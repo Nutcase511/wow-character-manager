@@ -1,0 +1,443 @@
+<template>
+  <div class="characters-view">
+    <div class="page-header">
+      <h2 class="page-title">
+        <el-icon><User /></el-icon>
+        角色管理
+      </h2>
+      <el-button type="primary" @click="showCreateDialog = true">
+        <el-icon><Plus /></el-icon>
+        添加角色
+      </el-button>
+    </div>
+
+    <el-card class="characters-card">
+      <div v-if="characterStore.loading" class="loading-container">
+        <el-skeleton :rows="3" animated />
+      </div>
+
+      <div v-else-if="!characterStore.hasCharacters" class="empty-container">
+        <el-empty description="暂无角色，请添加您的第一个角色">
+          <el-button type="primary" @click="showCreateDialog = true">添加角色</el-button>
+        </el-empty>
+      </div>
+
+      <div v-else class="characters-grid">
+        <div
+          v-for="character in characterStore.characters"
+          :key="character.id"
+          class="character-card"
+          @click="goToCharacterDetail(character.id)"
+        >
+          <div class="character-header">
+            <div class="character-info">
+              <h3 class="character-name">{{ character.name }}</h3>
+              <p class="character-realm">{{ character.realm }}</p>
+            </div>
+            <div class="character-level">{{ character.level }}级</div>
+          </div>
+
+          <div class="character-details">
+            <el-tag :type="getClassTagType(character.wow_class)" size="small">
+              {{ getClassDisplayName(character.wow_class) }}
+            </el-tag>
+            <el-tag v-if="character.spec" type="info" size="small">
+              {{ character.spec }}
+            </el-tag>
+            <el-tag :type="character.faction === 'alliance' ? 'primary' : 'danger'" size="small">
+              {{ character.faction === 'alliance' ? '联盟' : '部落' }}
+            </el-tag>
+          </div>
+
+          <div class="character-actions">
+            <el-button size="small" @click.stop="editCharacter(character)">
+              <el-icon><Edit /></el-icon>
+              编辑
+            </el-button>
+            <el-button size="small" type="danger" @click.stop="deleteCharacter(character.id)">
+              <el-icon><Delete /></el-icon>
+              删除
+            </el-button>
+          </div>
+        </div>
+      </div>
+    </el-card>
+
+    <!-- 创建/编辑角色对话框 -->
+    <el-dialog
+      v-model="showCreateDialog"
+      :title="isEditing ? '编辑角色' : '添加角色'"
+      width="500px"
+      @close="resetForm"
+    >
+      <el-form :model="form" :rules="rules" ref="formRef" label-width="80px">
+        <el-form-item label="角色名" prop="name">
+          <el-input v-model="form.name" placeholder="请输入角色名称" />
+        </el-form-item>
+        <el-form-item label="服务器" prop="realm">
+          <el-select v-model="form.realm" placeholder="请选择服务器" style="width: 100%">
+            <el-option label="时光1" value="时光1" />
+            <el-option label="时光2" value="时光2" />
+            <el-option label="时光3" value="时光3" />
+            <el-option label="时光4" value="时光4" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="职业" prop="wow_class">
+          <el-select v-model="form.wow_class" placeholder="请选择职业" style="width: 100%">
+            <el-option
+              v-for="(name, key) in classNames"
+              :key="key"
+              :label="name"
+              :value="key"
+            />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="专精" prop="spec">
+          <el-select v-model="form.spec" placeholder="请选择专精" style="width: 100%">
+            <el-option label="防护" value="防护" />
+            <el-option label="武器" value="武器" />
+            <el-option label="狂暴" value="狂暴" />
+            <el-option label="神圣" value="神圣" />
+            <el-option label="惩戒" value="惩戒" />
+            <el-option label="野兽" value="野兽" />
+            <el-option label="射击" value="射击" />
+            <el-option label="生存" value="生存" />
+            <el-option label="刺杀" value="刺杀" />
+            <el-option label="战斗" value="战斗" />
+            <el-option label="敏锐" value="敏锐" />
+            <el-option label="戒律" value="戒律" />
+            <el-option label="暗影" value="暗影" />
+            <el-option label="神圣" value="神圣" />
+            <el-option label="鲜血" value="鲜血" />
+            <el-option label="冰霜" value="冰霜" />
+            <el-option label="邪恶" value="邪恶" />
+            <el-option label="元素" value="元素" />
+            <el-option label="增强" value="增强" />
+            <el-option label="恢复" value="恢复" />
+            <el-option label="奥术" value="奥术" />
+            <el-option label="火焰" value="火焰" />
+            <el-option label="冰霜" value="冰霜" />
+            <el-option label="痛苦" value="痛苦" />
+            <el-option label="恶魔" value="恶魔" />
+            <el-option label="毁灭" value="毁灭" />
+            <el-option label="酒仙" value="酒仙" />
+            <el-option label="织雾" value="织雾" />
+            <el-option label="踏风" value="踏风" />
+            <el-option label="平衡" value="平衡" />
+            <el-option label="野性" value="野性" />
+            <el-option label="守护" value="守护" />
+            <el-option label="恢复" value="恢复" />
+            <el-option label="浩劫" value="浩劫" />
+            <el-option label="复仇" value="复仇" />
+            <el-option label="增辉" value="增辉" />
+            <el-option label="湮灭" value="湮灭" />
+            <el-option label="恩护" value="恩护" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="等级" prop="level">
+          <el-input-number v-model="form.level" :min="1" :max="80" />
+          <div class="form-tip">时光服最高等级为80</div>
+        </el-form-item>
+        <el-form-item label="阵营" prop="faction">
+          <el-radio-group v-model="form.faction">
+            <el-radio label="alliance">联盟</el-radio>
+            <el-radio label="horde">部落</el-radio>
+          </el-radio-group>
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="showCreateDialog = false">取消</el-button>
+        <el-button type="primary" @click="submitForm" :loading="characterStore.loading">
+          确定
+        </el-button>
+      </template>
+    </el-dialog>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref, onMounted, reactive } from 'vue'
+import { useRouter } from 'vue-router'
+import { useCharacterStore } from '@/stores/character'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { User, Plus, Edit, Delete } from '@element-plus/icons-vue'
+import type { Character, CharacterCreate } from '@/types'
+import { WoWClass } from '@/types'
+
+const router = useRouter()
+const characterStore = useCharacterStore()
+
+// 对话框状态
+const showCreateDialog = ref(false)
+const isEditing = ref(false)
+const editingCharacterId = ref<string | null>(null)
+
+// 表单数据
+const form = reactive<CharacterCreate>({
+  name: '',
+  realm: '',
+  wow_class: '',
+  spec: '',
+  level: 80,  // 时光服默认80级
+  faction: 'alliance'
+})
+
+const formRef = ref()
+
+// 表单验证规则
+const rules = {
+  name: [{ required: true, message: '请输入角色名称', trigger: 'blur' }],
+  realm: [{ required: true, message: '请输入服务器名称', trigger: 'blur' }],
+  wow_class: [{ required: true, message: '请选择职业', trigger: 'change' }],
+  level: [{ required: true, message: '请输入等级', trigger: 'blur' }]
+}
+
+// 职业名称映射
+const classNames: Record<string, string> = {
+  [WoWClass.WARRIOR]: '战士',
+  [WoWClass.PALADIN]: '圣骑士',
+  [WoWClass.HUNTER]: '猎人',
+  [WoWClass.ROGUE]: '潜行者',
+  [WoWClass.PRIEST]: '牧师',
+  [WoWClass.DEATH_KNIGHT]: '死亡骑士',
+  [WoWClass.SHAMAN]: '萨满祭司',
+  [WoWClass.MAGE]: '法师',
+  [WoWClass.WARLOCK]: '术士',
+  [WoWClass.MONK]: '武僧',
+  [WoWClass.DRUID]: '德鲁伊',
+  [WoWClass.DEMON_HUNTER]: '恶魔猎手',
+  [WoWClass.EVOKER]: '唤魔师'
+}
+
+// 获取职业显示名称
+function getClassDisplayName(classKey: string): string {
+  return classNames[classKey] || classKey
+}
+
+// 获取职业标签类型
+function getClassTagType(classKey: string): string {
+  const typeMap: Record<string, string> = {
+    [WoWClass.WARRIOR]: 'warning',
+    [WoWClass.PALADIN]: 'success',
+    [WoWClass.HUNTER]: 'success',
+    [WoWClass.ROGUE]: 'warning',
+    [WoWClass.PRIEST]: '',
+    [WoWClass.DEATH_KNIGHT]: 'danger',
+    [WoWClass.SHAMAN]: 'primary',
+    [WoWClass.MAGE]: 'primary',
+    [WoWClass.WARLOCK]: 'danger',
+    [WoWClass.MONK]: 'warning',
+    [WoWClass.DRUID]: 'success',
+    [WoWClass.DEMON_HUNTER]: 'danger',
+    [WoWClass.EVOKER]: 'primary'
+  }
+  return typeMap[classKey] || ''
+}
+
+// 重置表单
+function resetForm() {
+  formRef.value?.resetFields()
+  Object.assign(form, {
+    name: '',
+    realm: '',
+    wow_class: '',
+    spec: '',
+    level: 70,
+    faction: 'alliance'
+  })
+  isEditing.value = false
+  editingCharacterId.value = null
+}
+
+// 提交表单
+async function submitForm() {
+  if (!formRef.value) return
+
+  await formRef.value.validate(async (valid: boolean) => {
+    if (!valid) return
+
+    try {
+      if (isEditing.value && editingCharacterId.value) {
+        await characterStore.updateCharacter(editingCharacterId.value, form)
+        ElMessage.success('角色更新成功')
+      } else {
+        await characterStore.createCharacter(form)
+        ElMessage.success('角色创建成功')
+      }
+      showCreateDialog.value = false
+      resetForm()
+    } catch (error) {
+      ElMessage.error(isEditing.value ? '角色更新失败' : '角色创建失败')
+    }
+  })
+}
+
+// 编辑角色
+function editCharacter(character: Character) {
+  isEditing.value = true
+  editingCharacterId.value = character.id
+  Object.assign(form, {
+    name: character.name,
+    realm: character.realm,
+    wow_class: character.wow_class,
+    spec: character.spec || '',
+    level: character.level,
+    faction: character.faction
+  })
+  showCreateDialog.value = true
+}
+
+// 删除角色
+async function deleteCharacter(id: string) {
+  try {
+    await ElMessageBox.confirm('确定要删除这个角色吗？', '确认删除', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning'
+    })
+
+    await characterStore.deleteCharacter(id)
+    ElMessage.success('角色删除成功')
+  } catch (error) {
+    if (error !== 'cancel') {
+      ElMessage.error('角色删除失败')
+    }
+  }
+}
+
+// 跳转到角色详情
+function goToCharacterDetail(id: string) {
+  router.push(`/characters/${id}`)
+}
+
+// 生命周期
+onMounted(() => {
+  characterStore.fetchCharacters()
+})
+</script>
+
+<style scoped>
+.characters-view {
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.page-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 24px;
+  font-weight: 600;
+  color: #1a1a2e;
+}
+
+.characters-card {
+  min-height: 400px;
+}
+
+.loading-container {
+  padding: 20px;
+}
+
+.empty-container {
+  padding: 40px 20px;
+}
+
+.characters-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
+  padding: 10px;
+}
+
+.character-card {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 12px;
+  padding: 20px;
+  color: white;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.character-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 12px rgba(0, 0, 0, 0.15);
+}
+
+.character-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 16px;
+}
+
+.character-info {
+  flex: 1;
+}
+
+.character-name {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 4px;
+  color: white;
+}
+
+.character-realm {
+  font-size: 14px;
+  opacity: 0.9;
+  margin: 0;
+}
+
+.character-level {
+  font-size: 24px;
+  font-weight: 700;
+  color: #f39c12;
+}
+
+.character-details {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.character-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+  padding-top: 12px;
+}
+
+.character-actions .el-button {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  color: white;
+}
+
+.character-actions .el-button:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.character-actions .el-button--danger {
+  background: rgba(231, 76, 60, 0.8);
+}
+
+.character-actions .el-button--danger:hover {
+  background: rgba(231, 76, 60, 1);
+}
+
+.form-tip {
+  font-size: 12px;
+  color: #909399;
+  margin-top: 4px;
+}
+</style>
