@@ -134,3 +134,20 @@ export interface Realm {
   is_tournament: boolean
   region: string
 }
+
+// 职业与专精映射关系
+export const ClassSpecsMap: Record<string, string[]> = {
+  [WoWClass.WARRIOR]: ['防护', '武器', '狂暴'],
+  [WoWClass.PALADIN]: ['神圣', '惩戒', '防护'],
+  [WoWClass.HUNTER]: ['野兽', '射击', '生存'],
+  [WoWClass.ROGUE]: ['刺杀', '战斗', '敏锐'],
+  [WoWClass.PRIEST]: ['戒律', '神圣', '暗影'],
+  [WoWClass.DEATH_KNIGHT]: ['鲜血', '冰霜', '邪恶'],
+  [WoWClass.SHAMAN]: ['元素', '增强', '恢复'],
+  [WoWClass.MAGE]: ['奥术', '火焰', '冰霜'],
+  [WoWClass.WARLOCK]: ['痛苦', '恶魔', '毁灭'],
+  [WoWClass.MONK]: ['酒仙', '织雾', '踏风'],
+  [WoWClass.DRUID]: ['平衡', '野性', '守护', '恢复'],
+  [WoWClass.DEMON_HUNTER]: ['浩劫', '复仇'],
+  [WoWClass.EVOKER]: ['增辉', '湮灭', '恩护']
+}

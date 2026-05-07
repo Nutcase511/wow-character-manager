@@ -13,7 +13,13 @@ app = FastAPI(
 # 配置CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[settings.FRONTEND_URL, "http://localhost:5173"],
+    allow_origins=[
+        settings.FRONTEND_URL,
+        "http://localhost:5173",
+        "http://localhost:5174",
+        "http://127.0.0.1:5173",
+        "http://127.0.0.1:5174"
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -21,15 +27,16 @@ app.add_middleware(
 
 
 @app.on_event("startup")
-async def startup_db_client():
-    """启动时连接数据库"""
-    await db.connect_to_database()
+async def startup():
+    """启动时连接数据库并创建表"""
+    await db.connect()
+    await db.init_tables()
 
 
 @app.on_event("shutdown")
-async def shutdown_db_client():
+async def shutdown():
     """关闭时断开数据库连接"""
-    await db.close_database_connection()
+    await db.close()
 
 
 @app.get("/")
@@ -46,8 +53,7 @@ async def root():
 async def health_check():
     """健康检查"""
     try:
-        # 检查数据库连接
-        await db.get_database().command("ping")
+        await db.fetchone("SELECT 1")
         return {"status": "healthy", "database": "connected"}
     except Exception as e:
         return {"status": "unhealthy", "database": "disconnected", "error": str(e)}

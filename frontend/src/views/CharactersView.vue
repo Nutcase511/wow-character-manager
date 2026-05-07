@@ -93,46 +93,15 @@
           </el-select>
         </el-form-item>
         <el-form-item label="专精" prop="spec">
-          <el-select v-model="form.spec" placeholder="请选择专精" style="width: 100%">
-            <el-option label="防护" value="防护" />
-            <el-option label="武器" value="武器" />
-            <el-option label="狂暴" value="狂暴" />
-            <el-option label="神圣" value="神圣" />
-            <el-option label="惩戒" value="惩戒" />
-            <el-option label="野兽" value="野兽" />
-            <el-option label="射击" value="射击" />
-            <el-option label="生存" value="生存" />
-            <el-option label="刺杀" value="刺杀" />
-            <el-option label="战斗" value="战斗" />
-            <el-option label="敏锐" value="敏锐" />
-            <el-option label="戒律" value="戒律" />
-            <el-option label="暗影" value="暗影" />
-            <el-option label="神圣" value="神圣" />
-            <el-option label="鲜血" value="鲜血" />
-            <el-option label="冰霜" value="冰霜" />
-            <el-option label="邪恶" value="邪恶" />
-            <el-option label="元素" value="元素" />
-            <el-option label="增强" value="增强" />
-            <el-option label="恢复" value="恢复" />
-            <el-option label="奥术" value="奥术" />
-            <el-option label="火焰" value="火焰" />
-            <el-option label="冰霜" value="冰霜" />
-            <el-option label="痛苦" value="痛苦" />
-            <el-option label="恶魔" value="恶魔" />
-            <el-option label="毁灭" value="毁灭" />
-            <el-option label="酒仙" value="酒仙" />
-            <el-option label="织雾" value="织雾" />
-            <el-option label="踏风" value="踏风" />
-            <el-option label="平衡" value="平衡" />
-            <el-option label="野性" value="野性" />
-            <el-option label="守护" value="守护" />
-            <el-option label="恢复" value="恢复" />
-            <el-option label="浩劫" value="浩劫" />
-            <el-option label="复仇" value="复仇" />
-            <el-option label="增辉" value="增辉" />
-            <el-option label="湮灭" value="湮灭" />
-            <el-option label="恩护" value="恩护" />
+          <el-select v-model="form.spec" placeholder="请选择专精" style="width: 100%" :disabled="!form.wow_class">
+            <el-option
+              v-for="spec in availableSpecs"
+              :key="spec"
+              :label="spec"
+              :value="spec"
+            />
           </el-select>
+          <div v-if="!form.wow_class" class="form-tip">请先选择职业</div>
         </el-form-item>
         <el-form-item label="等级" prop="level">
           <el-input-number v-model="form.level" :min="1" :max="80" />
@@ -156,13 +125,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, reactive } from 'vue'
+import { ref, onMounted, reactive, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useCharacterStore } from '@/stores/character'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { User, Plus, Edit, Delete } from '@element-plus/icons-vue'
 import type { Character, CharacterCreate } from '@/types'
-import { WoWClass } from '@/types'
+import { WoWClass, ClassSpecsMap } from '@/types'
 
 const router = useRouter()
 const characterStore = useCharacterStore()
@@ -179,7 +148,7 @@ const form = reactive<CharacterCreate>({
   wow_class: '',
   spec: '',
   level: 80,  // 时光服默认80级
-  faction: 'alliance'
+  faction: 'horde'  // 默认部落
 })
 
 const formRef = ref()
@@ -234,6 +203,22 @@ function getClassTagType(classKey: string): string {
   return typeMap[classKey] || ''
 }
 
+// 计算当前职业可用的专精列表
+const availableSpecs = computed(() => {
+  if (!form.wow_class) return []
+  return ClassSpecsMap[form.wow_class] || []
+})
+
+// 监听职业变化，自动清空不匹配的专精
+watch(() => form.wow_class, (newClass, oldClass) => {
+  if (oldClass && newClass !== oldClass && form.spec) {
+    const specs = ClassSpecsMap[newClass] || []
+    if (!specs.includes(form.spec)) {
+      form.spec = ''
+    }
+  }
+})
+
 // 重置表单
 function resetForm() {
   formRef.value?.resetFields()
@@ -242,8 +227,8 @@ function resetForm() {
     realm: '',
     wow_class: '',
     spec: '',
-    level: 70,
-    faction: 'alliance'
+    level: 80,
+    faction: 'horde'  // 默认部落
   })
   isEditing.value = false
   editingCharacterId.value = null
