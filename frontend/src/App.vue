@@ -56,11 +56,12 @@ const activeMenu = computed(() => route.path)
 }
 
 .app-header {
-  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  background: linear-gradient(135deg, #0d0d1a 0%, #111827 100%);
   color: #fff;
   padding: 0;
   height: 60px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+  border-bottom: 1px solid #1f2937;
 }
 
 .header-content {
@@ -95,33 +96,35 @@ const activeMenu = computed(() => route.path)
 }
 
 .header-menu .el-menu-item {
-  color: rgba(255, 255, 255, 0.8);
+  color: rgba(255, 255, 255, 0.7);
   font-size: 15px;
+  border-bottom: 2px solid transparent;
 }
 
 .header-menu .el-menu-item:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.08);
   color: #fff;
 }
 
 .header-menu .el-menu-item.is-active {
-  background: rgba(243, 156, 18, 0.2);
+  background: rgba(243, 156, 18, 0.15);
   color: #f39c12;
   border-bottom: 2px solid #f39c12;
 }
 
 .app-main {
   flex: 1;
-  background: #f5f7fa;
+  background: #111827;
   padding: 20px;
   overflow-y: auto;
 }
 
 .app-footer {
-  background: #1a1a2e;
-  color: rgba(255, 255, 255, 0.6);
+  background: #0d0d1a;
+  color: rgba(255, 255, 255, 0.5);
   padding: 0;
   height: 40px;
+  border-top: 1px solid #1f2937;
 }
 
 .footer-content {
@@ -136,7 +139,7 @@ const activeMenu = computed(() => route.path)
 }
 
 .version {
-  color: rgba(255, 255, 255, 0.4);
+  color: rgba(255, 255, 255, 0.3);
 }
 
 /* 页面切换动画 */
@@ -161,9 +164,150 @@ const activeMenu = computed(() => route.path)
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB',
     'Microsoft YaHei', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  background: #111827;
 }
 
 #app {
   height: 100vh;
 }
+
+/* ===== 全局深色主题覆盖 ===== */
+html.dark {
+  --el-bg-color: #1f2937;
+  --el-bg-color-overlay: #1f2937;
+  --el-bg-color-page: #111827;
+  --el-text-color-primary: #e5e7eb;
+  --el-text-color-regular: #d1d5db;
+  --el-text-color-secondary: #9ca3af;
+  --el-text-color-placeholder: #6b7280;
+  --el-border-color: #374151;
+  --el-border-color-light: #2d3748;
+  --el-border-color-lighter: #1f2937;
+  --el-fill-color: #1f2937;
+  --el-fill-color-light: #252f3f;
+  --el-fill-color-lighter: #1f2937;
+  --el-fill-color-blank: #1a2332;
+  --el-mask-color: rgba(0, 0, 0, 0.6);
+
+  color-scheme: dark;
+}
+
+/* 深色卡片 */
+html.dark .el-card {
+  --el-card-bg-color: #1f2937;
+  border-color: #374151;
+}
+
+html.dark .el-table {
+  --el-table-bg-color: #1f2937;
+  --el-table-tr-bg-color: #1f2937;
+  --el-table-header-bg-color: #172033;
+  --el-table-row-hover-bg-color: #252f3f;
+  --el-table-border-color: #374151;
+}
+
+html.dark .el-table--striped .el-table__body tr.el-table__row--striped td.el-table__cell {
+  background: #172033;
+}
+
+/* 深色对话框 */
+html.dark .el-dialog {
+  --el-dialog-bg-color: #1f2937;
+  border: 1px solid #374151;
+}
+
+/* 深色输入框 */
+html.dark .el-input__wrapper,
+html.dark .el-textarea__inner {
+  background-color: #172033;
+  box-shadow: 0 0 0 1px #374151 inset;
+}
+
+html.dark .el-input__wrapper:hover,
+html.dark .el-textarea__inner:hover {
+  box-shadow: 0 0 0 1px #4b5563 inset;
+}
+
+html.dark .el-select .el-input__wrapper {
+  background-color: #172033;
+}
+
+/* 深色面包屑 */
+html.dark .el-breadcrumb__inner,
+html.dark .el-breadcrumb__separator {
+  color: #9ca3af;
+}
+
+html.dark .el-breadcrumb__inner a,
+html.dark .el-breadcrumb__inner.is-link {
+  color: #9ca3af;
+}
+
+html.dark .el-breadcrumb__inner a:hover,
+html.dark .el-breadcrumb__inner.is-link:hover {
+  color: #f39c12;
+}
+
+/* 深色 Tabs */
+html.dark .el-tabs__item {
+  color: #9ca3af;
+}
+
+html.dark .el-tabs__item.is-active {
+  color: #f39c12;
+}
+
+html.dark .el-tabs__nav-wrap::after {
+  background-color: #374151;
+}
+
+/* 深色 Radio 按钮组 */
+html.dark .el-radio-button__inner {
+  background-color: #1f2937;
+  border-color: #374151;
+  color: #9ca3af;
+}
+
+html.dark .el-radio-button__original-radio:checked + .el-radio-button__inner {
+  background-color: #f39c12;
+  border-color: #f39c12;
+  color: #000;
+}
+
+/* 深色 Tag */
+html.dark .el-tag {
+  border-color: #374151;
+}
+
+/* 深色描述列表 */
+html.dark .el-descriptions__body {
+  background-color: #1f2937;
+}
+
+html.dark .el-descriptions__label {
+  color: #9ca3af;
+}
+
+/* 深色空状态 */
+html.dark .el-empty__description p {
+  color: #6b7280;
+}
+
+/* 页面标题通用深色 */
+html.dark .page-title {
+  color: #e5e7eb;
+}
+
+/* 页面主文本 */
+html.dark .filter-count {
+  color: #6b7280;
+}
+
+/* 品质颜色在深色背景下保持鲜艳 */
+html.dark .q-poor { color: #9d9d9d; }
+html.dark .q-common { color: #e5e7eb; }
+html.dark .q-uncommon { color: #1eff00; }
+html.dark .q-rare { color: #4d9dff; }
+html.dark .q-epic { color: #c875ff; }
+html.dark .q-legendary { color: #ff8000; }
 </style>

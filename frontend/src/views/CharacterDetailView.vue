@@ -429,7 +429,7 @@ onMounted(async () => {
 .page-title {
   font-size: 24px;
   font-weight: 600;
-  color: #1a1a2e;
+  color: #e5e7eb;
   flex: 1;
   text-align: center;
 }
@@ -471,8 +471,9 @@ onMounted(async () => {
   justify-content: space-around;
   margin-top: 30px;
   padding: 20px;
-  background: #f5f7fa;
+  background: #172033;
   border-radius: 8px;
+  border: 1px solid #374151;
 }
 
 .empty-container {
@@ -482,7 +483,7 @@ onMounted(async () => {
 
 .form-tip {
   font-size: 12px;
-  color: #909399;
+  color: #6b7280;
   margin-top: 4px;
 }
 </style>

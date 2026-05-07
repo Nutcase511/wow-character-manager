@@ -17,6 +17,8 @@ def _row_to_dungeon(row) -> dict:
         "map_name": row["map_name"],
         "minimum_level": row["minimum_level"],
         "modes": json.loads(row["modes"]) if row["modes"] else [],
+        "expansion": row["expansion"] if "expansion" in row.keys() else "wotlk",
+        "category": row["category"] if "category" in row.keys() else "dungeon",
         "icon_url": row["icon_url"],
         "created_at": row["created_at"],
     }
@@ -27,19 +29,28 @@ async def create_dungeon(dungeon: DungeonCreate):
     """创建副本"""
     now = datetime.utcnow().isoformat()
     cursor = await db.execute(
-        """INSERT INTO dungeons (dungeon_id, name, description, map_name, minimum_level, modes, icon_url, created_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
+        """INSERT INTO dungeons (dungeon_id, name, description, map_name, minimum_level, modes, expansion, category, icon_url, created_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
         (dungeon.dungeon_id, dungeon.name, dungeon.description, dungeon.map_name,
-         dungeon.minimum_level, json.dumps(dungeon.modes), dungeon.icon_url, now)
+         dungeon.minimum_level, json.dumps(dungeon.modes), dungeon.expansion, dungeon.category, dungeon.icon_url, now)
     )
     row = await db.fetchone("SELECT * FROM dungeons WHERE id = ?", (cursor.lastrowid,))
     return DungeonResponse(**_row_to_dungeon(row))
 
 
 @router.get("/", response_model=List[DungeonResponse])
-async def get_dungeons():
-    """获取所有副本"""
-    rows = await db.fetchall("SELECT * FROM dungeons ORDER BY id DESC")
+async def get_dungeons(expansion: Optional[str] = None, category: Optional[str] = None):
+    """获取所有副本，支持按资料片和类型过滤"""
+    query = "SELECT * FROM dungeons WHERE 1=1"
+    params = []
+    if expansion:
+        query += " AND expansion = ?"
+        params.append(expansion)
+    if category:
+        query += " AND category = ?"
+        params.append(category)
+    query += " ORDER BY dungeon_id"
+    rows = await db.fetchall(query, params)
     return [DungeonResponse(**_row_to_dungeon(r)) for r in rows]
 
 

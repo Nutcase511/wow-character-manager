@@ -79,6 +79,8 @@ class DungeonCreate(BaseModel):
     map_name: Optional[str] = None
     minimum_level: int = 70
     modes: List[str] = []
+    expansion: str = "wotlk"
+    category: str = "dungeon"
     icon_url: Optional[str] = None
 
 
@@ -90,6 +92,8 @@ class DungeonResponse(BaseModel):
     map_name: Optional[str]
     minimum_level: int
     modes: List[str]
+    expansion: str = "wotlk"
+    category: str = "dungeon"
     icon_url: Optional[str]
     created_at: Optional[str] = None
 
