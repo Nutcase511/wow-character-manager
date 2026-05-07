@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.core.database import db
-from app.api import characters, item_needs, dungeons, bosses, realms
+from app.api import characters, item_needs, dungeons, bosses, realms, gold
 
 app = FastAPI(
     title=settings.APP_NAME,
@@ -65,6 +65,7 @@ app.include_router(item_needs.router, prefix="/api/item-needs", tags=["item-need
 app.include_router(dungeons.router, prefix="/api/dungeons", tags=["dungeons"])
 app.include_router(bosses.router, prefix="/api/bosses", tags=["bosses"])
 app.include_router(realms.router, prefix="/api/realms", tags=["realms"])
+app.include_router(gold.router, prefix="/api/gold", tags=["gold"])
 
 
 if __name__ == "__main__":

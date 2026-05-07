@@ -7,7 +7,11 @@ import type {
   Dungeon,
   Boss,
   ItemProgress,
-  Realm
+  Realm,
+  CharacterGold,
+  GoldSummary,
+  GoldTransaction,
+  GoldSnapshot
 } from '@/types'
 
 const api = axios.create({
@@ -84,6 +88,21 @@ export const realmApi = {
     api.get<Realm[]>('/realms/classic/list', { params }),
   getRetailRealms: (params?: { region?: string }) =>
     api.get<Realm[]>('/realms/retail/list', { params })
+}
+
+// 金币相关API
+export const goldApi = {
+  getAllGold: () => api.get<CharacterGold[]>('/gold/all'),
+  getCharacterSummary: (characterId: string, timeMode?: string) =>
+    api.get<GoldSummary>(`/gold/character/${characterId}`, { params: { time_mode: timeMode } }),
+  getCharacterTransactions: (characterId: string, timeMode?: string) =>
+    api.get<GoldTransaction[]>(`/gold/character/${characterId}/transactions`, { params: { time_mode: timeMode } }),
+  getCharacterSnapshots: (characterId: string, limit?: number) =>
+    api.get<GoldSnapshot[]>(`/gold/character/${characterId}/snapshots`, { params: { limit } }),
+  updateCharacterGold: (characterId: string, goldCopper: number) =>
+    api.post(`/gold/character/${characterId}/update`, null, { params: { gold_copper: goldCopper } }),
+  deleteCharacterGold: (characterId: string) =>
+    api.delete(`/gold/character/${characterId}`)
 }
 
 export default api

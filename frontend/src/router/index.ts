@@ -48,6 +48,18 @@ const routes: RouteRecordRaw[] = [
     name: 'ItemNeeds',
     component: () => import('@/views/ItemNeedsView.vue'),
     meta: { title: '装备需求' }
+  },
+  {
+    path: '/gold',
+    name: 'GoldOverview',
+    component: () => import('@/views/GoldOverview.vue'),
+    meta: { title: '金币统计' }
+  },
+  {
+    path: '/gold/character/:characterId',
+    name: 'GoldCharacter',
+    component: () => import('@/views/GoldCharacter.vue'),
+    meta: { title: '金币详情' }
   }
 ]
 

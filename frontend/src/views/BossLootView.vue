@@ -8,7 +8,13 @@
     </el-breadcrumb>
 
     <div class="page-header">
-      <h2 class="page-title">{{ bossName }} - 掉落装备</h2>
+      <div class="boss-header">
+        <div class="boss-icon-container">
+          <img v-if="bossIcon" :src="bossIcon" :alt="bossName" class="boss-icon" />
+          <span v-else class="boss-icon-placeholder">👹</span>
+        </div>
+        <h2 class="page-title">{{ bossName }} - 掉落装备</h2>
+      </div>
       <span class="loot-count">共 {{ lootItems.length }} 件装备</span>
     </div>
 
@@ -59,6 +65,7 @@ const bossId = Number(route.params.bossId)
 const dungeonId = ref(0)
 const dungeonName = ref('')
 const bossName = ref('')
+const bossIcon = ref('')
 const lootItems = ref<any[]>([])
 const loading = ref(false)
 
@@ -111,6 +118,7 @@ async function loadLoot() {
       bossName.value = bossRes.data.name
       dungeonName.value = bossRes.data.dungeon_name
       dungeonId.value = bossRes.data.dungeon_id
+      bossIcon.value = bossRes.data.icon_url || ''
     } else {
       bossName.value = `Boss #${bossId}`
     }
@@ -139,6 +147,34 @@ onMounted(() => { loadLoot() })
   align-items: center;
   justify-content: space-between;
   margin-bottom: 20px;
+}
+
+.boss-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.boss-icon-container {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #3f1f1f 0%, #1f1f2e 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.boss-icon {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+.boss-icon-placeholder {
+  font-size: 32px;
 }
 
 .page-title {

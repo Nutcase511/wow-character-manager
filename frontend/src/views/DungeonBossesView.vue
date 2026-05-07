@@ -21,7 +21,8 @@
       >
         <div class="card-content">
           <div class="boss-avatar">
-            <span>{{ boss.name.charAt(0) }}</span>
+            <img v-if="boss.icon_url" :src="boss.icon_url" :alt="boss.name" class="boss-avatar-img" />
+            <span v-else>{{ boss.name.charAt(0) }}</span>
           </div>
           <div class="boss-info">
             <h3 class="boss-name">{{ boss.name }}</h3>
@@ -128,12 +129,20 @@ onMounted(() => { loadBosses() })
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  overflow: hidden;
 }
 
 .boss-avatar span {
   color: #e5e7eb;
   font-size: 18px;
   font-weight: 600;
+}
+
+.boss-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
 }
 
 .boss-info {
