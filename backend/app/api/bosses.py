@@ -45,6 +45,22 @@ async def get_bosses(dungeon_id: Optional[int] = None):
     return [BossResponse(**_row_to_boss(r)) for r in rows]
 
 
+@router.get("/dungeon/{dungeon_id}/bosses", response_model=List[BossResponse])
+async def get_bosses_by_dungeon(dungeon_id: int):
+    """获取指定副本的所有Boss"""
+    rows = await db.fetchall("SELECT * FROM bosses WHERE dungeon_id = ? ORDER BY id", (dungeon_id,))
+    return [BossResponse(**_row_to_boss(r)) for r in rows]
+
+
+@router.get("/lookup/{boss_id}", response_model=BossResponse)
+async def lookup_boss_by_boss_id(boss_id: int):
+    """通过boss_id查找Boss"""
+    row = await db.fetchone("SELECT * FROM bosses WHERE boss_id = ?", (boss_id,))
+    if not row:
+        raise HTTPException(status_code=404, detail="Boss not found")
+    return BossResponse(**_row_to_boss(row))
+
+
 @router.get("/{boss_id}", response_model=BossResponse)
 async def get_boss(boss_id: int):
     """获取指定Boss"""
@@ -54,6 +70,21 @@ async def get_boss(boss_id: int):
     return BossResponse(**_row_to_boss(row))
 
 
+@router.get("/{boss_id}/loot")
+async def get_boss_loot(boss_id: int):
+    """获取指定Boss的掉落装备列表"""
+    rows = await db.fetchall(
+        """SELECT bl.item_id, bl.item_name, bl.difficulty,
+                  i.quality, i.item_level, i.slot, i.icon_url
+           FROM boss_loot bl
+           LEFT JOIN items i ON bl.item_id = i.item_id
+           WHERE bl.boss_id = ?
+           ORDER BY bl.id""",
+        (boss_id,)
+    )
+    return [dict(r) for r in rows]
+
+
 @router.post("/sync/{journal_encounter_id}")
 async def sync_boss_from_blizzard(journal_encounter_id: int):
     """手动同步Boss数据（本地模式）"""
@@ -61,13 +92,6 @@ async def sync_boss_from_blizzard(journal_encounter_id: int):
     if row:
         return BossResponse(**_row_to_boss(row))
     raise HTTPException(status_code=404, detail="Boss not found. Use POST / to create manually.")
-
-
-@router.get("/dungeon/{dungeon_id}/bosses", response_model=List[BossResponse])
-async def get_bosses_by_dungeon(dungeon_id: int):
-    """获取指定副本的所有Boss"""
-    rows = await db.fetchall("SELECT * FROM bosses WHERE dungeon_id = ? ORDER BY id", (dungeon_id,))
-    return [BossResponse(**_row_to_boss(r)) for r in rows]
 
 
 @router.delete("/{boss_id}")

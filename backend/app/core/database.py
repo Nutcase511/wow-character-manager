@@ -57,6 +57,8 @@ class Database:
                 map_name TEXT,
                 minimum_level INTEGER DEFAULT 70,
                 modes TEXT DEFAULT '[]',
+                expansion TEXT DEFAULT 'wotlk',
+                category TEXT DEFAULT 'dungeon',
                 icon_url TEXT,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
@@ -87,6 +89,15 @@ class Database:
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY (character_id) REFERENCES characters(id)
+            );
+
+            CREATE TABLE IF NOT EXISTS boss_loot (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                boss_id INTEGER NOT NULL,
+                item_id INTEGER NOT NULL,
+                item_name TEXT,
+                difficulty TEXT DEFAULT '',
+                FOREIGN KEY (boss_id) REFERENCES bosses(boss_id)
             );
         """)
         await self._connection.commit()

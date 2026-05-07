@@ -69,6 +69,8 @@ export interface Dungeon {
   map_name?: string
   minimum_level: number
   modes: string[]
+  expansion: string
+  category: string
   icon_url?: string
   created_at: string
 }
