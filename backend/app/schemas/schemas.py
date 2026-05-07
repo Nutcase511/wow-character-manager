@@ -176,3 +176,38 @@ class RealmResponse(BaseModel):
     timezone: str
     is_tournament: bool
     region: str
+
+
+class CharacterGoldResponse(BaseModel):
+    id: int
+    character_id: int
+    character_name: str
+    realm: str
+    current_gold: int
+    last_updated: Optional[str] = None
+
+
+class GoldTransactionResponse(BaseModel):
+    id: int
+    character_id: int
+    source: str
+    source_title: str
+    time_mode: str
+    amount_in: int
+    amount_out: int
+    recorded_at: Optional[str] = None
+
+
+class GoldSnapshotResponse(BaseModel):
+    id: int
+    character_id: int
+    gold_amount: int
+    snapshot_date: Optional[str] = None
+
+
+class GoldSummaryResponse(BaseModel):
+    character_gold: Optional[CharacterGoldResponse] = None
+    total_in: int
+    total_out: int
+    net: int
+    transactions: List[GoldTransactionResponse] = []

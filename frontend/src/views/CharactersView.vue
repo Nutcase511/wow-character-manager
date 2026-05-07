@@ -27,6 +27,7 @@
           v-for="character in characterStore.characters"
           :key="character.id"
           class="character-card"
+          :style="getClassCardStyle(character.wow_class)"
           @click="goToCharacterDetail(character.id)"
         >
           <div class="character-header">
@@ -34,11 +35,15 @@
               <h3 class="character-name">{{ character.name }}</h3>
               <p class="character-realm">{{ character.realm }}</p>
             </div>
-            <div class="character-level">{{ character.level }}级</div>
+            <div class="character-level" :style="{ color: getClassAccentColor(character.wow_class) }">{{ character.level }}级</div>
           </div>
 
           <div class="character-details">
-            <el-tag :type="getClassTagType(character.wow_class)" size="small">
+            <el-tag
+              :color="getClassAccentColor(character.wow_class)"
+              style="color: #fff; border-color: transparent;"
+              size="small"
+            >
               {{ getClassDisplayName(character.wow_class) }}
             </el-tag>
             <el-tag v-if="character.spec" type="info" size="small">
@@ -181,6 +186,38 @@ const classNames: Record<string, string> = {
 // 获取职业显示名称
 function getClassDisplayName(classKey: string): string {
   return classNames[classKey] || classKey
+}
+
+// 职业配色映射（WoW 经典职业代表色）
+const classColorMap: Record<string, { gradient: string; accent: string; border: string }> = {
+  [WoWClass.WARRIOR]:       { gradient: 'linear-gradient(135deg, #7d5a2a 0%, #4a3420 40%, #2a1f14 100%)', accent: '#c79c6e', border: '#7d5a2a' },
+  [WoWClass.PALADIN]:       { gradient: 'linear-gradient(135deg, #a0804a 0%, #6b5230 40%, #3d2e1a 100%)', accent: '#f58cba', border: '#a0804a' },
+  [WoWClass.HUNTER]:        { gradient: 'linear-gradient(135deg, #3a5a2a 0%, #264020 40%, #1a2d14 100%)', accent: '#abd473', border: '#3a5a2a' },
+  [WoWClass.ROGUE]:         { gradient: 'linear-gradient(135deg, #5a3a5a 0%, #3d2540 40%, #2a1a2d 100%)', accent: '#fff569', border: '#5a3a5a' },
+  [WoWClass.PRIEST]:        { gradient: 'linear-gradient(135deg, #4a4a6e 0%, #32324e 40%, #22223a 100%)', accent: '#ffffff', border: '#4a4a6e' },
+  [WoWClass.DEATH_KNIGHT]:  { gradient: 'linear-gradient(135deg, #4a2030 0%, #321524 40%, #240d1a 100%)', accent: '#c41e3a', border: '#4a2030' },
+  [WoWClass.SHAMAN]:        { gradient: 'linear-gradient(135deg, #1a4a5a 0%, #143a45 40%, #0d2830 100%)', accent: '#0070de', border: '#1a4a5a' },
+  [WoWClass.MAGE]:          { gradient: 'linear-gradient(135deg, #2a3a6e 0%, #1e2a50 40%, #141c38 100%)', accent: '#69ccf0', border: '#2a3a6e' },
+  [WoWClass.WARLOCK]:       { gradient: 'linear-gradient(135deg, #3a2a5a 0%, #2d1e48 40%, #201434 100%)', accent: '#9482c9', border: '#3a2a5a' },
+  [WoWClass.MONK]:          { gradient: 'linear-gradient(135deg, #2a5a4a 0%, #1e4438 40%, #142e28 100%)', accent: '#00ff96', border: '#2a5a4a' },
+  [WoWClass.DRUID]:         { gradient: 'linear-gradient(135deg, #3a5a30 0%, #2a4422 40%, #1c2e18 100%)', accent: '#ff7d0a', border: '#3a5a30' },
+  [WoWClass.DEMON_HUNTER]:  { gradient: 'linear-gradient(135deg, #5a2a1a 0%, #44200f 40%, #30140a 100%)', accent: '#a330c9', border: '#5a2a1a' },
+  [WoWClass.EVOKER]:        { gradient: 'linear-gradient(135deg, #2a4a4a 0%, #1e3838 40%, #142828 100%)', accent: '#33937f', border: '#2a4a4a' }
+}
+
+// 获取职业卡片样式
+function getClassCardStyle(classKey: string) {
+  const colors = classColorMap[classKey]
+  if (!colors) return {}
+  return {
+    background: colors.gradient,
+    borderColor: colors.border
+  }
+}
+
+// 获取职业强调色（用于等级数字、职业标签等）
+function getClassAccentColor(classKey: string): string {
+  return classColorMap[classKey]?.accent || '#f39c12'
 }
 
 // 获取职业标签类型
