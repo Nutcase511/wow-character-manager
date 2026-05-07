@@ -1,279 +1,425 @@
 """
-将提取的魔兽世界数据导入到MongoDB
+解析WoW插件导出的SavedVariables数据并导入SQLite
 """
 import json
 import os
-import asyncio
-from motor.motor_asyncio import AsyncIOMotorClient
-from typing import Dict, List, Any
+import re
+import sqlite3
+import sys
 
 
-class WoWDataImporter:
-    """魔兽世界数据导入器"""
+def parse_lua_table(filepath: str) -> dict:
+    """简单的Lua表解析器，提取WoWDataExporterDB数据"""
+    with open(filepath, 'r', encoding='utf-8') as f:
+        content = f.read()
 
-    def __init__(self, mongodb_url: str = "mongodb://localhost:27017", db_name: str = "wow_character_manager"):
-        self.mongodb_url = mongodb_url
-        self.db_name = db_name
-        self.client = None
-        self.database = None
+    result = {
+        "instances": [],
+        "bosses": [],
+        "items": {},
+    }
 
-    async def connect(self):
-        """连接数据库"""
-        self.client = AsyncIOMotorClient(self.mongodb_url)
-        self.database = self.client[self.db_name]
-        print(f"连接到MongoDB: {self.db_name}")
+    # 使用简单的方式：逐行解析
+    # 找到instances数组
+    current_section = None
+    current_instance = None
+    current_boss = None
+    current_loot = None
 
-    async def close(self):
-        """关闭数据库连接"""
-        if self.client:
-            self.client.close()
-            print("关闭数据库连接")
+    lines = content.split('\n')
+    for line in lines:
+        line = line.strip()
 
-    async def import_instances(self, instances_file: str):
-        """导入副本数据"""
-        if not os.path.exists(instances_file):
-            print(f"副本数据文件不存在: {instances_file}")
-            return
+        # 检测section
+        if '["instances"]' in line and '{' in line:
+            current_section = "instances"
+            continue
+        elif '["bosses"]' in line and '{' in line:
+            current_section = "bosses"
+            continue
+        elif '["items"]' in line and '{' in line:
+            current_section = "items"
+            continue
 
-        print(f"开始导入副本数据: {instances_file}")
+        # 解析键值对
+        if '=' not in line:
+            continue
 
-        with open(instances_file, 'r', encoding='utf-8') as f:
-            instances = json.load(f)
+        # 提取 key = value
+        match = re.match(r'^\["?(\w+)"?\]\s*=\s*(.+)$', line)
+        if not match:
+            match = re.match(r'^(\w+)\s*=\s*(.+)$', line)
+        if not match:
+            continue
 
-        # 转换数据格式
-        formatted_instances = []
-        for instance in instances:
-            formatted_instance = {
-                "dungeon_id": instance['id'],
-                "name": instance['name'],
-                "description": instance.get('description', ''),
-                "map_name": "",  # 需要从Map.dbc获取
-                "minimum_level": 70,  # 时光服默认70级
-                "modes": ["normal", "heroic"],  # 时光服难度
-                "icon_url": None,
-                "created_at": None  # 会在插入时设置
-            }
-            formatted_instances.append(formatted_instance)
+        key = match.group(1).strip('"')
+        value = match.group(2).strip().rstrip(',')
 
-        # 导入到数据库
-        if formatted_instances:
-            result = await self.database["dungeons"].insert_many(formatted_instances)
-            print(f"成功导入 {len(result.inserted_ids)} 个副本")
-        else:
-            print("没有副本数据可导入")
+        # 跳过table类型的值
+        if value == '{' or value == '{}':
+            continue
+        if value == 'nil' or value == 'None':
+            continue
 
-    async def import_bosses(self, bosses_file: str, instances_data: List[Dict]):
-        """导入Boss数据"""
-        if not os.path.exists(bosses_file):
-            print(f"Boss数据文件不存在: {bosses_file}")
-            return
+        # 解析值
+        parsed_value = _parse_value(value)
+        if parsed_value is None:
+            continue
 
-        print(f"开始导入Boss数据: {bosses_file}")
+        # 根据当前上下文存储
+        if key == 'instanceID':
+            current_instance = _ensure_current(result['instances'], 'instanceID', parsed_value)
+        elif key == 'encounterID':
+            current_boss = _ensure_current(result['bosses'], 'encounterID', parsed_value)
+        elif key == 'itemID' and current_section == 'items':
+            pass  # items表用itemID作为key
+        elif current_section == 'items' and key not in ('instanceID', 'encounterID'):
+            # 全局items表
+            pass
 
-        with open(bosses_file, 'r', encoding='utf-8') as f:
-            bosses = json.load(f)
+        if current_instance is not None and key in ('instanceID', 'name', 'description', 'tierName', 'minimumLevel'):
+            current_instance[key] = parsed_value
 
-        # 创建副本ID到名称的映射
-        instance_map = {inst['dungeon_id']: inst['name'] for inst in instances_data}
+        if current_boss is not None and key in ('encounterID', 'name', 'description', 'instanceID', 'instanceName'):
+            current_boss[key] = parsed_value
 
-        # 转换数据格式
-        formatted_bosses = []
-        for boss in bosses:
-            instance_id = boss.get('instance_id')
-            instance_name = instance_map.get(instance_id, "未知副本")
+    return result
 
-            formatted_boss = {
-                "boss_id": boss['id'],
-                "name": boss['name'],
-                "description": boss.get('description', ''),
-                "dungeon_id": instance_id,
-                "dungeon_name": instance_name,
-                "category": "副本Boss",
-                "icon_url": None,
-                "created_at": None
-            }
-            formatted_bosses.append(formatted_boss)
 
-        # 导入到数据库
-        if formatted_bosses:
-            result = await self.database["bosses"].insert_many(formatted_bosses)
-            print(f"成功导入 {len(result.inserted_ids)} 个Boss")
-        else:
-            print("没有Boss数据可导入")
-
-    async def import_items(self, items_file: str, limit: int = 1000):
-        """导入装备数据"""
-        if not os.path.exists(items_file):
-            print(f"装备数据文件不存在: {items_file}")
-            return
-
-        print(f"开始导入装备数据: {items_file} (限制: {limit}个)")
-
-        with open(items_file, 'r', encoding='utf-8') as f:
-            items = json.load(f)
-
-        # 装备类别名称映射
-        item_classes = {
-            0: "消耗品",
-            1: "容器",
-            2: "武器",
-            3: "宝石",
-            4: "护甲",
-            5: "试剂",
-            6: "投射物",
-            7: "贸易商品",
-            8: "通用",
-            9: "配方",
-            10: "货币",
-            11: "任务物品",
-            12: "钥匙",
-            13: "永久性",
-            15: "杂项"
-        }
-
-        # 装备品质映射
-        quality_map = {
-            0: "poor",
-            1: "common",
-            2: "uncommon",
-            3: "rare",
-            4: "epic",
-            5: "legendary",
-            6: "artifact",
-            7: "heirloom"
-        }
-
-        # 装备部位映射
-        slot_map = {
-            0: None,
-            1: "头部",
-            2: "颈部",
-            3: "肩部",
-            4: "衬衫",
-            5: "胸部",
-            6: "腰部",
-            7: "腿部",
-            8: "脚",
-            9: "手腕",
-            10: "手套",
-            11: "手指",
-            12: "饰品",
-            13: "单手",
-            14: "盾牌",
-            15: "远程",
-            16: "背部",
-            17: "双手",
-            18: "袋",
-            19: "图腾",
-            20: "弹药",
-            21: "投掷",
-            22: "Ranged",
-            23: "Quiver",
-            24: "Relic"
-        }
-
-        # 只导入装备类物品（护甲和武器）
-        equipment_items = [item for item in items if item.get('item_class') in [2, 4]]
-
-        # 限制导入数量
-        equipment_items = equipment_items[:limit]
-
-        formatted_items = []
-        for item in equipment_items:
-            item_class_id = item.get('item_class', 0)
-            quality_id = item.get('quality', 1)
-            slot_id = item.get('inventory_type', 0)
-
-            formatted_item = {
-                "item_id": item['id'],
-                "name": item['name'],
-                "quality": quality_map.get(quality_id, 'common'),
-                "item_level": item.get('item_level', 1),
-                "slot": slot_map.get(slot_id),
-                "stats": {},  # 需要从Item.dbc获取详细属性
-                "icon_url": None,
-                "created_at": None
-            }
-            formatted_items.append(formatted_item)
-
-        # 导入到数据库
-        if formatted_items:
-            result = await self.database["items"].insert_many(formatted_items)
-            print(f"成功导入 {len(result.inserted_ids)} 个装备")
-        else:
-            print("没有装备数据可导入")
-
-    async def import_all(self, data_dir: str = "./wow_data", item_limit: int = 1000):
-        """导入所有数据"""
-        print("开始导入所有魔兽世界数据...")
-        print(f"数据目录: {data_dir}")
-
-        await self.connect()
-
+def _parse_value(value: str):
+    """解析Lua值"""
+    value = value.strip()
+    if value.startswith('"') and value.endswith('"'):
+        return value[1:-1]
+    if value.startswith("'") and value.endswith("'"):
+        return value[1:-1]
+    if value == 'true':
+        return True
+    if value == 'false':
+        return False
+    if value == 'nil' or value == 'None':
+        return None
+    try:
+        return int(value)
+    except ValueError:
         try:
-            # 导入副本
-            instances_file = os.path.join(data_dir, "instances.json")
-            if os.path.exists(instances_file):
-                with open(instances_file, 'r', encoding='utf-8') as f:
-                    instances_data = json.load(f)
-
-                # 清空现有数据
-                await self.database["dungeons"].delete_many({})
-                await self.import_instances(instances_file)
-            else:
-                print("副本数据文件不存在，跳过")
-                instances_data = []
-
-            # 导入Boss
-            bosses_file = os.path.join(data_dir, "bosses.json")
-            if os.path.exists(bosses_file):
-                # 清空现有数据
-                await self.database["bosses"].delete_many({})
-                await self.import_bosses(bosses_file, instances_data)
-            else:
-                print("Boss数据文件不存在，跳过")
-
-            # 导入装备
-            items_file = os.path.join(data_dir, "items.json")
-            if os.path.exists(items_file):
-                # 清空现有数据
-                await self.database["items"].delete_many({})
-                await self.import_items(items_file, item_limit)
-            else:
-                print("装备数据文件不存在，跳过")
-
-            print("\n所有数据导入完成！")
-
-        finally:
-            await self.close()
+            return float(value)
+        except ValueError:
+            return value
 
 
-async def main():
-    """主函数"""
-    print("魔兽世界数据导入工具")
+def _ensure_current(lst, id_key, id_val):
+    """确保列表中有对应ID的条目"""
+    for item in lst:
+        if item.get(id_key) == id_val:
+            return item
+    new_item = {id_key: id_val}
+    lst.append(new_item)
+    return new_item
+
+
+def parse_saved_vars(filepath: str) -> dict:
+    """
+    更健壮的解析器 - 将Lua表转为Python字典
+    使用正则表达式逐块解析
+    """
+    with open(filepath, 'r', encoding='utf-8') as f:
+        content = f.read()
+
+    instances = []
+    bosses = []
+    items = {}
+    export_time = None
+
+    # 提取 exportTime
+    m = re.search(r'exportTime\s*=\s*(\d+)', content)
+    if m:
+        export_time = int(m.group(1))
+
+    # 提取 instances 数组中的每个instance块
+    # 找到 ["instances"] = { ... } 块
+    inst_section = _extract_section(content, '["instances"]')
+    if inst_section:
+        # 找到每个 { ... } 子块
+        inst_blocks = _extract_blocks(inst_section)
+        for block in inst_blocks:
+            inst = _parse_block(block)
+            if inst and inst.get('instanceID'):
+                # 提取instance内的bosses子块
+                boss_section = _extract_section(block, 'bosses')
+                inst_bosses = []
+                if boss_section:
+                    boss_blocks = _extract_blocks(boss_section)
+                    for bb in boss_blocks:
+                        boss = _parse_block(bb)
+                        if boss and boss.get('encounterID'):
+                            # 提取boss内的loot子块
+                            loot_section = _extract_section(bb, 'loot')
+                            loot_list = []
+                            if loot_section:
+                                loot_blocks = _extract_blocks(loot_section)
+                                for lb in loot_blocks:
+                                    loot = _parse_block(lb)
+                                    if loot and loot.get('itemID'):
+                                        loot_list.append(loot)
+                                        # 同时加入全局items
+                                        items[loot['itemID']] = loot
+                            boss['_loot'] = loot_list
+                            inst_bosses.append(boss)
+                inst['_bosses'] = inst_bosses
+                instances.append(inst)
+
+    # 提取 bosses 数组（扁平列表，用于参考）
+    boss_section = _extract_section(content, '["bosses"]')
+    if boss_section:
+        boss_blocks = _extract_blocks(boss_section)
+        for bb in boss_blocks:
+            boss = _parse_block(bb)
+            if boss and boss.get('encounterID'):
+                bosses.append(boss)
+
+    # 提取全局items
+    items_section = _extract_section(content, '["items"]')
+    if items_section:
+        # items 是 dict 形式: [itemID] = { ... }
+        item_blocks = _extract_blocks(items_section)
+        for ib in item_blocks:
+            item = _parse_block(ib)
+            if item and item.get('itemID'):
+                items[item['itemID']] = item
+
+    return {
+        'export_time': export_time,
+        'instances': instances,
+        'bosses': bosses,
+        'items': items,
+    }
+
+
+def _extract_section(content: str, key: str) -> str:
+    """提取指定key对应的 {} 块内容"""
+    # 查找 key = { 的位置
+    pattern = re.escape(key) + r'\s*=\s*\{'
+    m = re.search(pattern, content)
+    if not m:
+        return ""
+
+    start = m.end()
+    depth = 1
+    i = start
+    while i < len(content) and depth > 0:
+        if content[i] == '{':
+            depth += 1
+        elif content[i] == '}':
+            depth -= 1
+        i += 1
+
+    return content[start:i-1]
+
+
+def _extract_blocks(content: str) -> list:
+    """提取内容中所有顶层 { ... } 块"""
+    blocks = []
+    i = 0
+    while i < len(content):
+        if content[i] == '{':
+            depth = 1
+            start = i + 1
+            i += 1
+            while i < len(content) and depth > 0:
+                if content[i] == '{':
+                    depth += 1
+                elif content[i] == '}':
+                    depth -= 1
+                i += 1
+            blocks.append(content[start:i-1])
+        else:
+            i += 1
+    return blocks
+
+
+def _parse_block(block: str) -> dict:
+    """解析 { key = value, ... } 块"""
+    result = {}
+    for line in block.split('\n'):
+        line = line.strip().rstrip(',')
+        if '=' not in line:
+            continue
+
+        # 匹配 ["key"] = value 或 key = value
+        m = re.match(r'^\["?(\w+)"?\]\s*=\s*(.+)$', line)
+        if not m:
+            m = re.match(r'^(\w+)\s*=\s*(.+)$', line)
+        if not m:
+            continue
+
+        key = m.group(1).strip('"')
+        value = m.group(2).strip()
+
+        if value == '{' or value == '{}' or value == 'nil':
+            continue
+
+        result[key] = _parse_value(value)
+
+    return result
+
+
+def import_to_sqlite(data: dict, db_path: str = "./wow_character_manager.db"):
+    """将解析后的数据导入SQLite"""
+    conn = sqlite3.connect(db_path)
+    conn.execute("PRAGMA foreign_keys = ON")
+    cursor = conn.cursor()
+
+    # 清空旧数据
+    cursor.execute("DELETE FROM bosses")
+    cursor.execute("DELETE FROM dungeons")
+    cursor.execute("DELETE FROM items")
+    conn.commit()
+
+    # 导入副本
+    dungeon_count = 0
+    for inst in data.get('instances', []):
+        if not inst.get('instanceID'):
+            continue
+        try:
+            cursor.execute(
+                """INSERT OR REPLACE INTO dungeons (dungeon_id, name, description, minimum_level, modes)
+                   VALUES (?, ?, ?, ?, ?)""",
+                (
+                    inst['instanceID'],
+                    inst.get('name', ''),
+                    inst.get('description', ''),
+                    inst.get('minimumLevel', 70),
+                    '["normal", "heroic"]',
+                )
+            )
+            dungeon_count += 1
+
+            # 导入该副本下的Boss
+            for boss in inst.get('_bosses', []):
+                if not boss.get('encounterID'):
+                    continue
+                try:
+                    cursor.execute(
+                        """INSERT OR REPLACE INTO bosses (boss_id, name, description, dungeon_id, dungeon_name)
+                           VALUES (?, ?, ?, ?, ?)""",
+                        (
+                            boss['encounterID'],
+                            boss.get('name', ''),
+                            boss.get('description', ''),
+                            inst['instanceID'],
+                            inst.get('name', ''),
+                        )
+                    )
+
+                    # 导入Boss掉落物品
+                    for loot in boss.get('_loot', []):
+                        if not loot.get('itemID'):
+                            continue
+                        try:
+                            cursor.execute(
+                                """INSERT OR REPLACE INTO items (item_id, name, quality, item_level, slot)
+                                   VALUES (?, ?, ?, ?, ?)""",
+                                (
+                                    loot['itemID'],
+                                    loot.get('name', ''),
+                                    loot.get('quality', 'common'),
+                                    loot.get('itemLevel', 0),
+                                    loot.get('slot'),
+                                )
+                            )
+                        except Exception as e:
+                            print(f"  导入物品失败 {loot.get('name', '?')}: {e}")
+
+                except Exception as e:
+                    print(f"  导入Boss失败 {boss.get('name', '?')}: {e}")
+
+        except Exception as e:
+            print(f"导入副本失败 {inst.get('name', '?')}: {e}")
+
+    conn.commit()
+
+    # 统计
+    cursor.execute("SELECT COUNT(*) FROM dungeons")
+    d_count = cursor.fetchone()[0]
+    cursor.execute("SELECT COUNT(*) FROM bosses")
+    b_count = cursor.fetchone()[0]
+    cursor.execute("SELECT COUNT(*) FROM items")
+    i_count = cursor.fetchone()[0]
+
+    conn.close()
+
+    print(f"\n导入完成！")
+    print(f"  副本: {d_count}")
+    print(f"  Boss: {b_count}")
+    print(f"  物品: {i_count}")
+
+
+def main():
+    print("WoW数据导入工具 (SavedVariables -> SQLite)")
     print("=" * 50)
 
-    # 配置
-    MONGODB_URL = "mongodb://localhost:27017"
-    DATABASE_NAME = "wow_character_manager"
-    DATA_DIR = "./wow_data"
-    ITEM_LIMIT = 500  # 装备导入数量限制，避免数据过大
+    # 查找SavedVariables文件
+    default_path = r"C:\WOW\World of Warcraft\_classic_titan_\WTF\Account\*\SavedVariables\WoWDataExporter.lua"
 
-    print(f"MongoDB: {MONGODB_URL}")
-    print(f"数据库: {DATABASE_NAME}")
-    print(f"数据目录: {DATA_DIR}")
-    print(f"装备导入限制: {ITEM_LIMIT}")
+    import glob
+    files = glob.glob(default_path)
+
+    if not files:
+        # 尝试当前目录
+        if os.path.exists("WoWDataExporter.lua"):
+            files = ["WoWDataExporter.lua"]
+
+    if not files:
+        print("未找到WoWDataExporter.lua文件！")
+        print("请确保：")
+        print("  1. 已安装WoWDataExporter插件")
+        print("  2. 在游戏中输入 /wowexport 导出数据")
+        print("  3. 退出游戏或 /reload 保存数据")
+        print(f"\n预期路径: {default_path}")
+        filepath = input("请手动输入文件路径（或按Enter退出）: ").strip()
+        if filepath and os.path.exists(filepath):
+            files = [filepath]
+        else:
+            return
+
+    filepath = files[0]
+    print(f"读取文件: {filepath}")
+
+    if not os.path.exists(filepath):
+        print(f"文件不存在: {filepath}")
+        return
+
+    # 解析数据
+    print("\n解析数据...")
+    data = parse_saved_vars(filepath)
+
+    inst_count = len(data.get('instances', []))
+    boss_count = len(data.get('bosses', []))
+    item_count = len(data.get('items', {}))
+
+    print(f"解析结果:")
+    print(f"  副本: {inst_count}")
+    print(f"  Boss: {boss_count}")
+    print(f"  物品: {item_count}")
+
+    if inst_count == 0:
+        print("\n没有解析到副本数据！可能原因：")
+        print("  1. 尚未在游戏中输入 /wowexport")
+        print("  2. 导出后未退出游戏或 /reload")
+        return
 
     # 确认导入
-    confirm = input(f"\n确认导入数据？这将清空现有数据 (y/n): ").strip().lower()
+    db_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "wow_character_manager.db")
+    print(f"\n目标数据库: {db_path}")
+    confirm = input("确认导入？这将清空现有副本/Boss/物品数据 (y/n): ").strip().lower()
     if confirm != 'y':
         print("操作取消")
         return
 
-    # 执行导入
-    importer = WoWDataImporter(MONGODB_URL, DATABASE_NAME)
-    await importer.import_all(DATA_DIR, ITEM_LIMIT)
+    # 导入
+    import_to_sqlite(data, db_path)
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    main()

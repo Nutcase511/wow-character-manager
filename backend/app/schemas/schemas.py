@@ -34,23 +34,20 @@ class CharacterCreate(BaseModel):
     realm: str = Field(..., description="服务器名称")
     wow_class: WoWClass = Field(..., description="职业")
     spec: Optional[str] = Field(None, description="专精")
-    level: int = Field(70, description="等级")
-    faction: str = Field("alliance", description="阵营")
+    level: int = Field(80, description="等级")
+    faction: str = Field("horde", description="阵营")
 
 
 class CharacterResponse(BaseModel):
-    id: str
+    id: int
     name: str
     realm: str
-    wow_class: WoWClass
+    wow_class: str
     spec: Optional[str]
     level: int
     faction: str
-    created_at: datetime
-    updated_at: datetime
-
-    class Config:
-        from_attributes = True
+    created_at: Optional[str] = None
+    updated_at: Optional[str] = None
 
 
 class ItemCreate(BaseModel):
@@ -64,18 +61,15 @@ class ItemCreate(BaseModel):
 
 
 class ItemResponse(BaseModel):
-    id: str
+    id: int
     item_id: int
     name: str
-    quality: ItemQuality
+    quality: str
     item_level: int
     slot: Optional[str]
     stats: Dict[str, int]
     icon_url: Optional[str]
-    created_at: datetime
-
-    class Config:
-        from_attributes = True
+    created_at: Optional[str] = None
 
 
 class DungeonCreate(BaseModel):
@@ -89,7 +83,7 @@ class DungeonCreate(BaseModel):
 
 
 class DungeonResponse(BaseModel):
-    id: str
+    id: int
     dungeon_id: int
     name: str
     description: Optional[str]
@@ -97,10 +91,7 @@ class DungeonResponse(BaseModel):
     minimum_level: int
     modes: List[str]
     icon_url: Optional[str]
-    created_at: datetime
-
-    class Config:
-        from_attributes = True
+    created_at: Optional[str] = None
 
 
 class BossCreate(BaseModel):
@@ -114,7 +105,7 @@ class BossCreate(BaseModel):
 
 
 class BossResponse(BaseModel):
-    id: str
+    id: int
     boss_id: int
     name: str
     description: Optional[str]
@@ -122,10 +113,7 @@ class BossResponse(BaseModel):
     dungeon_name: str
     category: Optional[str]
     icon_url: Optional[str]
-    created_at: datetime
-
-    class Config:
-        from_attributes = True
+    created_at: Optional[str] = None
 
 
 class ItemNeedCreate(BaseModel):
@@ -141,7 +129,7 @@ class ItemNeedCreate(BaseModel):
 
 
 class ItemNeedResponse(BaseModel):
-    id: str
+    id: int
     character_id: str
     item_id: int
     item_name: str
@@ -151,11 +139,8 @@ class ItemNeedResponse(BaseModel):
     priority: int
     obtained: bool
     notes: Optional[str]
-    created_at: datetime
-    updated_at: datetime
-
-    class Config:
-        from_attributes = True
+    created_at: Optional[str] = None
+    updated_at: Optional[str] = None
 
 
 class ProgressCreate(BaseModel):
@@ -168,17 +153,14 @@ class ProgressCreate(BaseModel):
 
 
 class ProgressResponse(BaseModel):
-    id: str
+    id: int
     character_id: str
     dungeon_id: int
     dungeon_name: str
     difficulty: str
     bosses_killed: List[int]
     last_updated: Optional[datetime]
-    created_at: datetime
-
-    class Config:
-        from_attributes = True
+    created_at: Optional[str] = None
 
 
 class RealmResponse(BaseModel):
@@ -190,6 +172,3 @@ class RealmResponse(BaseModel):
     timezone: str
     is_tournament: bool
     region: str
-
-    class Config:
-        from_attributes = True
