@@ -320,11 +320,12 @@ onMounted(() => {
   gap: 8px;
   font-size: 24px;
   font-weight: 600;
-  color: #1a1a2e;
+  color: #e5e7eb;
 }
 
 .characters-card {
   min-height: 400px;
+  border: 1px solid #374151;
 }
 
 .loading-container {
@@ -343,18 +344,19 @@ onMounted(() => {
 }
 
 .character-card {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #1e3a5f 0%, #2d1f4e 100%);
   border-radius: 12px;
   padding: 20px;
-  color: white;
+  color: #e5e7eb;
   cursor: pointer;
   transition: transform 0.2s, box-shadow 0.2s;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+  border: 1px solid #374151;
 }
 
 .character-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 8px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
 }
 
 .character-header {
@@ -372,13 +374,14 @@ onMounted(() => {
   font-size: 18px;
   font-weight: 600;
   margin-bottom: 4px;
-  color: white;
+  color: #e5e7eb;
 }
 
 .character-realm {
   font-size: 14px;
-  opacity: 0.9;
+  opacity: 0.7;
   margin: 0;
+  color: #9ca3af;
 }
 
 .character-level {
@@ -398,31 +401,31 @@ onMounted(() => {
   display: flex;
   gap: 8px;
   justify-content: flex-end;
-  border-top: 1px solid rgba(255, 255, 255, 0.2);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
   padding-top: 12px;
 }
 
 .character-actions .el-button {
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.1);
   border: none;
-  color: white;
+  color: #e5e7eb;
 }
 
 .character-actions .el-button:hover {
-  background: rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.2);
 }
 
 .character-actions .el-button--danger {
-  background: rgba(231, 76, 60, 0.8);
+  background: rgba(231, 76, 60, 0.6);
 }
 
 .character-actions .el-button--danger:hover {
-  background: rgba(231, 76, 60, 1);
+  background: rgba(231, 76, 60, 0.9);
 }
 
 .form-tip {
   font-size: 12px;
-  color: #909399;
+  color: #6b7280;
   margin-top: 4px;
 }
 </style>

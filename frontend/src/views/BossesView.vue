@@ -275,7 +275,7 @@ onMounted(() => {
   gap: 8px;
   font-size: 24px;
   font-weight: 600;
-  color: #1a1a2e;
+  color: #e5e7eb;
 }
 
 .header-actions {
@@ -285,11 +285,12 @@ onMounted(() => {
 
 .bosses-card {
   min-height: 400px;
+  border: 1px solid #374151;
 }
 
 .form-tip {
   font-size: 12px;
-  color: #909399;
+  color: #6b7280;
   margin-top: 4px;
 }
 </style>

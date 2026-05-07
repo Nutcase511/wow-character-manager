@@ -26,6 +26,18 @@ const routes: RouteRecordRaw[] = [
     meta: { title: '副本管理' }
   },
   {
+    path: '/dungeons/:dungeonId/bosses',
+    name: 'DungeonBosses',
+    component: () => import('@/views/DungeonBossesView.vue'),
+    meta: { title: '副本Boss' }
+  },
+  {
+    path: '/bosses/:bossId/loot',
+    name: 'BossLoot',
+    component: () => import('@/views/BossLootView.vue'),
+    meta: { title: 'Boss掉落' }
+  },
+  {
     path: '/bosses',
     name: 'Bosses',
     component: () => import('@/views/BossesView.vue'),

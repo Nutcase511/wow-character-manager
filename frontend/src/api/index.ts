@@ -57,20 +57,20 @@ export const itemNeedApi = {
 
 // 副本相关API
 export const dungeonApi = {
-  getAll: () => api.get<Dungeon[]>('/dungeons'),
+  getAll: (params?: { expansion?: string; category?: string }) => api.get<Dungeon[]>('/dungeons/', { params }),
   getById: (id: string) => api.get<Dungeon>(`/dungeons/${id}`),
-  create: (data: Partial<Dungeon>) => api.post<Dungeon>('/dungeons', data),
-  syncFromBlizzard: (journalInstanceId: number) => api.post<Dungeon>(`/dungeons/sync/${journalInstanceId}`),
+  create: (data: Partial<Dungeon>) => api.post<Dungeon>('/dungeons/', data),
   delete: (id: string) => api.delete(`/dungeons/${id}`)
 }
 
 // Boss相关API
 export const bossApi = {
-  getAll: (params?: { dungeon_id?: number }) => api.get<Boss[]>('/bosses', { params }),
+  getAll: (params?: { dungeon_id?: number }) => api.get<Boss[]>('/bosses/', { params }),
   getById: (id: string) => api.get<Boss>(`/bosses/${id}`),
-  create: (data: Partial<Boss>) => api.post<Boss>('/bosses', data),
-  syncFromBlizzard: (journalEncounterId: number) => api.post<Boss>(`/bosses/sync/${journalEncounterId}`),
+  create: (data: Partial<Boss>) => api.post<Boss>('/bosses/', data),
   getByDungeon: (dungeonId: number) => api.get<Boss[]>(`/bosses/dungeon/${dungeonId}/bosses`),
+  lookupByBossId: (bossId: number) => api.get<Boss>(`/bosses/lookup/${bossId}`),
+  getBossLoot: (bossId: number) => api.get(`/bosses/${bossId}/loot`),
   delete: (id: string) => api.delete(`/bosses/${id}`)
 }
 
