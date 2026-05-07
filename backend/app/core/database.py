@@ -99,6 +99,37 @@ class Database:
                 difficulty TEXT DEFAULT '',
                 FOREIGN KEY (boss_id) REFERENCES bosses(boss_id)
             );
+
+            CREATE TABLE IF NOT EXISTS character_gold (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                character_id INTEGER NOT NULL,
+                character_name TEXT NOT NULL,
+                realm TEXT NOT NULL,
+                current_gold INTEGER DEFAULT 0,
+                last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (character_id) REFERENCES characters(id),
+                UNIQUE(character_id)
+            );
+
+            CREATE TABLE IF NOT EXISTS gold_transaction (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                character_id INTEGER NOT NULL,
+                source TEXT NOT NULL,
+                source_title TEXT NOT NULL,
+                time_mode TEXT NOT NULL,
+                amount_in INTEGER DEFAULT 0,
+                amount_out INTEGER DEFAULT 0,
+                recorded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (character_id) REFERENCES characters(id)
+            );
+
+            CREATE TABLE IF NOT EXISTS gold_snapshot (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                character_id INTEGER NOT NULL,
+                gold_amount INTEGER NOT NULL,
+                snapshot_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (character_id) REFERENCES characters(id)
+            );
         """)
         await self._connection.commit()
         print("Database tables initialized")

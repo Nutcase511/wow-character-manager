@@ -19,6 +19,14 @@
 
     <el-card class="bosses-card">
       <el-table :data="bosses" stripe v-loading="loading">
+        <el-table-column label="图标" width="80">
+          <template #default="{ row }">
+            <div class="boss-icon">
+              <img v-if="row.icon_url" :src="row.icon_url" :alt="row.name" class="boss-icon-img" />
+              <span v-else class="boss-icon-placeholder">👹</span>
+            </div>
+          </template>
+        </el-table-column>
         <el-table-column prop="name" label="Boss名称" width="200" />
         <el-table-column prop="dungeon_name" label="所属副本" width="200" />
         <el-table-column prop="category" label="分类" width="150" />
@@ -90,6 +98,12 @@
             placeholder="请输入Boss描述"
           />
         </el-form-item>
+        <el-form-item label="图标URL" prop="icon_url">
+          <el-input v-model="form.icon_url" placeholder="请输入Boss图标URL（可选）" />
+          <div v-if="form.icon_url" class="icon-preview">
+            <img :src="form.icon_url" class="icon-preview-img" />
+          </div>
+        </el-form-item>
       </el-form>
       <template #footer>
         <el-button @click="showCreateDialog = false">取消</el-button>
@@ -126,7 +140,8 @@ const form = reactive({
   dungeon_id: 0,
   dungeon_name: '',
   category: '',
-  description: ''
+  description: '',
+  icon_url: ''
 })
 
 const syncForm = reactive({
@@ -152,7 +167,8 @@ function resetForm() {
     dungeon_id: 0,
     dungeon_name: '',
     category: '',
-    description: ''
+    description: '',
+    icon_url: ''
   })
   isEditing.value = false
   editingBossId.value = null
@@ -213,7 +229,8 @@ function editBoss(boss: Boss) {
     dungeon_id: boss.dungeon_id,
     dungeon_name: boss.dungeon_name,
     category: boss.category || '',
-    description: boss.description || ''
+    description: boss.description || '',
+    icon_url: boss.icon_url || ''
   })
   showCreateDialog.value = true
 }
@@ -292,5 +309,37 @@ onMounted(() => {
   font-size: 12px;
   color: #6b7280;
   margin-top: 4px;
+}
+
+.boss-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+}
+
+.boss-icon-img {
+  width: 40px;
+  height: 40px;
+  border-radius: 6px;
+  object-fit: cover;
+  border: 2px solid #4b5563;
+}
+
+.boss-icon-placeholder {
+  font-size: 28px;
+}
+
+.icon-preview {
+  margin-top: 8px;
+}
+
+.icon-preview-img {
+  width: 64px;
+  height: 64px;
+  border-radius: 8px;
+  object-fit: cover;
+  border: 2px solid #4b5563;
 }
 </style>

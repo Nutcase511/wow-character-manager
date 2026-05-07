@@ -153,3 +153,48 @@ export const ClassSpecsMap: Record<string, string[]> = {
   [WoWClass.DEMON_HUNTER]: ['浩劫', '复仇'],
   [WoWClass.EVOKER]: ['增辉', '湮灭', '恩护']
 }
+
+// 金币相关类型
+export interface CharacterGold {
+  id: string
+  character_id: string
+  character_name: string
+  realm: string
+  current_gold: number
+  last_updated: string
+}
+
+export interface GoldTransaction {
+  id: string
+  character_id: string
+  source: string
+  source_title: string
+  time_mode: string
+  amount_in: number
+  amount_out: number
+  recorded_at: string
+}
+
+export interface GoldSnapshot {
+  id: string
+  character_id: string
+  gold_amount: number
+  snapshot_date: string
+}
+
+export interface GoldSummary {
+  character_gold?: CharacterGold
+  total_in: number
+  total_out: number
+  net: number
+  transactions: GoldTransaction[]
+}
+
+// 时间模式
+export const TimeModes = ['Session', 'Day', 'Week', 'Total']
+export const TimeModeLabels: Record<string, string> = {
+  'Session': '本次会话',
+  'Day': '今日',
+  'Week': '本周',
+  'Total': '总计'
+}

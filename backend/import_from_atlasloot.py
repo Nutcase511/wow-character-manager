@@ -331,6 +331,44 @@ def parse_dungeon_data_v2(filepath: str, cn_map: dict):
     return instances
 
 
+def get_boss_icon_url(npc_id: int, boss_name: str = "") -> str:
+    """
+    生成Boss图标URL
+    使用WoW经典服的图标服务
+    """
+    if not npc_id or npc_id <= 0:
+        return None
+    
+    # 根据Boss名字选择不同的图标
+    boss_name_lower = boss_name.lower() if boss_name else ""
+    
+    # 龙类Boss
+    if any(keyword in boss_name_lower for keyword in ["dragon", "wyrm", "drake", "龙"]):
+        return "https://wow.zamimg.com/images/wow/icons/large/inv_misc_head_dragon_01.jpg"
+    
+    # 亡灵/骷髅Boss
+    elif any(keyword in boss_name_lower for keyword in ["lich", "undead", "skeleton", "lich king", "亡灵", "骷髅"]):
+        return "https://wow.zamimg.com/images/wow/icons/large/inv_misc_monsterscull_06.jpg"
+    
+    # 恶魔Boss
+    elif any(keyword in boss_name_lower for keyword in ["demon", "demonic", "恶魔"]):
+        return "https://wow.zamimg.com/images/wow/icons/large/inv_misc_head_demon_01.jpg"
+    
+    # 巨人Boss
+    elif any(keyword in boss_name_lower for keyword in ["giant", "titan", "巨人", "泰坦"]):
+        return "https://wow.zamimg.com/images/wow/icons/large/inv_misc_monsterscull_07.jpg"
+    
+    # 元素Boss
+    elif any(keyword in boss_name_lower for keyword in ["elemental", "fire", "water", "earth", "air", "元素"]):
+        return "https://wow.zamimg.com/images/wow/icons/large/inv_elemental_primal_fire.jpg"
+    
+    # 默认Boss图标
+    else:
+        return "https://wow.zamimg.com/images/wow/icons/large/inv_misc_monsterscull_06.jpg"
+
+
+
+
 def import_to_sqlite(instances: list, db_path: str):
     """导入SQLite"""
     conn = sqlite3.connect(db_path)
@@ -372,11 +410,12 @@ def import_to_sqlite(instances: list, db_path: str):
                 continue
 
             boss_id = boss.get('npc_id') or boss.get('encounter_journal_id') or hash(boss['key']) % 100000
+            icon_url = get_boss_icon_url(boss.get('npc_id'), boss.get('name', ''))
             try:
                 cursor.execute(
-                    """INSERT OR REPLACE INTO bosses (boss_id, name, dungeon_id, dungeon_name)
-                       VALUES (?, ?, ?, ?)""",
-                    (boss_id, boss['name'], dungeon_id, inst['name'])
+                    """INSERT OR REPLACE INTO bosses (boss_id, name, dungeon_id, dungeon_name, icon_url)
+                       VALUES (?, ?, ?, ?, ?)""",
+                    (boss_id, boss['name'], dungeon_id, inst['name'], icon_url)
                 )
                 b_count += 1
             except Exception as e:

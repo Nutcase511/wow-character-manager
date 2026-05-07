@@ -17,6 +17,7 @@
           <el-menu-item index="/dungeons">副本管理</el-menu-item>
           <el-menu-item index="/bosses">Boss管理</el-menu-item>
           <el-menu-item index="/item-needs">装备需求</el-menu-item>
+          <el-menu-item index="/gold">金币统计</el-menu-item>
         </el-menu>
       </div>
     </el-header>

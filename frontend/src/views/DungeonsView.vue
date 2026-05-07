@@ -132,7 +132,7 @@ const router = useRouter()
 
 // 筛选状态
 const activeExpansion = ref('wotlk')
-const activeCategory = ref('all')
+const activeCategory = ref('raid')
 
 // 数据状态
 const dungeons = ref<Dungeon[]>([])
