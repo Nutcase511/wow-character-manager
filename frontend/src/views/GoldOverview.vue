@@ -225,10 +225,10 @@ onMounted(() => {
 .mini-class-icon {
   width: 32px;
   height: 32px;
-  border-radius: 50%;
+  border-radius: 6px;
   border: 1px solid rgba(255, 255, 255, 0.2);
   background: rgba(0, 0, 0, 0.3);
-  object-fit: contain;
+  object-fit: cover;
 }
 
 .character-text {
