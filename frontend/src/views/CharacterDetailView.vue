@@ -2,7 +2,12 @@
   <div class="character-detail-view">
     <div class="page-header">
       <el-button @click="goBack" :icon="ArrowLeft">返回</el-button>
-      <h2 class="page-title">{{ character?.name }} - 角色详情</h2>
+      <div v-if="character" class="character-header-info">
+        <img :src="getClassIcon(character.wow_class)" :alt="getClassDisplayName(character.wow_class)" class="class-icon-lg" />
+        <h2 class="page-title">{{ character?.name }} - 角色详情</h2>
+        <img :src="getFactionIcon(character.faction)" :alt="character.faction" class="faction-icon-lg" />
+      </div>
+      <h2 v-else class="page-title">角色详情</h2>
       <div class="header-actions">
         <el-button type="primary" @click="showAddNeedDialog = true">
           <el-icon><Plus /></el-icon>
@@ -196,6 +201,7 @@ import { ArrowLeft, Plus, Refresh } from '@element-plus/icons-vue'
 import { goldApi } from '@/api'
 import type { ItemNeed, ItemNeedCreate, ItemProgress } from '@/types'
 import { WoWClass } from '@/types'
+import { getClassIcon, getFactionIcon } from '@/utils/classIcons'
 
 const route = useRoute()
 const router = useRouter()
@@ -474,14 +480,37 @@ onMounted(async () => {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 20px;
+  gap: 20px;
+}
+
+.character-header-info {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex: 1;
+  justify-content: center;
+}
+
+.class-icon-lg {
+  width: 48px;
+  height: 48px;
+  border-radius: 10px;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  background: rgba(0, 0, 0, 0.3);
+  padding: 2px;
+  object-fit: cover;
+}
+
+.faction-icon-lg {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
 }
 
 .page-title {
   font-size: 24px;
   font-weight: 600;
   color: #e5e7eb;
-  flex: 1;
-  text-align: center;
 }
 
 .header-actions {
