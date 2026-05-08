@@ -41,7 +41,7 @@
           <div class="character-details">
             <el-tag
               :color="getClassAccentColor(character.wow_class)"
-              style="color: #fff; border-color: transparent;"
+              :style="{ color: getClassTagTextColor(character.wow_class), borderColor: 'transparent' }"
               size="small"
             >
               {{ getClassDisplayName(character.wow_class) }}
@@ -220,6 +220,15 @@ function getClassAccentColor(classKey: string): string {
   return classColorMap[classKey]?.accent || '#f39c12'
 }
 
+// 获取职业标签文字颜色（浅色背景用深色字）
+function getClassTagTextColor(classKey: string): string {
+  const lightAccentClasses = [WoWClass.PRIEST]
+  if (lightAccentClasses.includes(classKey as WoWClass)) {
+    return '#2a3f6e'
+  }
+  return '#fff'
+}
+
 // 获取职业标签类型
 function getClassTagType(classKey: string): string {
   const typeMap: Record<string, string> = {
@@ -381,19 +390,19 @@ onMounted(() => {
 }
 
 .character-card {
-  background: linear-gradient(135deg, #1e3a5f 0%, #2d1f4e 100%);
   border-radius: 12px;
   padding: 20px;
   color: #e5e7eb;
   cursor: pointer;
-  transition: transform 0.2s, box-shadow 0.2s;
+  transition: transform 0.2s, box-shadow 0.2s, border-color 0.3s;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
-  border: 1px solid #374151;
+  border: 1px solid rgba(255, 255, 255, 0.15);
 }
 
 .character-card:hover {
   transform: translateY(-4px);
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
+  border-color: rgba(255, 255, 255, 0.3);
 }
 
 .character-header {
@@ -424,7 +433,6 @@ onMounted(() => {
 .character-level {
   font-size: 24px;
   font-weight: 700;
-  color: #f39c12;
 }
 
 .character-details {
