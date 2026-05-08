@@ -101,6 +101,7 @@ export const goldApi = {
     api.get<GoldSnapshot[]>(`/gold/character/${characterId}/snapshots`, { params: { limit } }),
   updateCharacterGold: (characterId: string, goldCopper: number) =>
     api.post(`/gold/character/${characterId}/update`, null, { params: { gold_copper: goldCopper } }),
+  refreshGold: () => api.post<{ success: boolean; message: string; characters: number; transactions: number }>('/gold/refresh'),
   deleteCharacterGold: (characterId: string) =>
     api.delete(`/gold/character/${characterId}`)
 }
