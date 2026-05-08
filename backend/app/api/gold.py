@@ -211,3 +211,105 @@ async def delete_character_gold(character_id: int):
     await db.execute("DELETE FROM character_gold WHERE character_id = ?", (character_id,))
     
     return {"success": True, "message": "Gold data deleted successfully"}
+
+
+@router.get("/stats/monthly")
+async def get_monthly_gold_stats(period: str = "month"):
+    """获取按日/月/年统计的金币数据（用于图表）"""
+    # 获取交易记录并按不同粒度分组
+    if period == "year":
+        # 按年查看时，按月份统计
+        rows = await db.fetchall("""
+            SELECT strftime('%Y-%m', recorded_at) as period,
+                   SUM(amount_in) as total_in,
+                   SUM(amount_out) as total_out
+            FROM gold_transaction
+            GROUP BY strftime('%Y-%m', recorded_at)
+            ORDER BY period
+        """)
+    elif period == "month":
+        # 按月查看时，按日期统计
+        rows = await db.fetchall("""
+            SELECT strftime('%Y-%m-%d', recorded_at) as period,
+                   SUM(amount_in) as total_in,
+                   SUM(amount_out) as total_out
+            FROM gold_transaction
+            GROUP BY strftime('%Y-%m-%d', recorded_at)
+            ORDER BY period
+        """)
+    else:
+        # 默认按日统计（周视图）
+        rows = await db.fetchall("""
+            SELECT strftime('%Y-%m-%d', recorded_at) as period,
+                   SUM(amount_in) as total_in,
+                   SUM(amount_out) as total_out
+            FROM gold_transaction
+            GROUP BY strftime('%Y-%m-%d', recorded_at)
+            ORDER BY period
+        """)
+    
+    result = []
+    for row in rows:
+        result.append({
+            "period": row["period"],
+            "total_in": row["total_in"] or 0,
+            "total_out": row["total_out"] or 0,
+            "net": (row["total_in"] or 0) - (row["total_out"] or 0)
+        })
+    
+    return result
+
+
+@router.get("/stats/characters")
+async def get_character_gold_stats():
+    """获取各角色金币统计数据（用于柱状图对比）"""
+    rows = await db.fetchall("""
+        SELECT cg.character_id, cg.character_name, cg.realm, cg.current_gold, c.wow_class
+        FROM character_gold cg
+        LEFT JOIN characters c ON cg.character_id = c.id
+        ORDER BY cg.current_gold DESC
+    """)
+    
+    result = []
+    for row in rows:
+        result.append({
+            "character_id": row["character_id"],
+            "character_name": row["character_name"],
+            "realm": row["realm"],
+            "current_gold": row["current_gold"] or 0,
+            "wow_class": row["wow_class"] or "unknown"
+        })
+    
+    return result
+
+
+@router.get("/stats/timeline")
+async def get_gold_timeline(character_id: int = None):
+    """获取金币时间线数据"""
+    if character_id:
+        # 获取单个角色的快照
+        rows = await db.fetchall("""
+            SELECT snapshot_date, gold_amount
+            FROM gold_snapshot
+            WHERE character_id = ?
+            ORDER BY snapshot_date
+        """, (character_id,))
+    else:
+        # 获取所有角色的最近快照
+        rows = await db.fetchall("""
+            SELECT cg.character_name, gs.snapshot_date, gs.gold_amount
+            FROM gold_snapshot gs
+            JOIN character_gold cg ON gs.character_id = cg.character_id
+            WHERE (gs.character_id, gs.snapshot_date) IN (
+                SELECT character_id, MAX(snapshot_date) 
+                FROM gold_snapshot 
+                GROUP BY character_id
+            )
+            ORDER BY gs.gold_amount DESC
+        """)
+    
+    result = []
+    for row in rows:
+        result.append(dict(row))
+    
+    return result
