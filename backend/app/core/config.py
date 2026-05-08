@@ -2,9 +2,16 @@ from pydantic_settings import BaseSettings
 from typing import Optional
 
 
+import os
+from pathlib import Path
+
+# 项目根目录（backend 目录）
+BACKEND_DIR = Path(__file__).resolve().parent.parent
+
+
 class Settings(BaseSettings):
     # SQLite
-    SQLITE_DB_PATH: str = "./wow_character_manager.db"
+    SQLITE_DB_PATH: str = str(BACKEND_DIR / "wow_character_manager.db")
 
     # App
     APP_NAME: str = "WoW Character Manager"

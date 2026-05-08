@@ -3,6 +3,17 @@ from typing import List
 from app.schemas.schemas import CharacterCreate, CharacterResponse
 from app.core.database import db
 from datetime import datetime
+import asyncio
+import os
+import sys
+import sqlite3
+
+# 导入 tdInspect 解析模块
+_backend_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if _backend_dir not in sys.path:
+    sys.path.insert(0, _backend_dir)
+
+from import_tdinspect import parse_tdinspect_lua, name_to_key, CLASS_ID_MAP_WOTLK, TDINSPECT_FILE
 
 router = APIRouter()
 
@@ -20,6 +31,64 @@ def _row_to_character(row) -> dict:
         "updated_at": row["updated_at"],
     }
 
+
+@router.post("/refresh-levels", operation_id="refresh_character_levels")
+async def refresh_character_levels():
+    """从 tdInspect 插件数据同步角色等级和职业信息"""
+    import traceback
+    if not os.path.exists(TDINSPECT_FILE):
+        raise HTTPException(status_code=404, detail="未找到tdInspect数据文件，请确认游戏已安装tdInspect插件")
+
+    try:
+        def _sync():
+            characters = parse_tdinspect_lua(TDINSPECT_FILE)
+            db_path = os.path.join(_backend_dir, "wow_character_manager.db")
+            conn = sqlite3.connect(db_path)
+            conn.row_factory = sqlite3.Row
+            cursor = conn.cursor()
+            cursor.execute("SELECT id, name, wow_class, level FROM characters")
+            db_chars = {row["name"]: dict(row) for row in cursor.fetchall()}
+            now = datetime.utcnow().isoformat()
+            updated = 0
+            skipped = 0
+            for c in characters:
+                char_name = name_to_key(c["name"])
+                matched = db_chars.get(char_name)
+                if not matched:
+                    continue
+                cls_id = c["class"]
+                char_class = CLASS_ID_MAP_WOTLK.get(cls_id, None)
+                if not char_class:
+                    skipped += 1
+                    continue
+                char_level = c["level"] or 0
+                updates = []
+                if matched["wow_class"] != char_class:
+                    updates.append(f"职业 {matched['wow_class']}→{char_class}")
+                if matched["level"] != char_level and char_level > 0:
+                    updates.append(f"等级 {matched['level']}→{char_level}")
+                if updates:
+                    cursor.execute(
+                        "UPDATE characters SET wow_class=?, level=?, updated_at=? WHERE id=?",
+                        (char_class, char_level, now, matched["id"])
+                    )
+                    updated += 1
+                else:
+                    skipped += 1
+            conn.commit()
+            conn.close()
+            return updated, skipped
+
+        updated, skipped = await asyncio.to_thread(_sync)
+        return {
+            "success": True,
+            "message": f"同步完成！更新 {updated} 条，跳过 {skipped} 条",
+            "updated": updated,
+            "skipped": skipped
+        }
+    except Exception as e:
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/", response_model=CharacterResponse)
 async def create_character(character: CharacterCreate):

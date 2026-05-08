@@ -44,7 +44,8 @@ export const characterApi = {
   getById: (id: string) => api.get<Character>(`/characters/${id}`),
   create: (data: CharacterCreate) => api.post<Character>('/characters', data),
   update: (id: string, data: CharacterCreate) => api.put<Character>(`/characters/${id}`, data),
-  delete: (id: string) => api.delete(`/characters/${id}`)
+  delete: (id: string) => api.delete(`/characters/${id}`),
+  refreshLevels: () => api.post<{ success: boolean; message: string; updated: number; skipped: number }>('/characters/refresh-levels')
 }
 
 // 装备需求相关API
