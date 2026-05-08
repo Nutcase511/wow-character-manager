@@ -9,6 +9,10 @@
         <el-icon><Plus /></el-icon>
         添加角色
       </el-button>
+      <el-button @click="handleRefreshLevels" :loading="refreshing">
+        <el-icon><Refresh /></el-icon>
+        刷新等级
+      </el-button>
     </div>
 
     <el-card class="characters-card">
@@ -24,7 +28,7 @@
 
       <div v-else class="characters-grid">
         <div
-          v-for="character in characterStore.characters"
+          v-for="character in sortedCharacters"
           :key="character.id"
           class="character-card"
           :style="getClassCardStyle(character.wow_class)"
@@ -138,8 +142,8 @@ import { ref, onMounted, reactive, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useCharacterStore } from '@/stores/character'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { User, Plus, Edit, Delete } from '@element-plus/icons-vue'
-import type { Character, CharacterCreate } from '@/types'
+import { User, Plus, Edit, Delete, Refresh } from '@element-plus/icons-vue'
+import { characterApi, goldApi } from '@/api'
 import { WoWClass, ClassSpecsMap } from '@/types'
 import { getClassIcon, getFactionIcon } from '@/utils/classIcons'
 
@@ -260,6 +264,11 @@ const availableSpecs = computed(() => {
   return ClassSpecsMap[form.wow_class] || []
 })
 
+// 按等级排序的角色列表（等级从高到低）
+const sortedCharacters = computed(() => {
+  return [...characterStore.characters].sort((a, b) => b.level - a.level)
+})
+
 // 监听职业变化，自动清空不匹配的专精
 watch(() => form.wow_class, (newClass, oldClass) => {
   if (oldClass && newClass !== oldClass && form.spec) {
@@ -338,6 +347,21 @@ async function deleteCharacter(id: string) {
     if (error !== 'cancel') {
       ElMessage.error('角色删除失败')
     }
+  }
+}
+
+const refreshing = ref(false)
+
+async function handleRefreshLevels() {
+  refreshing.value = true
+  try {
+    const res = await characterApi.refreshLevels()
+    ElMessage.success(res.data.message || '刷新成功')
+    await characterStore.fetchCharacters()
+  } catch (e: any) {
+    ElMessage.error(e?.response?.data?.detail || '刷新失败')
+  } finally {
+    refreshing.value = false
   }
 }
 
