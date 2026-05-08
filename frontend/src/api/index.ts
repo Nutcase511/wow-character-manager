@@ -105,7 +105,13 @@ export const goldApi = {
     api.post(`/gold/character/${characterId}/update`, null, { params: { gold_copper: goldCopper } }),
   refreshGold: () => api.post<{ success: boolean; message: string; characters: number; transactions: number }>('/gold/refresh'),
   deleteCharacterGold: (characterId: string) =>
-    api.delete(`/gold/character/${characterId}`)
+    api.delete(`/gold/character/${characterId}`),
+  // 图表数据API
+  getMonthlyStats: (period?: string) =>
+    api.get(`/gold/stats/monthly`, { params: { period } }),
+  getCharacterStats: () => api.get(`/gold/stats/characters`),
+  getGoldTimeline: (characterId?: number) =>
+    api.get(`/gold/stats/timeline`, { params: { character_id: characterId } })
 }
 
 export default api
