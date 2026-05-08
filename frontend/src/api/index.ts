@@ -76,6 +76,7 @@ export const bossApi = {
   getByDungeon: (dungeonId: number) => api.get<Boss[]>(`/bosses/dungeon/${dungeonId}/bosses`),
   lookupByBossId: (bossId: number) => api.get<Boss>(`/bosses/lookup/${bossId}`),
   getBossLoot: (bossId: number) => api.get(`/bosses/${bossId}/loot`),
+  getItemDetail: (itemId: number) => api.get(`/bosses/item/${itemId}`),
   delete: (id: string) => api.delete(`/bosses/${id}`)
 }
 

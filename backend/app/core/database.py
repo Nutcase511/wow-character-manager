@@ -1,7 +1,9 @@
 import aiosqlite
 import json
+import logging
 from app.core.config import settings
 
+logger = logging.getLogger(__name__)
 
 class Database:
     def __init__(self):
@@ -16,10 +18,29 @@ class Database:
         await self._connection.execute("PRAGMA foreign_keys=ON")
         print(f"Connected to SQLite: {self.db_path}")
 
+    async def ensure_connection(self):
+        """确保数据库连接可用，不可用时自动重连"""
+        if self._connection is None:
+            logger.info("Database connection is None, reconnecting...")
+            await self.connect()
+            return
+        try:
+            # 尝试执行简单查询来验证连接是否还活着
+            await self._connection.execute("SELECT 1")
+        except Exception as e:
+            logger.warning(f"Database connection lost ({e}), reconnecting...")
+            try:
+                await self._connection.close()
+            except Exception:
+                pass
+            self._connection = None
+            await self.connect()
+
     async def close(self):
         """关闭连接"""
         if self._connection:
             await self._connection.close()
+            self._connection = None
             print("Closed SQLite connection")
 
     async def init_tables(self):
@@ -139,16 +160,19 @@ class Database:
 
     async def fetchone(self, query: str, params=()):
         """执行查询并返回一行"""
+        await self.ensure_connection()
         cursor = await self._connection.execute(query, params)
         return await cursor.fetchone()
 
     async def fetchall(self, query: str, params=()):
         """执行查询并返回所有行"""
+        await self.ensure_connection()
         cursor = await self._connection.execute(query, params)
         return await cursor.fetchall()
 
     async def execute(self, query: str, params=()):
         """执行写操作并返回cursor"""
+        await self.ensure_connection()
         cursor = await self._connection.execute(query, params)
         await self._connection.commit()
         return cursor
