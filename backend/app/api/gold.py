@@ -62,7 +62,7 @@ async def refresh_gold():
     """从 Accountant's Lua 文件重新导入最新金币数据"""
     import traceback
     try:
-        accountant_files = find_accountant_files(ADDON_DIR)
+        accountant_files = find_accountant_files(ACC_ADDON_DIR)
         if not accountant_files:
             raise HTTPException(status_code=404, detail="未找到Accountant数据文件，请确认游戏已保存数据")
 

@@ -2,20 +2,19 @@ from fastapi import APIRouter, HTTPException
 from typing import List
 from app.schemas.schemas import CharacterCreate, CharacterResponse
 from app.core.database import db
+from app.core.config import settings
 from datetime import datetime
 import asyncio
 import os
 import sys
 import sqlite3
 
-# 导入 tdInspect 解析模块
+router = APIRouter()
+
+# tdInspect 目录（与 backend 同级的 backend 目录）
 _backend_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-if _backend_dir not in sys.path:
-    sys.path.insert(0, _backend_dir)
 
 from import_tdinspect import parse_tdinspect_lua, name_to_key, CLASS_ID_MAP_WOTLK, TDINSPECT_FILE
-
-router = APIRouter()
 
 
 def _row_to_character(row) -> dict:
@@ -42,7 +41,7 @@ async def refresh_character_levels():
     try:
         def _sync():
             characters = parse_tdinspect_lua(TDINSPECT_FILE)
-            db_path = os.path.join(_backend_dir, "wow_character_manager.db")
+            db_path = settings.SQLITE_DB_PATH
             conn = sqlite3.connect(db_path)
             conn.row_factory = sqlite3.Row
             cursor = conn.cursor()
