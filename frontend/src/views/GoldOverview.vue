@@ -30,12 +30,15 @@
       <div class="card-header">
         <h3>角色金币</h3>
       </div>
-      <el-table :data="allGold" stripe v-loading="loading">
-        <el-table-column label="角色" width="150">
+      <el-table :data="goldWithClass" stripe v-loading="loading">
+        <el-table-column label="角色" width="180">
           <template #default="{ row }">
             <div class="character-info">
-              <span class="character-name">{{ row.character_name }}</span>
-              <span class="character-realm">{{ row.realm }}</span>
+              <img :src="getClassIcon(row.wow_class)" :alt="row.wow_class" class="mini-class-icon" />
+              <div class="character-text">
+                <span class="character-name">{{ row.character_name }}</span>
+                <span class="character-realm">{{ row.realm }}</span>
+              </div>
             </div>
           </template>
         </el-table-column>
@@ -68,18 +71,39 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { Refresh } from '@element-plus/icons-vue'
-import { goldApi } from '@/api'
+import { goldApi, characterApi } from '@/api'
 import type { CharacterGold } from '@/types'
+import { getClassIcon } from '@/utils/classIcons'
 
 const router = useRouter()
 
 const loading = ref(false)
 const syncing = ref(false)
 const allGold = ref<CharacterGold[]>([])
+const characters = ref<any[]>([])
 
 const totalGold = computed(() => {
   return allGold.value.reduce((sum, g) => sum + g.current_gold, 0)
 })
+
+const goldWithClass = computed(() => {
+  return allGold.value.map(gold => {
+    const char = characters.value.find(c => c.id === gold.character_id)
+    return {
+      ...gold,
+      wow_class: char?.wow_class || '未知'
+    }
+  })
+})
+
+async function loadCharacters() {
+  try {
+    const response = await characterApi.getAll()
+    characters.value = response.data
+  } catch {
+    characters.value = []
+  }
+}
 
 function formatGold(copper: number): string {
   if (!copper) return '0金 0银 0铜'
@@ -124,6 +148,7 @@ function viewCharacter(characterId: string) {
 }
 
 onMounted(() => {
+  loadCharacters()
   loadAllGold()
 })
 </script>
@@ -192,6 +217,21 @@ onMounted(() => {
 }
 
 .character-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.mini-class-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(0, 0, 0, 0.3);
+  object-fit: contain;
+}
+
+.character-text {
   display: flex;
   flex-direction: column;
   gap: 4px;

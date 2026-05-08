@@ -31,6 +31,9 @@
           @click="goToCharacterDetail(character.id)"
         >
           <div class="character-header">
+            <div class="character-icon">
+              <img :src="getClassIcon(character.wow_class)" :alt="getClassDisplayName(character.wow_class)" class="class-icon" />
+            </div>
             <div class="character-info">
               <h3 class="character-name">{{ character.name }}</h3>
               <p class="character-realm">{{ character.realm }}</p>
@@ -50,6 +53,7 @@
               {{ character.spec }}
             </el-tag>
             <el-tag :type="character.faction === 'alliance' ? 'primary' : 'danger'" size="small">
+              <img :src="getFactionIcon(character.faction)" :alt="character.faction" class="faction-icon" />
               {{ character.faction === 'alliance' ? '联盟' : '部落' }}
             </el-tag>
           </div>
@@ -137,6 +141,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { User, Plus, Edit, Delete } from '@element-plus/icons-vue'
 import type { Character, CharacterCreate } from '@/types'
 import { WoWClass, ClassSpecsMap } from '@/types'
+import { getClassIcon, getFactionIcon } from '@/utils/classIcons'
 
 const router = useRouter()
 const characterStore = useCharacterStore()
@@ -410,6 +415,26 @@ onMounted(() => {
   justify-content: space-between;
   align-items: flex-start;
   margin-bottom: 16px;
+  gap: 12px;
+}
+
+.character-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+.class-icon {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 6px;
 }
 
 .character-info {
@@ -472,5 +497,12 @@ onMounted(() => {
   font-size: 12px;
   color: #6b7280;
   margin-top: 4px;
+}
+
+.faction-icon {
+  width: 14px;
+  height: 14px;
+  margin-right: 4px;
+  vertical-align: middle;
 }
 </style>

@@ -9,15 +9,22 @@
         <el-select
           v-model="selectedCharacterId"
           placeholder="选择角色"
-          style="width: 200px; margin-right: 12px"
+          style="width: 240px; margin-right: 12px"
           @change="handleCharacterChange"
           clearable
         >
+          <template #default="{ option }">
+            <div class="character-option">
+              <img :src="getClassIcon(option.data.wow_class)" :alt="option.data.wow_class" class="option-class-icon" />
+              <span>{{ option.label }}</span>
+            </div>
+          </template>
           <el-option
             v-for="char in characters"
             :key="char.id"
             :label="`${char.name} - ${char.realm}`"
             :value="char.id"
+            :data="char"
           />
         </el-select>
         <el-button type="primary" @click="showAddDialog = true" :disabled="!selectedCharacterId">
@@ -68,9 +75,12 @@
       >
         <el-table-column prop="item_name" label="装备名称" width="200" />
         <el-table-column prop="item_id" label="装备ID" width="100" />
-        <el-table-column prop="character_id" label="角色" width="150">
+        <el-table-column prop="character_id" label="角色" width="180">
           <template #default="{ row }">
-            {{ getCharacterName(row.character_id) }}
+            <div class="character-mini-info">
+              <img :src="getCharacterClassIcon(row.character_id)" :alt="row.character_id" class="mini-class-icon" />
+              <span>{{ getCharacterName(row.character_id) }}</span>
+            </div>
           </template>
         </el-table-column>
         <el-table-column prop="dungeon_name" label="副本" width="150" />
@@ -174,6 +184,7 @@ import { useItemNeedStore } from '@/stores/itemNeed'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Goods, Plus } from '@element-plus/icons-vue'
 import type { ItemNeed, ItemNeedCreate, Character } from '@/types'
+import { getClassIcon } from '@/utils/classIcons'
 
 const characterStore = useCharacterStore()
 const itemNeedStore = useItemNeedStore()
@@ -237,6 +248,12 @@ const filteredNeeds = computed(() => {
 function getCharacterName(characterId: string): string {
   const character = characters.value.find(c => c.id === characterId)
   return character ? `${character.name} - ${character.realm}` : characterId
+}
+
+// 获取角色职业图标
+function getCharacterClassIcon(characterId: string): string {
+  const character = characters.value.find(c => c.id === characterId)
+  return character ? getClassIcon(character.wow_class) : getClassIcon('未知')
 }
 
 // 重置表单
@@ -418,5 +435,33 @@ onMounted(() => {
   font-size: 12px;
   color: #6b7280;
   margin-top: 4px;
+}
+
+.character-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.option-class-icon {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  object-fit: contain;
+}
+
+.character-mini-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.mini-class-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(0, 0, 0, 0.3);
+  object-fit: contain;
 }
 </style>
