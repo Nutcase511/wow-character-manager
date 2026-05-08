@@ -81,11 +81,11 @@ const totalGold = computed(() => {
 })
 
 function formatGold(copper: number): string {
-  if (!copper) return '0 G 0 S 0 C'
+  if (!copper) return '0金 0银 0铜'
   const gold = Math.floor(copper / 10000)
   const silver = Math.floor((copper % 10000) / 100)
   const copperRemain = copper % 100
-  return `${gold} G ${silver} S ${copperRemain} C`
+  return `${gold}金 ${silver}银 ${copperRemain}铜`
 }
 
 function formatDate(dateStr: string): string {

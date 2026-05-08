@@ -47,7 +47,7 @@ def _row_to_snapshot(row):
 @router.get("/all", response_model=List[CharacterGoldResponse])
 async def get_all_gold():
     """获取所有角色的金币信息"""
-    rows = await db.fetchall("SELECT * FROM character_gold ORDER BY last_updated DESC")
+    rows = await db.fetchall("SELECT cg.*, c.level FROM character_gold cg JOIN characters c ON cg.character_id = c.id ORDER BY c.level DESC")
     return [CharacterGoldResponse(**_row_to_gold(row)) for row in rows]
 
 

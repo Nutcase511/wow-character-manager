@@ -9,7 +9,7 @@ import os
 from datetime import datetime
 
 # Accountant插件数据目录 - 根据实际情况修改
-ADDON_DIR = r"C:\WOW\World of Warcraft\_classic_titan_\WTF\Account"
+ADDON_DIR = r"C:\WOW\World of Warcraft\_classic_titan_\WTF\Account\224692699#1\SavedVariables"
 DATA_DB = os.path.join(os.path.dirname(os.path.abspath(__file__)), "wow_character_manager.db")
 
 # Accountant数据来源的中文映射
@@ -46,20 +46,28 @@ def parse_lua_file(file_path):
     with open(file_path, 'r', encoding='utf-8') as f:
         content = f.read()
 
-    # 查找Accountant_SaveData定义
-    pattern = r'Accountant_SaveData\s*=\s*(\{.*\})\s*$'
-    match = re.search(pattern, content, re.DOTALL)
-    
+    # 查找 Accountant_ClassicSaveData 或 Accountant_SaveData 的起始位置
+    match = re.search(r'Accountant(?:_Classic)?SaveData\s*=\s*\{', content)
     if not match:
-        print(f"未找到Accountant_SaveData数据: {file_path}")
+        print(f"未找到Accountant数据: {file_path}")
         return None
 
-    # 简单的Lua table到Python dict的转换
+    start = match.end() - 1  # 回到 '{'
+    # 用括号计数找配对的结束 '}'
+    depth = 0
+    for i in range(start, len(content)):
+        if content[i] == '{':
+            depth += 1
+        elif content[i] == '}':
+            depth -= 1
+            if depth == 0:
+                data_str = content[start:i+1]
+                break
+    else:
+        print(f"无法匹配括号: {file_path}")
+        return None
+
     try:
-        # 使用简单的解析方法
-        data_str = match.group(1)
-        # 将Lua table转换为Python可解析的格式
-        # 这是一个简化版本，适用于Accountant的数据结构
         data = parse_lua_table(data_str)
         return data
     except Exception as e:
@@ -185,7 +193,7 @@ def find_accountant_files(account_dir):
     # 遍历账户目录
     for root, dirs, files in os.walk(account_dir):
         for file in files:
-            if file == "Accountant.lua":
+            if "Accountant" in file and file.endswith(".lua"):
                 accountant_files.append(os.path.join(root, file))
     
     return accountant_files
