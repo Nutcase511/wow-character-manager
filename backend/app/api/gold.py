@@ -18,7 +18,8 @@ from app.schemas.schemas import (
 from app.core.database import db
 
 # 导入 Accountant's Lua 解析/导入函数（同步的，丢线程池跑）
-from import_accountant import find_accountant_files, parse_lua_file, import_accountant_data, ADDON_DIR, DATA_DB
+from import_accountant import find_accountant_files, parse_lua_file, import_accountant_data, ADDON_DIR as ACC_ADDON_DIR, DATA_DB
+from import_tdinspect import parse_tdinspect_lua, name_to_key, CLASS_ID_MAP_WOTLK
 
 router = APIRouter()
 
