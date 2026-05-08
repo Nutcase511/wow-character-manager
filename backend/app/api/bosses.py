@@ -75,14 +75,51 @@ async def get_boss_loot(boss_id: int):
     """获取指定Boss的掉落装备列表"""
     rows = await db.fetchall(
         """SELECT bl.item_id, bl.item_name, bl.difficulty,
-                  i.quality, i.item_level, i.slot, i.icon_url
+                  i.quality, i.item_level, i.slot, i.icon_url, i.stats
            FROM boss_loot bl
            LEFT JOIN items i ON bl.item_id = i.item_id
            WHERE bl.boss_id = ?
            ORDER BY bl.id""",
         (boss_id,)
     )
-    return [dict(r) for r in rows]
+    result = []
+    for row in rows:
+        row_dict = dict(row)
+        # 解析stats JSON
+        if row_dict.get('stats'):
+            try:
+                import json
+                row_dict['stats'] = json.loads(row_dict['stats'])
+            except:
+                row_dict['stats'] = {}
+        else:
+            row_dict['stats'] = {}
+        result.append(row_dict)
+    return result
+
+
+@router.get("/item/{item_id}")
+async def get_item_detail(item_id: int):
+    """获取装备详情"""
+    row = await db.fetchone(
+        "SELECT * FROM items WHERE item_id = ?",
+        (item_id,)
+    )
+    if not row:
+        raise HTTPException(status_code=404, detail="Item not found")
+    
+    result = dict(row)
+    # 解析stats JSON
+    if result.get('stats'):
+        try:
+            import json
+            result['stats'] = json.loads(result['stats'])
+        except:
+            result['stats'] = {}
+    else:
+        result['stats'] = {}
+    
+    return result
 
 
 @router.post("/sync/{journal_encounter_id}")
