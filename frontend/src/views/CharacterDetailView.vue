@@ -16,6 +16,25 @@
     </div>
 
     <div v-else-if="character" class="character-content">
+      <!-- 金币信息 -->
+      <el-card class="gold-card">
+        <template #header>
+          <div class="card-header">
+            <span>金币信息</span>
+            <el-button size="small" @click="loadGold" :loading="goldLoading" :icon="Refresh">
+              刷新
+            </el-button>
+          </div>
+        </template>
+        <div v-if="goldLoading" class="gold-loading">
+          <el-skeleton :rows="1" animated />
+        </div>
+        <div v-else-if="goldData?.character_gold" class="gold-content">
+            <span class="gold-amount">{{ formatGold(goldData.character_gold.current_gold) }}</span>
+        </div>
+        <el-empty v-else description="暂无金币数据，请先在金币统计页面刷新同步" :image-size="60" />
+      </el-card>
+
       <!-- 角色基本信息 -->
       <el-card class="character-info-card">
         <template #header>
@@ -168,12 +187,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, reactive, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useCharacterStore } from '@/stores/character'
 import { useItemNeedStore } from '@/stores/itemNeed'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { ArrowLeft, Plus } from '@element-plus/icons-vue'
+import { ArrowLeft, Plus, Refresh } from '@element-plus/icons-vue'
+import { goldApi } from '@/api'
 import type { ItemNeed, ItemNeedCreate, ItemProgress } from '@/types'
 import { WoWClass } from '@/types'
 
@@ -187,6 +207,8 @@ const loading = ref(true)
 const character = ref<any>(null)
 const progress = ref<ItemProgress | null>(null)
 const itemNeeds = ref<ItemNeed[]>([])
+const goldData = ref<any>(null)
+const goldLoading = ref(false)
 
 // 过滤器
 const filterStatus = ref<'all' | 'pending' | 'obtained'>('all')
@@ -271,6 +293,34 @@ function getClassTagType(classKey: string): string {
 // 格式化日期
 function formatDate(dateString: string): string {
   return new Date(dateString).toLocaleDateString('zh-CN')
+}
+
+// 格式化金币
+function formatGold(copper: number): string {
+  if (copper === 0) return '0金'
+  const gold = Math.floor(copper / 10000)
+  const silver = Math.floor((copper % 10000) / 100)
+  const c = copper % 100
+  const parts = []
+  if (gold > 0) parts.push(`${gold}金`)
+  if (silver > 0) parts.push(`${silver}银`)
+  if (c > 0) parts.push(`${c}铜`)
+  return parts.join(' ')
+}
+
+// 加载角色金币
+async function loadGold() {
+  goldLoading.value = true
+  try {
+    // 从金币统计列表接口获取，和金币统计页面保持同一数据源
+    const allGold = await goldApi.getAllGold()
+    const found = allGold.data.find((g: any) => g.character_id === character.value?.id)
+    goldData.value = found ? { character_gold: found } : null
+  } catch {
+    goldData.value = null
+  } finally {
+    goldLoading.value = false
+  }
 }
 
 // 返回上一页
@@ -405,8 +455,8 @@ onMounted(async () => {
   loading.value = true
   try {
     await loadCharacter()
-    await loadItemNeeds()
-    await loadProgress()
+    await Promise.all([loadItemNeeds(), loadProgress()])
+    await loadGold()
   } finally {
     loading.value = false
   }
@@ -485,5 +535,22 @@ onMounted(async () => {
   font-size: 12px;
   color: #6b7280;
   margin-top: 4px;
+}
+
+.gold-card .gold-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 0;
+}
+
+.gold-card .gold-amount {
+  font-size: 28px;
+  font-weight: 700;
+  color: #fbbf24;
+}
+
+.gold-loading {
+  padding: 10px 0;
 }
 </style>
