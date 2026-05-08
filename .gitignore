@@ -32,6 +32,7 @@ ENV/
 .env.local
 .env.production.local
 .env.development.local
+.env.*
 
 # IDE
 .vscode/*
@@ -50,6 +51,12 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
+# Frontend specific
+frontend/node_modules/
+frontend/dist/
+frontend/.nuxt/
+frontend/.next/
+
 # Testing
 .pytest_cache/
 .coverage
@@ -61,6 +68,9 @@ htmlcov/
 logs/
 
 # Database
+*.db
+*.sqlite
+*.sqlite3
 *.mongo
 dump/
 
@@ -72,3 +82,16 @@ Thumbs.db
 *.tmp
 *.temp
 wow_data/
+
+# Scraping scripts output
+*.txt
+*.json
+!package.json
+!tsconfig.json
+!*.config.json
+
+# Import scripts (keep source but ignore generated files)
+backend/*.py
+!backend/app/
+!backend/main.py
+!backend/requirements.txt
