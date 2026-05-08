@@ -1,5 +1,14 @@
+import asyncio
+import sys
+import os
 from fastapi import APIRouter, HTTPException
 from typing import List, Optional
+
+# 将 backend 目录加入路径以便导入 import_accountant
+_backend_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if _backend_dir not in sys.path:
+    sys.path.insert(0, _backend_dir)
+
 from app.schemas.schemas import (
     CharacterGoldResponse,
     GoldTransactionResponse,
@@ -7,6 +16,9 @@ from app.schemas.schemas import (
     GoldSummaryResponse
 )
 from app.core.database import db
+
+# 导入 Accountant's Lua 解析/导入函数（同步的，丢线程池跑）
+from import_accountant import find_accountant_files, parse_lua_file, import_accountant_data, ADDON_DIR, DATA_DB
 
 router = APIRouter()
 
@@ -42,6 +54,46 @@ def _row_to_snapshot(row):
         "gold_amount": row["gold_amount"],
         "snapshot_date": row["snapshot_date"]
     }
+
+
+@router.post("/refresh")
+async def refresh_gold():
+    """从 Accountant's Lua 文件重新导入最新金币数据"""
+    import traceback
+    try:
+        accountant_files = find_accountant_files(ADDON_DIR)
+        if not accountant_files:
+            raise HTTPException(status_code=404, detail="未找到Accountant数据文件，请确认游戏已保存数据")
+
+        total_chars = 0
+        total_trans = 0
+        errors = []
+
+        for file_path in accountant_files:
+            try:
+                data = parse_lua_file(file_path)
+                if data:
+                    chars, trans = await asyncio.to_thread(import_accountant_data, data, DATA_DB)
+                    total_chars += chars
+                    total_trans += trans
+            except Exception as e:
+                errors.append(f"{file_path}: {str(e)}")
+
+        if errors and total_chars == 0:
+            raise HTTPException(status_code=500, detail=f"导入失败: {'; '.join(errors)}")
+
+        return {
+            "success": True,
+            "message": f"同步完成！角色: {total_chars}, 交易: {total_trans}",
+            "characters": total_chars,
+            "transactions": total_trans,
+            "errors": errors if errors else None
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        traceback.print_exc()
+        return {"success": False, "error": str(e), "trace": traceback.format_exc()}
 
 
 @router.get("/all", response_model=List[CharacterGoldResponse])

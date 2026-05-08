@@ -6,9 +6,9 @@
         金币统计
       </h2>
       <div class="header-actions">
-        <el-button @click="loadAllGold">
+        <el-button @click="handleRefresh" :loading="syncing">
           <el-icon><Refresh /></el-icon>
-          刷新
+          {{ syncing ? '同步中...' : '刷新' }}
         </el-button>
       </div>
     </div>
@@ -74,6 +74,7 @@ import type { CharacterGold } from '@/types'
 const router = useRouter()
 
 const loading = ref(false)
+const syncing = ref(false)
 const allGold = ref<CharacterGold[]>([])
 
 const totalGold = computed(() => {
@@ -94,6 +95,18 @@ function formatDate(dateStr: string): string {
   return date.toLocaleString('zh-CN')
 }
 
+async function handleRefresh() {
+  syncing.value = true
+  try {
+    await goldApi.refreshGold()
+    await loadAllGold()
+    ElMessage.success('金币数据已同步最新')
+  } catch (error: any) {
+    ElMessage.error(error?.response?.data?.detail || '同步失败，请确认游戏已保存数据')
+  } finally {
+    syncing.value = false
+  }
+}
 async function loadAllGold() {
   loading.value = true
   try {

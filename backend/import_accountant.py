@@ -8,7 +8,29 @@ import sqlite3
 import os
 from datetime import datetime
 
-# Accountant插件数据目录 - 根据实际情况修改
+# Accountant 插件职业名 -> 数据库职业名 映射
+ACCOUNTANT_CLASS_MAP = {
+    "WARRIOR": "warrior",
+    "PALADIN": "paladin",
+    "HUNTER": "hunter",
+    "ROGUE": "rogue",
+    "PRIEST": "priest",
+    "DEATHKNIGHT": "death_knight",
+    "SHAMAN": "shaman",
+    "MAGE": "mage",
+    "WARLOCK": "warlock",
+    "MONK": "monk",
+    "DRUID": "druid",
+    "DEMONHUNTER": "demon_hunter",
+    "EVOKER": "evoker",
+}
+
+# Accountant 阵营名 -> 数据库阵营名 映射
+ACCOUNTANT_FACTION_MAP = {
+    "Alliance": "alliance",
+    "Horde": "horde",
+}
+
 ADDON_DIR = r"C:\WOW\World of Warcraft\_classic_titan_\WTF\Account\224692699#1\SavedVariables"
 DATA_DB = os.path.join(os.path.dirname(os.path.abspath(__file__)), "wow_character_manager.db")
 
@@ -225,13 +247,19 @@ def import_accountant_data(accountant_data, db_path):
                     continue
                 
                 print(f"\n处理角色: {char_name} - {realm_name}")
-                
+
+                # 先提取角色信息（职业、阵营）
+                options = char_data.get("options", {})
+
                 # 查找或创建角色
-                character_id = get_or_create_character(cursor, char_name, realm_name)
-                
+                character_id = get_or_create_character(
+                    cursor, char_name, realm_name,
+                    char_class=options.get("class", ""),
+                    char_faction=options.get("faction", "")
+                )
+
                 if character_id:
                     # 导入金币数据
-                    options = char_data.get("options", {})
                     data = char_data.get("data", {})
                     
                     # 更新当前金币
@@ -260,22 +288,38 @@ def import_accountant_data(accountant_data, db_path):
     return imported_chars, imported_trans
 
 
-def get_or_create_character(cursor, name, realm):
+def get_or_create_character(cursor, name, realm, char_class="", char_faction=""):
     """
     获取或创建角色
     """
     cursor.execute("SELECT id FROM characters WHERE name = ? AND realm = ?", (name, realm))
     row = cursor.fetchone()
-    
+
     if row:
+        # 更新职业和阵营（如果提供了）
+        if char_class or char_faction:
+            updates = []
+            params = []
+            if char_class:
+                mapped_class = ACCOUNTANT_CLASS_MAP.get(char_class.upper(), char_class.lower())
+                updates.append("wow_class = ?")
+                params.append(mapped_class)
+            if char_faction:
+                mapped_faction = ACCOUNTANT_FACTION_MAP.get(char_faction, char_faction.lower())
+                updates.append("faction = ?")
+                params.append(mapped_faction)
+            if updates:
+                params.append(row[0])
+                cursor.execute(f"UPDATE characters SET {', '.join(updates)} WHERE id = ?", params)
         return row[0]
-    
+
     # 创建新角色
-    cursor.execute("""
-        INSERT INTO characters (name, realm, wow_class, level, faction)
-        VALUES (?, ?, ?, ?, ?)
-    """, (name, realm, "未知", 80, "未知"))
-    
+    wow_class = ACCOUNTANT_CLASS_MAP.get(char_class.upper(), char_class.lower()) if char_class else ""
+    faction = ACCOUNTANT_FACTION_MAP.get(char_faction, char_faction.lower()) if char_faction else ""
+    cursor.execute(
+        "INSERT INTO characters (name, realm, wow_class, level, faction)\n        VALUES (?, ?, ?, ?, ?)",
+        (name, realm, wow_class, 80, faction)
+    )
     return cursor.lastrowid
 
 
