@@ -446,8 +446,8 @@ onMounted(() => {
 .option-class-icon {
   width: 24px;
   height: 24px;
-  border-radius: 50%;
-  object-fit: contain;
+  border-radius: 5px;
+  object-fit: cover;
 }
 
 .character-mini-info {
@@ -459,9 +459,9 @@ onMounted(() => {
 .mini-class-icon {
   width: 28px;
   height: 28px;
-  border-radius: 50%;
+  border-radius: 6px;
   border: 1px solid rgba(255, 255, 255, 0.2);
   background: rgba(0, 0, 0, 0.3);
-  object-fit: contain;
+  object-fit: cover;
 }
 </style>
