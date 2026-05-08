@@ -13,7 +13,8 @@ export default defineConfig({
     port: 5173,
     proxy: {
       '/api': {
-        target: 'http://localhost:8002',
+        target: 'http://localhost:8000',
+        // TODO: 8002 被僵尸进程占用，迁移到 8000 后清理该进程
         changeOrigin: true
       }
     }
