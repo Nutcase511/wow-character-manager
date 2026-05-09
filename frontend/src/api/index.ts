@@ -65,7 +65,8 @@ export const dungeonApi = {
   getAll: (params?: { expansion?: string; category?: string }) => api.get<Dungeon[]>('/dungeons/', { params }),
   getById: (id: string) => api.get<Dungeon>(`/dungeons/${id}`),
   create: (data: Partial<Dungeon>) => api.post<Dungeon>('/dungeons/', data),
-  delete: (id: string) => api.delete(`/dungeons/${id}`)
+  delete: (id: string) => api.delete(`/dungeons/${id}`),
+  importAtlasLoot: () => api.post<{ success: boolean; message: string; stats: { instances: number; bosses: number; items: number; loot: number } }>('/dungeons/import-atlasloot')
 }
 
 // Boss相关API

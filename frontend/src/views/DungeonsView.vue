@@ -6,6 +6,10 @@
         副本管理
       </h2>
       <div class="header-actions">
+        <el-button type="success" @click="handleImportAtlasLoot" :loading="importing">
+          <el-icon><Upload /></el-icon>
+          从 AtlasLoot 导入
+        </el-button>
         <el-button type="primary" @click="showCreateDialog = true">
           <el-icon><Plus /></el-icon>
           添加副本
@@ -125,7 +129,7 @@ import { ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { dungeonApi } from '@/api'
 import { ElMessage } from 'element-plus'
-import { Grid, Plus, ArrowRight } from '@element-plus/icons-vue'
+import { Grid, Plus, ArrowRight, Upload } from '@element-plus/icons-vue'
 import type { Dungeon } from '@/types'
 
 const router = useRouter()
@@ -137,6 +141,7 @@ const activeCategory = ref('raid')
 // 数据状态
 const dungeons = ref<Dungeon[]>([])
 const loading = ref(false)
+const importing = ref(false)
 
 // 对话框状态
 const showCreateDialog = ref(false)
@@ -236,6 +241,25 @@ async function loadDungeons() {
     ElMessage.error('加载副本列表失败')
   } finally {
     loading.value = false
+  }
+}
+
+// 从 AtlasLoot 导入
+async function handleImportAtlasLoot() {
+  importing.value = true
+  try {
+    const response = await dungeonApi.importAtlasLoot()
+    if (response.data.success) {
+      const stats = response.data.stats
+      ElMessage.success(`导入成功！副本:${stats.instances} Boss:${stats.bosses} 物品:${stats.items} 掉落:${stats.loot}`)
+      await loadDungeons()
+    } else {
+      ElMessage.error(response.data.message || '导入失败')
+    }
+  } catch (error) {
+    ElMessage.error('AtlasLoot 导入失败，请检查后端是否运行')
+  } finally {
+    importing.value = false
   }
 }
 

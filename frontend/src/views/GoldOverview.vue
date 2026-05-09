@@ -63,8 +63,8 @@
       <div class="card-header">
         <h3>角色金币</h3>
       </div>
-      <el-table :data="goldWithClass" stripe v-loading="loading">
-        <el-table-column label="角色" width="180">
+      <el-table :data="goldWithClass" stripe v-loading="loading" style="width: 100%">
+        <el-table-column label="角色" min-width="180">
           <template #default="{ row }">
             <div class="character-info">
               <img :src="getClassIcon(row.wow_class)" :alt="row.wow_class" class="mini-class-icon" />
@@ -75,17 +75,17 @@
             </div>
           </template>
         </el-table-column>
-        <el-table-column label="当前金币" width="200">
+        <el-table-column label="当前金币" align="right">
           <template #default="{ row }">
             <span class="gold-amount">{{ formatGold(row.current_gold) }}</span>
           </template>
         </el-table-column>
-        <el-table-column label="更新时间" width="200">
+        <el-table-column label="更新时间" align="center">
           <template #default="{ row }">
             <span class="update-time">{{ formatDate(row.last_updated) }}</span>
           </template>
         </el-table-column>
-        <el-table-column label="操作" fixed="right" width="120">
+        <el-table-column label="操作" width="120" align="center">
           <template #default="{ row }">
             <el-button size="small" @click="viewCharacter(row.character_id)">
               详情
