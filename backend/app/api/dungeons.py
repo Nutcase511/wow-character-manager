@@ -92,13 +92,21 @@ async def delete_dungeon(dungeon_id: int):
 async def import_from_atlasloot():
     """从AtlasLoot插件数据导入副本/Boss/掉落数据"""
     try:
+        # 验证脚本存在
+        if not os.path.exists(IMPORT_SCRIPT):
+            raise HTTPException(status_code=500, detail=f"Import script not found: {IMPORT_SCRIPT}")
+        
         # 调用导入脚本
+        # Windows 下使用系统编码（GBK/CP936），避免乱码
+        import locale
+        enc = locale.getpreferredencoding(False) or 'utf-8'
         result = subprocess.run(
             [sys.executable, IMPORT_SCRIPT],
             capture_output=True,
             text=True,
-            encoding='utf-8',
-            timeout=60
+            encoding=enc,
+            timeout=120,
+            cwd=os.path.dirname(IMPORT_SCRIPT)  # 设置工作目录
         )
         
         if result.returncode != 0:
@@ -108,7 +116,7 @@ async def import_from_atlasloot():
             )
         
         # 解析输出获取统计信息
-        output = result.stdout
+        output = result.stdout or ""
         stats = {
             "instances": 0,
             "bosses": 0,
@@ -138,6 +146,8 @@ async def import_from_atlasloot():
             "output": output
         }
     except subprocess.TimeoutExpired:
-        raise HTTPException(status_code=504, detail="Import timeout (60s)")
+        raise HTTPException(status_code=504, detail="Import timeout (120s)")
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Import error: {str(e)}")
