@@ -31,7 +31,7 @@ api.interceptors.request.use(
 
 // 响应拦截器
 api.interceptors.response.use(
-  (response) => response,
+  (response) => response.data,
   (error) => {
     console.error('API Error:', error)
     return Promise.reject(error)
@@ -45,7 +45,8 @@ export const characterApi = {
   create: (data: CharacterCreate) => api.post<Character>('/characters', data),
   update: (id: string, data: CharacterCreate) => api.put<Character>(`/characters/${id}`, data),
   delete: (id: string) => api.delete(`/characters/${id}`),
-  refreshLevels: () => api.post<{ success: boolean; message: string; updated: number; skipped: number }>('/characters/refresh-levels')
+  refreshLevels: () => api.post<{ success: boolean; message: string; updated: number; skipped: number }>('/characters/refresh-levels'),
+  refreshAllData: () => api.post<{ success: boolean; message: string; total: number; success_count: number; failed_count: number; results: any[] }>('/character-refresh/refresh-all')
 }
 
 // 装备需求相关API
@@ -112,7 +113,51 @@ export const goldApi = {
     api.get(`/gold/stats/monthly`, { params: { period } }),
   getCharacterStats: () => api.get(`/gold/stats/characters`),
   getGoldTimeline: (characterId?: number) =>
-    api.get(`/gold/stats/timeline`, { params: { character_id: characterId } })
+    api.get(`/gold/stats/timeline`, { params: { character_id: characterId } }),
+  // 每日快照API
+  createDailySnapshot: () => api.post(`/gold/snapshot/daily`),
+  getDailyStats: (characterId?: number) =>
+    api.get(`/gold/stats/daily`, { params: { character_id: characterId } })
+}
+
+// 装备相关API
+export const equipmentApi = {
+  getCharacterEquipment: (characterId: string) => 
+    api.get(`/characters/${characterId}/equipment`),
+  syncEquipment: (characterId: string, data: any) => 
+    api.post(`/characters/${characterId}/equipment/sync`, data),
+  getEquipmentSlots: () => 
+    api.get('/characters/equipment/slots')
+}
+
+// 天赋相关API
+export const talentApi = {
+  getClasses: () => api.get('/talents/classes'),
+  getClassTrees: (className: string) => api.get(`/talents/trees/${className}`),
+  getTalentTree: (treeId: number) => api.get(`/talents/tree/${treeId}`),
+  getTalentTreeBySpec: (className: string, specName: string) => 
+    api.get(`/talents/tree/${className}/${specName}`),
+  
+  // 配点方案
+  getBuilds: (params?: { class_name?: string; spec_name?: string }) => 
+    api.get('/talents/builds', { params }),
+  getBuild: (id: number) => api.get(`/talents/builds/${id}`),
+  createBuild: (data: { name: string; class_name: string; spec_name: string; points: Record<string, number>; notes?: string }) => 
+    api.post('/talents/builds', data),
+  deleteBuild: (id: number) => api.delete(`/talents/builds/${id}`),
+  uploadBuildImage: (id: number, file: File) => {
+    const formData = new FormData()
+    formData.append('file', file)
+    return api.post(`/talents/builds/${id}/upload-image`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    })
+  }
+}
+
+// 物品相关API
+export const itemApi = {
+  getById: (itemId: number) => api.get(`/items/${itemId}`),
+  getBatch: (itemIds: number[]) => api.post('/items/batch', itemIds)
 }
 
 export default api

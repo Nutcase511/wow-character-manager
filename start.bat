@@ -10,7 +10,7 @@ cd backend
 call venv\Scripts\activate
 echo Backend dependencies are already installed.
 echo Starting backend server...
-start /B python -m uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+start /B python run_server.py
 cd ..
 echo Backend service started successfully! http://localhost:8000
 echo.

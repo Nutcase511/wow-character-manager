@@ -60,6 +60,12 @@ const routes: RouteRecordRaw[] = [
     name: 'GoldCharacter',
     component: () => import('@/views/GoldCharacter.vue'),
     meta: { title: '金币详情' }
+  },
+  {
+    path: '/talents',
+    name: 'Talents',
+    component: () => import('@/views/TalentsView.vue'),
+    meta: { title: '天赋模拟器' }
   }
 ]
 

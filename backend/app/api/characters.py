@@ -26,8 +26,12 @@ def _row_to_character(row) -> dict:
         "spec": row["spec"],
         "level": row["level"],
         "faction": row["faction"],
+        "race": row["race"] if "race" in row.keys() else None,
         "created_at": row["created_at"],
         "updated_at": row["updated_at"],
+        "equips_data": row["equips_data"] if "equips_data" in row.keys() else None,
+        "talents_data": row["talents_data"] if "talents_data" in row.keys() else None,
+        "active_talent_group": row["active_talent_group"] if "active_talent_group" in row.keys() else None,
     }
 
 

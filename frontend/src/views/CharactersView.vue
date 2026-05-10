@@ -13,6 +13,10 @@
         <el-icon><Refresh /></el-icon>
         刷新等级
       </el-button>
+      <el-button type="success" @click="handleRefreshAllData" :loading="refreshingAll">
+        <el-icon><RefreshRight /></el-icon>
+        刷新全部数据
+      </el-button>
     </div>
 
     <el-card class="characters-card">
@@ -142,7 +146,7 @@ import { ref, onMounted, reactive, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useCharacterStore } from '@/stores/character'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { User, Plus, Edit, Delete, Refresh } from '@element-plus/icons-vue'
+import { User, Plus, Edit, Delete, Refresh, RefreshRight } from '@element-plus/icons-vue'
 import { characterApi, goldApi } from '@/api'
 import { WoWClass, ClassSpecsMap } from '@/types'
 import { getClassIcon, getFactionIcon } from '@/utils/classIcons'
@@ -351,6 +355,7 @@ async function deleteCharacter(id: string) {
 }
 
 const refreshing = ref(false)
+const refreshingAll = ref(false)
 
 async function handleRefreshLevels() {
   refreshing.value = true
@@ -362,6 +367,35 @@ async function handleRefreshLevels() {
     ElMessage.error(e?.response?.data?.detail || '刷新失败')
   } finally {
     refreshing.value = false
+  }
+}
+
+async function handleRefreshAllData() {
+  refreshingAll.value = true
+  try {
+    const res = await characterApi.refreshAllData()
+    const data = res.data
+    
+    if (data.success) {
+      ElMessage.success(data.message || '刷新成功')
+      await characterStore.fetchCharacters()
+      
+      // 显示详细结果
+      if (data.results && data.results.length > 0) {
+        const successCount = data.results.filter((r: any) => r.success).length
+        const failedCount = data.results.length - successCount
+        
+        if (failedCount > 0) {
+          ElMessage.warning(`${successCount} 个角色刷新成功，${failedCount} 个失败`)
+        }
+      }
+    } else {
+      ElMessage.error(data.message || '刷新失败')
+    }
+  } catch (e: any) {
+    ElMessage.error(e?.response?.data?.detail || '刷新全部数据失败')
+  } finally {
+    refreshingAll.value = false
   }
 }
 

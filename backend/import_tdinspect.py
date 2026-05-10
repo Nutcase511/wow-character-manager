@@ -84,7 +84,7 @@ def extract_block(content: str, start: int) -> str:
 
 def parse_char_block_fields(block: str) -> dict:
     """
-    解析角色块中的所有字段（class, level, race 等）。
+    解析角色块中的所有字段（class, level, race, talents, equips 等）。
     这些字段和 proto 同级，都在角色块外层。
     proto/glyphs 等子块直接跳过（深度 >= 1 时遇到的 { 不计入顶层字段）。
     """
@@ -97,6 +97,27 @@ def parse_char_block_fields(block: str) -> dict:
         "talents": [],
         "equips": [],
     }
+
+    # 首先提取整个块的 equips 和 talents 数组
+    # equips = { "item:1234:...", "item:5678:...", ... }
+    equips_match = re.search(r'\["equips"\]\s*=\s*\{([^}]*)\}', block, re.DOTALL)
+    if equips_match:
+        equips_content = equips_match.group(1)
+        # 提取所有 "item:..." 字符串
+        equips = re.findall(r'"(item:[^"]+)"', equips_content)
+        result["equips"] = equips
+    
+    # talents = { { "053200310", "", ... }, { ... } }
+    talents_match = re.search(r'\["talents"\]\s*=\s*\{([^}]*\{[^}]*\}[^}]*)\}', block, re.DOTALL)
+    if talents_match:
+        talents_content = talents_match.group(1)
+        # 提取每个天赋组
+        talent_groups = re.findall(r'\{([^}]*)\}', talents_content)
+        for group in talent_groups:
+            # 提取字符串
+            talents = re.findall(r'"([^"]*)"', group)
+            if talents:
+                result["talents"].append(talents)
 
     lines = block.split("\n")
     for raw_line in lines:

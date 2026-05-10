@@ -55,6 +55,14 @@
       </div>
     </el-card>
 
+    <!-- 每日净收入趋势图表 -->
+    <el-card class="chart-card">
+      <div class="card-header">
+        <h3>每日净收入趋势</h3>
+      </div>
+      <div ref="trendChartRef" class="chart"></div>
+    </el-card>
+
     <el-card class="transactions-card">
       <div class="card-header">
         <h3>收支明细</h3>
@@ -103,13 +111,16 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted, nextTick } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { ArrowLeft, Refresh } from '@element-plus/icons-vue'
 import { goldApi } from '@/api'
 import type { GoldSummary, GoldSnapshot } from '@/types'
 import { TimeModes, TimeModeLabels } from '@/types'
+
+// ECharts
+import * as echarts from 'echarts'
 
 const router = useRouter()
 const route = useRoute()
@@ -120,6 +131,10 @@ const snapshotsLoading = ref(false)
 const summary = ref<GoldSummary | null>(null)
 const snapshots = ref<GoldSnapshot[]>([])
 const activeTimeMode = ref('Total')
+
+// 图表引用
+const trendChartRef = ref<HTMLElement | null>(null)
+let trendChart: echarts.ECharts | null = null
 
 function formatGold(copper: number): string {
   if (!copper) return '0金 0银 0铜'
@@ -138,8 +153,9 @@ function formatDate(dateStr: string): string {
 async function loadSummary() {
   loading.value = true
   try {
-    const response = await goldApi.getCharacterSummary(characterId, activeTimeMode.value)
-    summary.value = response.data
+    const data = await goldApi.getCharacterSummary(characterId, activeTimeMode.value)
+    summary.value = data
+    updateTrendChart()
   } catch (error) {
     ElMessage.error('加载金币详情失败')
   } finally {
@@ -150,8 +166,8 @@ async function loadSummary() {
 async function loadSnapshots() {
   snapshotsLoading.value = true
   try {
-    const response = await goldApi.getCharacterSnapshots(characterId, 30)
-    snapshots.value = response.data
+    const data = await goldApi.getCharacterSnapshots(characterId, 30)
+    snapshots.value = data
   } catch (error) {
     ElMessage.error('加载历史记录失败')
   } finally {
@@ -159,9 +175,153 @@ async function loadSnapshots() {
   }
 }
 
+function initCharts() {
+  if (trendChartRef.value) {
+    trendChart = echarts.init(trendChartRef.value)
+    updateTrendChart()
+  }
+}
+
+function updateTrendChart() {
+  if (!trendChart || !summary.value?.transactions || summary.value.transactions.length === 0) return
+
+  // 按日期分组计算每日净收入
+  const dailyData: Record<string, { income: number; expense: number; net: number }> = {}
+  
+  summary.value.transactions.forEach(t => {
+    const date = t.recorded_at?.split(' ')[0] || ''
+    if (!date) return
+    
+    if (!dailyData[date]) {
+      dailyData[date] = { income: 0, expense: 0, net: 0 }
+    }
+    dailyData[date].income += t.amount_in || 0
+    dailyData[date].expense += t.amount_out || 0
+    dailyData[date].net = dailyData[date].income - dailyData[date].expense
+  })
+
+  // 按日期排序
+  const sortedDates = Object.keys(dailyData).sort((a, b) => new Date(a).getTime() - new Date(b).getTime())
+  
+  const dates = sortedDates.map(d => {
+    const date = new Date(d)
+    return `${date.getMonth() + 1}/${date.getDate()}`
+  })
+
+  const incomes = sortedDates.map(d => dailyData[d].income)
+  const expenses = sortedDates.map(d => dailyData[d].expense)
+  const nets = sortedDates.map(d => dailyData[d].net)
+
+  const option: echarts.EChartsOption = {
+    tooltip: {
+      trigger: 'axis',
+      formatter: (params: any) => {
+        let result = `<strong>${dates[params[0].dataIndex]}</strong><br/>`
+        params.forEach((item: any) => {
+          const value = Math.floor(item.value / 10000)
+          const prefix = item.seriesName === '净收入' && value > 0 ? '+' : ''
+          result += `${item.marker} ${item.seriesName}: ${prefix}${value}金<br/>`
+        })
+        return result
+      }
+    },
+    legend: {
+      data: ['收入', '支出', '净收入'],
+      top: 0,
+      textStyle: { color: '#9ca3af' }
+    },
+    grid: {
+      left: '3%',
+      right: '4%',
+      bottom: '3%',
+      top: 30,
+      containLabel: true
+    },
+    xAxis: {
+      type: 'category',
+      boundaryGap: false,
+      data: dates,
+      axisLabel: { 
+        color: '#9ca3af',
+        rotate: dates.length > 10 ? 45 : 0
+      }
+    },
+    yAxis: {
+      type: 'value',
+      axisLabel: {
+        color: '#9ca3af',
+        formatter: (value: number) => {
+          const gold = Math.floor(value / 10000)
+          return gold > 0 ? `+${gold}金` : `${gold}金`
+        }
+      }
+    },
+    series: [
+      {
+        name: '收入',
+        type: 'line',
+        smooth: true,
+        data: incomes,
+        lineStyle: { color: '#4ade80', width: 2 },
+        itemStyle: { color: '#4ade80' },
+        areaStyle: {
+          color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+            { offset: 0, color: 'rgba(74, 222, 128, 0.2)' },
+            { offset: 1, color: 'rgba(74, 222, 128, 0)' }
+          ])
+        },
+        symbol: 'circle',
+        symbolSize: 5
+      },
+      {
+        name: '支出',
+        type: 'line',
+        smooth: true,
+        data: expenses,
+        lineStyle: { color: '#f87171', width: 2 },
+        itemStyle: { color: '#f87171' },
+        areaStyle: {
+          color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+            { offset: 0, color: 'rgba(248, 113, 113, 0.2)' },
+            { offset: 1, color: 'rgba(248, 113, 113, 0)' }
+          ])
+        },
+        symbol: 'circle',
+        symbolSize: 5
+      },
+      {
+        name: '净收入',
+        type: 'line',
+        smooth: true,
+        data: nets,
+        lineStyle: { color: '#fbbf24', width: 3 },
+        itemStyle: { color: '#fbbf24' },
+        symbol: 'circle',
+        symbolSize: 6
+      }
+    ]
+  }
+
+  trendChart.setOption(option)
+}
+
+function handleResize() {
+  trendChart?.resize()
+}
+
 onMounted(() => {
   loadSummary()
   loadSnapshots()
+  
+  nextTick(() => {
+    initCharts()
+    window.addEventListener('resize', handleResize)
+  })
+})
+
+onUnmounted(() => {
+  window.removeEventListener('resize', handleResize)
+  trendChart?.dispose()
 })
 </script>
 
@@ -277,10 +437,15 @@ onMounted(() => {
   color: #22c55e;
 }
 
+.chart-card,
 .transactions-card,
 .snapshots-card {
   margin-bottom: 20px;
   border: 1px solid #374151;
+}
+
+.chart {
+  height: 300px;
 }
 
 .card-header {
