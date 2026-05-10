@@ -54,8 +54,23 @@ class Database:
                 spec TEXT,
                 level INTEGER DEFAULT 80,
                 faction TEXT DEFAULT 'horde',
+                race TEXT DEFAULT NULL,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                last_sync_at TIMESTAMP DEFAULT NULL,
+                -- WCL 数据
+                wcl_character_id INTEGER DEFAULT NULL,
+                wcl_updated_at TIMESTAMP DEFAULT NULL,
+                wcl_zone_rankings TEXT DEFAULT NULL,
+                wcl_best_performances TEXT DEFAULT NULL,
+                wcl_raw_data TEXT DEFAULT NULL,
+                wcl_item_level INTEGER DEFAULT NULL,
+                wcl_spec TEXT DEFAULT NULL,
+                wcl_talents TEXT DEFAULT NULL,
+                -- tdInspect 数据
+                talents_data TEXT DEFAULT NULL,
+                active_talent_group INTEGER DEFAULT 1,
+                equips_data TEXT DEFAULT NULL
             );
 
             CREATE TABLE IF NOT EXISTS items (
@@ -150,6 +165,47 @@ class Database:
                 gold_amount INTEGER NOT NULL,
                 snapshot_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY (character_id) REFERENCES characters(id)
+            );
+
+            CREATE TABLE IF NOT EXISTS character_equipment (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                character_id INTEGER NOT NULL,
+                item_id INTEGER NOT NULL,
+                name TEXT NOT NULL,
+                slot TEXT NOT NULL,
+                quality TEXT NOT NULL,
+                item_level INTEGER DEFAULT 0,
+                icon_url TEXT,
+                armor INTEGER DEFAULT 0,
+                stats TEXT DEFAULT '[]',
+                enchantments TEXT DEFAULT '[]',
+                sockets TEXT DEFAULT '[]',
+                spells TEXT DEFAULT '[]',
+                binding TEXT,
+                durability_current INTEGER DEFAULT 0,
+                durability_max INTEGER DEFAULT 0,
+                sell_price INTEGER DEFAULT 0,
+                item_set_id INTEGER DEFAULT 0,
+                item_set_name TEXT,
+                is_equipped INTEGER DEFAULT 1,
+                equipped_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (character_id) REFERENCES characters(id),
+                UNIQUE(character_id, slot)
+            );
+
+            CREATE TABLE IF NOT EXISTS character_item_sets (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                character_id INTEGER NOT NULL,
+                set_id INTEGER NOT NULL,
+                set_name TEXT NOT NULL,
+                equipped_count INTEGER DEFAULT 0,
+                total_count INTEGER DEFAULT 0,
+                effects TEXT DEFAULT '[]',
+                items TEXT DEFAULT '[]',
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (character_id) REFERENCES characters(id),
+                UNIQUE(character_id, set_id)
             );
         """)
         await self._connection.commit()

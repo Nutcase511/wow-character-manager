@@ -6,10 +6,6 @@
         Boss管理
       </h2>
       <div class="header-actions">
-        <el-button @click="showSyncDialog = true">
-          <el-icon><Refresh /></el-icon>
-          从暴雪API同步
-        </el-button>
         <el-button type="primary" @click="showCreateDialog = true">
           <el-icon><Plus /></el-icon>
           添加Boss
@@ -39,33 +35,6 @@
         </el-table-column>
       </el-table>
     </el-card>
-
-    <!-- 从暴雪API同步对话框 -->
-    <el-dialog
-      v-model="showSyncDialog"
-      title="从暴雪API同步Boss数据"
-      width="400px"
-    >
-      <el-form :model="syncForm" label-width="120px">
-        <el-form-item label="Boss ID">
-          <el-input-number
-            v-model="syncForm.journal_encounter_id"
-            :min="1"
-            placeholder="请输入Boss Journal ID"
-            style="width: 100%"
-          />
-          <div class="form-tip">
-            提示：可以在暴雪API文档中查找Boss的Journal Encounter ID
-          </div>
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <el-button @click="showSyncDialog = false">取消</el-button>
-        <el-button type="primary" @click="syncFromBlizzard" :loading="syncing">
-          同步
-        </el-button>
-      </template>
-    </el-dialog>
 
     <!-- 添加/编辑Boss对话框 -->
     <el-dialog
@@ -98,17 +67,14 @@
             placeholder="请输入Boss描述"
           />
         </el-form-item>
-        <el-form-item label="图标URL" prop="icon_url">
-          <el-input v-model="form.icon_url" placeholder="请输入Boss图标URL（可选）" />
-          <div v-if="form.icon_url" class="icon-preview">
-            <img :src="form.icon_url" class="icon-preview-img" />
-          </div>
+        <el-form-item label="图标URL">
+          <el-input v-model="form.icon_url" placeholder="请输入图标URL（可选）" />
         </el-form-item>
       </el-form>
       <template #footer>
         <el-button @click="showCreateDialog = false">取消</el-button>
-        <el-button type="primary" @click="submitForm" :loading="loading">
-          确定
+        <el-button type="primary" @click="submitForm" :loading="submitting">
+          {{ isEditing ? '更新' : '添加' }}
         </el-button>
       </template>
     </el-dialog>
@@ -117,18 +83,20 @@
 
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
-import { bossApi } from '@/api'
+import { useRoute } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { UserFilled, Refresh, Plus } from '@element-plus/icons-vue'
+import { UserFilled, Plus } from '@element-plus/icons-vue'
 import type { Boss } from '@/types'
+import { bossApi } from '@/api'
+
+const route = useRoute()
 
 // 状态
 const bosses = ref<Boss[]>([])
 const loading = ref(false)
-const syncing = ref(false)
+const submitting = ref(false)
 
 // 对话框状态
-const showSyncDialog = ref(false)
 const showCreateDialog = ref(false)
 const isEditing = ref(false)
 const editingBossId = ref<string | null>(null)
@@ -142,10 +110,6 @@ const form = reactive({
   category: '',
   description: '',
   icon_url: ''
-})
-
-const syncForm = reactive({
-  journal_encounter_id: 0
 })
 
 const formRef = ref()
@@ -181,9 +145,10 @@ async function submitForm() {
   await formRef.value.validate(async (valid: boolean) => {
     if (!valid) return
 
+    submitting.value = true
     try {
       if (isEditing.value && editingBossId.value) {
-        await bossApi.create(form) // 这里应该用update API
+        await bossApi.create(form)
         ElMessage.success('Boss更新成功')
       } else {
         await bossApi.create(form)
@@ -194,29 +159,10 @@ async function submitForm() {
       await loadBosses()
     } catch (error) {
       ElMessage.error(isEditing.value ? 'Boss更新失败' : 'Boss添加失败')
+    } finally {
+      submitting.value = false
     }
   })
-}
-
-// 从暴雪API同步
-async function syncFromBlizzard() {
-  if (syncForm.journal_encounter_id <= 0) {
-    ElMessage.warning('请输入有效的Boss ID')
-    return
-  }
-
-  syncing.value = true
-  try {
-    await bossApi.syncFromBlizzard(syncForm.journal_encounter_id)
-    ElMessage.success('同步成功')
-    showSyncDialog.value = false
-    syncForm.journal_encounter_id = 0
-    await loadBosses()
-  } catch (error) {
-    ElMessage.error('同步失败，请检查Boss ID是否正确')
-  } finally {
-    syncing.value = false
-  }
 }
 
 // 编辑Boss
@@ -258,9 +204,15 @@ async function deleteBoss(id: string) {
 async function loadBosses() {
   loading.value = true
   try {
-    const response = await bossApi.getAll()
-    bosses.value = response.data
+    const dungeonId = Number(route.params.id) || 0
+    const params: Record<string, number> = {}
+    if (dungeonId > 0) {
+      params.dungeon_id = dungeonId
+    }
+    const data = await bossApi.getAll(params)
+    bosses.value = data
   } catch (error) {
+    console.error('Error loading bosses:', error)
     ElMessage.error('加载Boss列表失败')
   } finally {
     loading.value = false
@@ -277,6 +229,7 @@ onMounted(() => {
 .bosses-view {
   max-width: 1400px;
   margin: 0 auto;
+  padding: 20px;
 }
 
 .page-header {
@@ -287,59 +240,37 @@ onMounted(() => {
 }
 
 .page-title {
+  font-size: 24px;
+  font-weight: bold;
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 24px;
-  font-weight: 600;
-  color: #e5e7eb;
+  gap: 10px;
 }
 
 .header-actions {
   display: flex;
-  gap: 12px;
+  gap: 10px;
 }
 
 .bosses-card {
-  min-height: 400px;
-  border: 1px solid #374151;
-}
-
-.form-tip {
-  font-size: 12px;
-  color: #6b7280;
-  margin-top: 4px;
+  margin-top: 20px;
 }
 
 .boss-icon {
+  width: 48px;
+  height: 48px;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 48px;
-  height: 48px;
 }
 
 .boss-icon-img {
-  width: 40px;
-  height: 40px;
-  border-radius: 6px;
-  object-fit: cover;
-  border: 2px solid #4b5563;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
 }
 
 .boss-icon-placeholder {
-  font-size: 28px;
-}
-
-.icon-preview {
-  margin-top: 8px;
-}
-
-.icon-preview-img {
-  width: 64px;
-  height: 64px;
-  border-radius: 8px;
-  object-fit: cover;
-  border: 2px solid #4b5563;
+  font-size: 32px;
 }
 </style>

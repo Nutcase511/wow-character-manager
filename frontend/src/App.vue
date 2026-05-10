@@ -3,7 +3,7 @@
     <el-header class="app-header">
       <div class="header-content">
         <div class="logo">
-          <el-icon :size="24"><Monitor /></el-icon>
+          <img src="/images/wow.png" alt="WoW Logo" class="logo-image">
           <span class="logo-text">魔兽世界角色管理系统</span>
         </div>
         <el-menu
@@ -15,9 +15,9 @@
         >
           <el-menu-item index="/characters">角色管理</el-menu-item>
           <el-menu-item index="/dungeons">副本管理</el-menu-item>
-          <el-menu-item index="/bosses">Boss管理</el-menu-item>
           <el-menu-item index="/item-needs">装备需求</el-menu-item>
           <el-menu-item index="/gold">金币统计</el-menu-item>
+          <el-menu-item index="/talents">天赋模拟器</el-menu-item>
         </el-menu>
       </div>
     </el-header>
@@ -81,6 +81,12 @@ const activeMenu = computed(() => route.path)
   margin-right: 40px;
   font-size: 18px;
   font-weight: 600;
+}
+
+.logo-image {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
 }
 
 .logo-text {

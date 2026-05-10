@@ -10,6 +10,9 @@
           <el-icon><Refresh /></el-icon>
           {{ syncing ? '同步中...' : '刷新' }}
         </el-button>
+        <el-button type="primary" @click="createDailySnapshot" :loading="creatingSnapshot">
+          📸 创建今日快照
+        </el-button>
       </div>
     </div>
 
@@ -115,6 +118,7 @@ const router = useRouter()
 
 const loading = ref(false)
 const syncing = ref(false)
+const creatingSnapshot = ref(false)
 const allGold = ref<CharacterGold[]>([])
 const characters = ref<any[]>([])
 const period = ref('month')
@@ -159,8 +163,8 @@ const goldWithClass = computed(() => {
 
 async function loadCharacters() {
   try {
-    const response = await characterApi.getAll()
-    characters.value = response.data
+    const data = await characterApi.getAll()
+    characters.value = data
   } catch {
     characters.value = []
   }
@@ -187,7 +191,11 @@ async function handleRefresh() {
     await loadAllGold()
     await loadMonthlyStats()
     await loadCharacterStats()
-    ElMessage.success('金币数据已同步最新')
+    
+    // 自动创建今日快照
+    await goldApi.createDailySnapshot()
+    
+    ElMessage.success('金币数据已同步最新，今日快照已自动创建')
   } catch (error: any) {
     ElMessage.error(error?.response?.data?.detail || '同步失败，请确认游戏已保存数据')
   } finally {
@@ -195,11 +203,27 @@ async function handleRefresh() {
   }
 }
 
+async function createDailySnapshot() {
+  creatingSnapshot.value = true
+  try {
+    const response = await goldApi.createDailySnapshot()
+    if (response.success) {
+      ElMessage.success(`每日快照创建成功，记录了 ${response.count} 个角色`)
+    } else {
+      ElMessage.info(response.message)
+    }
+  } catch (error) {
+    ElMessage.error('创建每日快照失败')
+  } finally {
+    creatingSnapshot.value = false
+  }
+}
+
 async function loadAllGold() {
   loading.value = true
   try {
-    const response = await goldApi.getAllGold()
-    allGold.value = response.data
+    const data = await goldApi.getAllGold()
+    allGold.value = data
   } catch (error) {
     ElMessage.error('加载金币数据失败')
   } finally {
@@ -209,8 +233,8 @@ async function loadAllGold() {
 
 async function loadMonthlyStats() {
   try {
-    const response = await goldApi.getMonthlyStats(period.value)
-    monthlyStats.value = response.data
+    const data = await goldApi.getMonthlyStats(period.value)
+    monthlyStats.value = data
     updateTrendChart()
   } catch (error) {
     console.error('加载月度统计失败:', error)
@@ -219,8 +243,8 @@ async function loadMonthlyStats() {
 
 async function loadCharacterStats() {
   try {
-    const response = await goldApi.getCharacterStats()
-    characterStats.value = response.data
+    const data = await goldApi.getCharacterStats()
+    characterStats.value = data
     updateBarChart()
   } catch (error) {
     console.error('加载角色统计失败:', error)

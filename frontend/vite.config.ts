@@ -14,7 +14,10 @@ export default defineConfig({
     proxy: {
       '/api': {
         target: 'http://localhost:8000',
-        // TODO: 8002 被僵尸进程占用，迁移到 8000 后清理该进程
+        changeOrigin: true
+      },
+      '/uploads': {
+        target: 'http://localhost:8000',
         changeOrigin: true
       }
     }

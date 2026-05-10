@@ -20,7 +20,7 @@ export const useCharacterStore = defineStore('character', () => {
     error.value = null
     try {
       const response = await characterApi.getAll()
-      characters.value = response.data
+      characters.value = response
     } catch (err) {
       error.value = '获取角色列表失败'
       console.error('Failed to fetch characters:', err)
@@ -34,8 +34,8 @@ export const useCharacterStore = defineStore('character', () => {
     error.value = null
     try {
       const response = await characterApi.getById(id)
-      currentCharacter.value = response.data
-      return response.data
+      currentCharacter.value = response
+      return response
     } catch (err) {
       error.value = '获取角色信息失败'
       console.error('Failed to fetch character:', err)
@@ -50,8 +50,8 @@ export const useCharacterStore = defineStore('character', () => {
     error.value = null
     try {
       const response = await characterApi.create(data)
-      characters.value.push(response.data)
-      return response.data
+      characters.value.push(response)
+      return response
     } catch (err) {
       error.value = '创建角色失败'
       console.error('Failed to create character:', err)
@@ -68,12 +68,12 @@ export const useCharacterStore = defineStore('character', () => {
       const response = await characterApi.update(id, data)
       const index = characters.value.findIndex(c => c.id === id)
       if (index !== -1) {
-        characters.value[index] = response.data
+        characters.value[index] = response
       }
       if (currentCharacter.value?.id === id) {
-        currentCharacter.value = response.data
+        currentCharacter.value = response
       }
-      return response.data
+      return response
     } catch (err) {
       error.value = '更新角色失败'
       console.error('Failed to update character:', err)

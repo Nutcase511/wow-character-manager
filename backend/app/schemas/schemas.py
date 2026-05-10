@@ -46,8 +46,12 @@ class CharacterResponse(BaseModel):
     spec: Optional[str]
     level: int
     faction: str
+    race: Optional[str] = None
     created_at: Optional[str] = None
     updated_at: Optional[str] = None
+    equips_data: Optional[str] = None
+    talents_data: Optional[str] = None
+    active_talent_group: Optional[int] = None
 
 
 class ItemCreate(BaseModel):

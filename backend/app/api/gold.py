@@ -313,3 +313,70 @@ async def get_gold_timeline(character_id: int = None):
         result.append(dict(row))
     
     return result
+
+
+@router.post("/snapshot/daily")
+async def create_daily_snapshot():
+    """创建每日金币快照（为所有角色记录当前金币）"""
+    # 获取所有角色当前金币
+    gold_rows = await db.fetchall("SELECT * FROM character_gold")
+    
+    if not gold_rows:
+        return {"success": False, "message": "没有找到角色金币数据"}
+    
+    # 获取今天的日期
+    today = await db.fetchone("SELECT DATE('now') as today")
+    today_str = today["today"]
+    
+    # 检查今天是否已经创建过快照
+    existing = await db.fetchone("""
+        SELECT COUNT(*) as count 
+        FROM gold_snapshot 
+        WHERE DATE(snapshot_date) = ?
+        LIMIT 1
+    """, (today_str,))
+    
+    if existing["count"] > 0:
+        return {"success": False, "message": "今日快照已存在", "count": 0}
+    
+    # 创建快照记录
+    count = 0
+    for row in gold_rows:
+        await db.execute("""
+            INSERT INTO gold_snapshot (character_id, gold_amount)
+            VALUES (?, ?)
+        """, (row["character_id"], row["current_gold"]))
+        count += 1
+    
+    return {"success": True, "message": f"每日快照创建成功", "count": count}
+
+
+@router.get("/stats/daily")
+async def get_daily_stats(character_id: int = None):
+    """获取每日金币统计数据（用于趋势图表）"""
+    if character_id:
+        rows = await db.fetchall("""
+            SELECT DATE(snapshot_date) as date, 
+                   AVG(gold_amount) as avg_gold,
+                   MAX(gold_amount) as max_gold,
+                   MIN(gold_amount) as min_gold
+            FROM gold_snapshot
+            WHERE character_id = ?
+            GROUP BY DATE(snapshot_date)
+            ORDER BY date
+        """, (character_id,))
+    else:
+        # 获取所有角色每日的总金币
+        rows = await db.fetchall("""
+            SELECT DATE(gs.snapshot_date) as date,
+                   SUM(gs.gold_amount) as total_gold
+            FROM gold_snapshot gs
+            GROUP BY DATE(gs.snapshot_date)
+            ORDER BY date
+        """)
+    
+    result = []
+    for row in rows:
+        result.append(dict(row))
+    
+    return result

@@ -17,59 +17,146 @@
       </div>
     </div>
 
-    <!-- 资料片 Tab -->
-    <el-tabs v-model="activeExpansion" @tab-change="handleExpansionChange">
-      <el-tab-pane label="巫妖王之怒" name="wotlk" />
-      <el-tab-pane label="燃烧的远征" name="tbc" />
-      <el-tab-pane label="经典旧世" name="classic" />
-    </el-tabs>
-
-    <!-- 类型过滤 -->
-    <div class="filter-bar">
-      <el-radio-group v-model="activeCategory" @change="handleCategoryChange">
-        <el-radio-button value="all">全部</el-radio-button>
-        <el-radio-button value="dungeon">五人本</el-radio-button>
-        <el-radio-button value="raid">团本</el-radio-button>
-        <el-radio-button value="worldboss">世界Boss</el-radio-button>
-      </el-radio-group>
-      <span class="filter-count">共 {{ dungeons.length }} 个副本</span>
+    <!-- 阶段选择 -->
+    <div class="phase-bar">
+      <span class="phase-label">阶段:</span>
+      <el-select v-model="activePhase" placeholder="选择阶段" @change="handlePhaseChange">
+        <el-option label="五人本" value="dungeon" />
+        <el-option label="P1" value="P1" />
+        <el-option label="P2" value="P2" />
+        <el-option label="P3" value="P3" />
+        <el-option label="P4" value="P4" />
+        <el-option label="P5" value="P5" />
+        <el-option label="P6" value="P6" />
+        <el-option label="P7" value="P7" />
+        <el-option label="P8" value="P8" />
+        <el-option label="P9" value="P9" />
+        <el-option label="P10" value="P10" />
+        <el-option label="P11" value="P11" />
+      </el-select>
     </div>
 
-    <!-- 副本卡片网格 -->
-    <div v-loading="loading" class="dungeon-grid">
-      <el-card
-        v-for="dungeon in dungeons"
-        :key="dungeon.id"
-        class="dungeon-card"
-        shadow="hover"
-        @click="goToBosses(dungeon)"
-      >
-        <div class="card-content">
-          <div class="card-icon" :class="getCategoryClass(dungeon.category)">
-            {{ getCategoryIcon(dungeon.category) }}
-          </div>
-          <div class="card-info">
-            <h3 class="card-name">{{ dungeon.name }}</h3>
-            <div class="card-meta">
-              <el-tag :type="getCategoryTagType(dungeon.category)" size="small">
-                {{ getCategoryName(dungeon.category) }}
-              </el-tag>
-              <span class="card-level">Lv.{{ dungeon.minimum_level }}</span>
+    <!-- 五人本区域 -->
+    <div v-if="!activePhase || activePhase === 'dungeon'" class="dungeon-section">
+      <div class="section-header">
+        <h3>
+          <el-icon><Building /></el-icon>
+          五人本
+        </h3>
+        <span class="section-count">{{ dungeonList.length }} 个</span>
+      </div>
+      <div v-if="dungeonList.length > 0" class="dungeon-grid dungeon-grid-sm">
+        <el-card
+          v-for="dungeon in dungeonList"
+          :key="dungeon.id"
+          class="dungeon-card dungeon-card-sm"
+          shadow="hover"
+          @click="goToBosses(dungeon)"
+        >
+          <div class="card-content">
+            <div class="card-icon" :class="getCategoryClass(dungeon.category)">
+              {{ getCategoryIcon(dungeon.category) }}
             </div>
-            <div class="card-modes">
-              <span
-                v-for="mode in dungeon.modes"
-                :key="mode"
-                class="mode-tag"
-              >{{ getModeDisplayName(mode) }}</span>
+            <div class="card-info">
+              <h3 class="card-name">{{ dungeon.name }}</h3>
+              <div class="card-meta">
+                <el-tag :type="getCategoryTagType(dungeon.category)" size="small">
+                  {{ getCategoryName(dungeon.category) }}
+                </el-tag>
+                <span class="card-level">Lv.{{ dungeon.minimum_level }}</span>
+              </div>
             </div>
+            <el-icon class="card-arrow"><ArrowRight /></el-icon>
           </div>
-          <el-icon class="card-arrow"><ArrowRight /></el-icon>
-        </div>
-      </el-card>
+        </el-card>
+      </div>
+      <el-empty v-else description="暂无五人本数据" />
     </div>
 
-    <el-empty v-if="!loading && dungeons.length === 0" description="暂无副本数据" />
+    <!-- 团本区域 -->
+    <div v-if="!activePhase || activePhase !== 'dungeon'" class="dungeon-section">
+      <div class="section-header">
+        <h3>
+          <el-icon><Trophy /></el-icon>
+          团队副本
+        </h3>
+        <span class="section-count">{{ raidList.length }} 个</span>
+      </div>
+
+      <div v-if="raidList.length > 0" class="dungeon-grid">
+        <el-card
+          v-for="dungeon in raidList"
+          :key="dungeon.id"
+          class="dungeon-card"
+          shadow="hover"
+          @click="goToBosses(dungeon)"
+        >
+          <div class="card-content">
+            <div class="card-icon" :class="getCategoryClass(dungeon.category)">
+              {{ getCategoryIcon(dungeon.category) }}
+            </div>
+            <div class="card-info">
+              <h3 class="card-name">{{ dungeon.name }}</h3>
+              <div class="card-meta">
+                <el-tag :type="getPhaseTagType(dungeon.phase)" class="phase-tag-sm">
+                  {{ dungeon.phase }}
+                </el-tag>
+                <el-tag :type="getCategoryTagType(dungeon.category)" size="small">
+                  {{ getCategoryName(dungeon.category) }}
+                </el-tag>
+                <span class="card-level">Lv.{{ dungeon.minimum_level }}</span>
+              </div>
+              <div class="card-modes">
+                <span
+                  v-for="mode in dungeon.modes"
+                  :key="mode"
+                  class="mode-tag"
+                >{{ getModeDisplayName(mode) }}</span>
+              </div>
+            </div>
+            <el-icon class="card-arrow"><ArrowRight /></el-icon>
+          </div>
+        </el-card>
+      </div>
+      <el-empty v-else description="暂无团本数据" />
+    </div>
+
+    <!-- 世界Boss区域 -->
+    <div v-if="!activePhase || activePhase !== 'dungeon'" class="dungeon-section">
+      <div class="section-header">
+        <h3>
+          <el-icon><Skull /></el-icon>
+          世界Boss
+        </h3>
+        <span class="section-count">{{ worldBossList.length }} 个</span>
+      </div>
+      <div v-if="worldBossList.length > 0" class="dungeon-grid dungeon-grid-sm">
+        <el-card
+          v-for="dungeon in worldBossList"
+          :key="dungeon.id"
+          class="dungeon-card dungeon-card-sm"
+          shadow="hover"
+          @click="goToBosses(dungeon)"
+        >
+          <div class="card-content">
+            <div class="card-icon" :class="getCategoryClass(dungeon.category)">
+              {{ getCategoryIcon(dungeon.category) }}
+            </div>
+            <div class="card-info">
+              <h3 class="card-name">{{ dungeon.name }}</h3>
+              <div class="card-meta">
+                <el-tag :type="getCategoryTagType(dungeon.category)" size="small">
+                  {{ getCategoryName(dungeon.category) }}
+                </el-tag>
+                <span class="card-level">Lv.{{ dungeon.minimum_level }}</span>
+              </div>
+            </div>
+            <el-icon class="card-arrow"><ArrowRight /></el-icon>
+          </div>
+        </el-card>
+      </div>
+      <el-empty v-else description="暂无世界Boss数据" />
+    </div>
 
     <!-- 添加副本对话框 -->
     <el-dialog
@@ -99,6 +186,21 @@
             <el-option label="世界Boss" value="worldboss" />
           </el-select>
         </el-form-item>
+        <el-form-item label="阶段" prop="phase">
+          <el-select v-model="form.phase" placeholder="选择阶段">
+            <el-option label="P1" value="P1" />
+            <el-option label="P2" value="P2" />
+            <el-option label="P3" value="P3" />
+            <el-option label="P4" value="P4" />
+            <el-option label="P5" value="P5" />
+            <el-option label="P6" value="P6" />
+            <el-option label="P7" value="P7" />
+            <el-option label="P8" value="P8" />
+            <el-option label="P9" value="P9" />
+            <el-option label="P10" value="P10" />
+            <el-option label="P11" value="P11" />
+          </el-select>
+        </el-form-item>
         <el-form-item label="最低等级" prop="minimum_level">
           <el-input-number v-model="form.minimum_level" :min="1" :max="80" />
         </el-form-item>
@@ -125,18 +227,17 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { dungeonApi } from '@/api'
 import { ElMessage } from 'element-plus'
-import { Grid, Plus, ArrowRight, Upload } from '@element-plus/icons-vue'
+
 import type { Dungeon } from '@/types'
 
 const router = useRouter()
 
 // 筛选状态
-const activeExpansion = ref('wotlk')
-const activeCategory = ref('raid')
+const activePhase = ref('P3')
 
 // 数据状态
 const dungeons = ref<Dungeon[]>([])
@@ -155,6 +256,7 @@ const form = reactive({
   modes: [] as string[],
   expansion: 'wotlk',
   category: 'dungeon',
+  phase: '',
   description: ''
 })
 
@@ -163,6 +265,42 @@ const formRef = ref()
 const rules = {
   dungeon_id: [{ required: true, message: '请输入副本ID', trigger: 'blur' }],
   name: [{ required: true, message: '请输入副本名称', trigger: 'blur' }],
+}
+
+// 阶段标题映射
+function getPhaseTitle(phase: string): string {
+  const titles: Record<string, string> = {
+    'P1': '第一阶段',
+    'P2': '第二阶段',
+    'P3': '第三阶段',
+    'P4': '第四阶段',
+    'P5': '第五阶段',
+    'P6': '第六阶段',
+    'P7': '第七阶段',
+    'P8': '第八阶段',
+    'P9': '第九阶段',
+    'P10': '第十阶段',
+    'P11': '第十一阶段',
+  }
+  return titles[phase] || phase
+}
+
+// 阶段标签类型
+function getPhaseTagType(phase: string): string {
+  const types: Record<string, string> = {
+    'P1': 'success',
+    'P2': 'success',
+    'P3': 'primary',
+    'P4': 'primary',
+    'P5': 'warning',
+    'P6': 'warning',
+    'P7': 'warning',
+    'P8': 'danger',
+    'P9': 'info',
+    'P10': 'info',
+    'P11': 'danger',
+  }
+  return types[phase] || 'default'
 }
 
 // 显示名称映射
@@ -178,98 +316,109 @@ function getCategoryName(cat: string): string {
   return names[cat] || cat
 }
 
-function getCategoryTagType(cat: string): string {
-  const types: Record<string, string> = { dungeon: '', raid: 'danger', worldboss: 'warning' }
-  return types[cat] || ''
+function getCategoryIcon(cat: string): string {
+  const icons: Record<string, string> = { dungeon: '🏰', raid: '👑', worldboss: '💀' }
+  return icons[cat] || '📦'
 }
 
 function getCategoryClass(cat: string): string {
-  return cat || 'dungeon'
+  const classes: Record<string, string> = { dungeon: 'icon-dungeon', raid: 'icon-raid', worldboss: 'icon-worldboss' }
+  return classes[cat] || ''
 }
 
-function getCategoryIcon(cat: string): string {
-  const icons: Record<string, string> = { dungeon: '⚔', raid: '🏰', worldboss: '💀' }
-  return icons[cat] || '⚔'
+function getCategoryTagType(cat: string): string {
+  const types: Record<string, string> = { dungeon: 'primary', raid: 'success', worldboss: 'danger' }
+  return types[cat] || 'default'
 }
 
-// 跳转到Boss列表
-function goToBosses(dungeon: Dungeon) {
-  router.push({ name: 'DungeonBosses', params: { dungeonId: dungeon.dungeon_id } })
-}
+// 筛选后的列表
+const dungeonList = computed(() => {
+  return dungeons.value.filter(d => d.category === 'dungeon')
+})
 
-// 筛选变更
-async function handleExpansionChange() { await loadDungeons() }
-async function handleCategoryChange() { await loadDungeons() }
+const raidList = computed(() => {
+  return dungeons.value.filter(d => d.category === 'raid')
+})
 
-// 重置表单
-function resetForm() {
-  formRef.value?.resetFields()
-  Object.assign(form, {
-    dungeon_id: 0, name: '', map_name: '', minimum_level: 70, modes: [],
-    expansion: activeExpansion.value, category: 'dungeon', description: ''
-  })
-}
+const worldBossList = computed(() => {
+  return dungeons.value.filter(d => d.category === 'worldboss')
+})
 
-// 提交表单
-async function submitForm() {
-  if (!formRef.value) return
-  await formRef.value.validate(async (valid: boolean) => {
-    if (!valid) return
-    try {
-      await dungeonApi.create(form)
-      ElMessage.success('副本添加成功')
-      showCreateDialog.value = false
-      resetForm()
-      await loadDungeons()
-    } catch (error) {
-      ElMessage.error('副本添加失败')
-    }
-  })
-}
 
-// 加载副本列表
+
 async function loadDungeons() {
   loading.value = true
   try {
-    const params: { expansion?: string; category?: string } = { expansion: activeExpansion.value }
-    if (activeCategory.value !== 'all') {
-      params.category = activeCategory.value
+    const params: Record<string, string> = {}
+    if (activePhase.value === 'dungeon') {
+      params.category = 'dungeon'
+    } else if (activePhase.value) {
+      params.phase = activePhase.value
     }
-    const response = await dungeonApi.getAll(params)
-    dungeons.value = response.data
+    const data = await dungeonApi.getAll(params)
+    dungeons.value = data
   } catch (error) {
-    ElMessage.error('加载副本列表失败')
+    ElMessage.error('加载副本失败')
   } finally {
     loading.value = false
   }
 }
 
-// 从 AtlasLoot 导入
+function goToBosses(dungeon: Dungeon) {
+  router.push(`/dungeons/${dungeon.dungeon_id}/bosses`)
+}
+
+function handlePhaseChange() {
+  loadDungeons()
+}
+
+function resetForm() {
+  form.dungeon_id = 0
+  form.name = ''
+  form.map_name = ''
+  form.minimum_level = 70
+  form.modes = []
+  form.expansion = 'wotlk'
+  form.category = 'dungeon'
+  form.phase = ''
+  form.description = ''
+}
+
+async function submitForm() {
+  if (!formRef.value) return
+  try {
+    await formRef.value.validate()
+    const data = await dungeonApi.create(form)
+    ElMessage.success('添加成功')
+    showCreateDialog.value = false
+    resetForm()
+    loadDungeons()
+  } catch (error) {
+    ElMessage.error('添加失败')
+  }
+}
+
 async function handleImportAtlasLoot() {
   importing.value = true
   try {
-    const response = await dungeonApi.importAtlasLoot()
-    if (response.data.success) {
-      const stats = response.data.stats
-      ElMessage.success(`导入成功！副本:${stats.instances} Boss:${stats.bosses} 物品:${stats.items} 掉落:${stats.loot}`)
-      await loadDungeons()
-    } else {
-      ElMessage.error(response.data.message || '导入失败')
-    }
+    const data = await dungeonApi.importFromAtlasLoot()
+    ElMessage.success(`成功导入 ${data.count} 个副本`)
+    loadDungeons()
   } catch (error) {
-    ElMessage.error('AtlasLoot 导入失败，请检查后端是否运行')
+    ElMessage.error('导入失败')
   } finally {
     importing.value = false
   }
 }
 
-onMounted(() => { loadDungeons() })
+onMounted(() => {
+  loadDungeons()
+})
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
 .dungeons-view {
-  max-width: 1400px;
-  margin: 0 auto;
+  padding: 20px;
 }
 
 .page-header {
@@ -277,125 +426,204 @@ onMounted(() => { loadDungeons() })
   justify-content: space-between;
   align-items: center;
   margin-bottom: 20px;
+  
+  .page-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  
+  .header-actions {
+    display: flex;
+    gap: 10px;
+  }
 }
 
-.page-title {
+.phase-bar {
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 24px;
-  font-weight: 600;
-  color: #e5e7eb;
+  gap: 10px;
+  margin-bottom: 15px;
+  
+  .phase-label {
+    font-weight: 500;
+    color: #666;
+  }
+  
+  :deep(.el-select) {
+    width: 160px;
+  }
 }
 
-.header-actions {
-  display: flex;
-  gap: 12px;
+.dungeon-section {
+  margin-bottom: 30px;
+  
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #eee;
+    
+    h3 {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 0;
+      font-size: 18px;
+      font-weight: 600;
+    }
+    
+    .section-count {
+      color: #999;
+      font-size: 14px;
+    }
+  }
 }
 
-.filter-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 16px;
-}
-
-.filter-count {
-  font-size: 13px;
-  color: #6b7280;
+.phase-group {
+  margin-bottom: 25px;
+  
+  .phase-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+    
+    .phase-tag {
+      font-weight: bold;
+    }
+    
+    .phase-title {
+      font-weight: 600;
+      font-size: 15px;
+    }
+    
+    .phase-count {
+      color: #999;
+      font-size: 13px;
+      margin-left: auto;
+    }
+  }
 }
 
 .dungeon-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: 16px;
-  min-height: 400px;
+  gap: 15px;
+  
+  &.dungeon-grid-sm {
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  }
 }
 
 .dungeon-card {
   cursor: pointer;
-  transition: transform 0.2s, box-shadow 0.2s;
-  border: 1px solid #374151;
-}
-
-.dungeon-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
-}
-
-.card-content {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-.card-icon {
-  width: 48px;
-  height: 48px;
-  border-radius: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 22px;
-  flex-shrink: 0;
-}
-
-.card-icon.dungeon {
-  background: #1e3a5f;
-}
-
-.card-icon.raid {
-  background: #3f1f1f;
-}
-
-.card-icon.worldboss {
-  background: #3f2f1f;
-}
-
-.card-info {
-  flex: 1;
-  min-width: 0;
-}
-
-.card-name {
-  font-size: 16px;
-  font-weight: 600;
-  color: #e5e7eb;
-  margin: 0 0 6px 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.card-meta {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 4px;
-}
-
-.card-level {
-  font-size: 12px;
-  color: #9ca3af;
-}
-
-.card-modes {
-  display: flex;
-  gap: 4px;
-  flex-wrap: wrap;
-}
-
-.mode-tag {
-  font-size: 11px;
-  color: #9ca3af;
-  background: #252f3f;
-  padding: 1px 6px;
-  border-radius: 3px;
-}
-
-.card-arrow {
-  color: #4b5563;
-  font-size: 18px;
-  flex-shrink: 0;
+  transition: all 0.3s ease;
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+  }
+  
+  &.dungeon-card-sm {
+    .card-content {
+      padding: 12px 15px;
+    }
+    
+    .card-icon {
+      width: 40px;
+      height: 40px;
+      font-size: 20px;
+    }
+    
+    .card-name {
+      font-size: 15px;
+    }
+    
+    .card-meta {
+      flex-wrap: wrap;
+    }
+  }
+  
+  .card-content {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 15px;
+  }
+  
+  .card-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    flex-shrink: 0;
+    
+    &.icon-dungeon {
+      background: linear-gradient(135deg, #409eff, #667eea);
+    }
+    
+    &.icon-raid {
+      background: linear-gradient(135deg, #67c23a, #85ce61);
+    }
+    
+    &.icon-worldboss {
+      background: linear-gradient(135deg, #f56c6c, #f87171);
+    }
+  }
+  
+  .card-info {
+    flex: 1;
+    min-width: 0;
+    
+    .card-name {
+      margin: 0 0 8px 0;
+      font-size: 16px;
+      font-weight: 600;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    
+    .card-meta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 6px;
+      
+      .card-level {
+        font-size: 13px;
+        color: #999;
+      }
+    }
+    
+    .card-modes {
+      display: flex;
+      gap: 6px;
+      
+      .mode-tag {
+        font-size: 12px;
+        padding: 2px 6px;
+        background: #f5f7fa;
+        border-radius: 4px;
+        color: #666;
+      }
+    }
+  }
+  
+  .card-arrow {
+    color: #ccc;
+    font-size: 18px;
+    transition: color 0.3s;
+  }
+  
+  &:hover .card-arrow {
+    color: #409eff;
+  }
 }
 </style>

@@ -60,12 +60,13 @@ function goToLoot(boss: Boss) {
 async function loadBosses() {
   loading.value = true
   try {
-    const response = await bossApi.getByDungeon(dungeonId)
-    bosses.value = response.data
+    const data = await bossApi.getByDungeon(dungeonId)
+    bosses.value = data
     if (bosses.value.length > 0) {
       dungeonName.value = bosses.value[0].dungeon_name
     }
   } catch (error) {
+    console.error('Error loading bosses:', error)
     ElMessage.error('加载Boss列表失败')
   } finally {
     loading.value = false
