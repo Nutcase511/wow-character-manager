@@ -7,6 +7,7 @@ from app.api import characters, item_needs, dungeons, bosses, realms, gold, tale
 from app.api.equipment import router as equipment_router
 from app.api.character_refresh import router as refresh_router
 from app.api.items import router as items_router
+from app.api.settings import router as settings_router
 
 app = FastAPI(
     title=settings.APP_NAME,
@@ -17,14 +18,8 @@ app = FastAPI(
 # 配置CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        settings.FRONTEND_URL,
-        "http://localhost:5173",
-        "http://localhost:5174",
-        "http://127.0.0.1:5173",
-        "http://127.0.0.1:5174"
-    ],
-    allow_credentials=True,
+    allow_origins=["*"],  # 允许所有来源（开发环境）
+    allow_credentials=False,  # 使用*时不能为True
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -77,6 +72,7 @@ app.include_router(talents.router, tags=["talents"])
 app.include_router(equipment_router, tags=["equipment"])
 app.include_router(refresh_router, prefix="/api/character-refresh", tags=["character-refresh"])
 app.include_router(items_router, prefix="/api/items", tags=["items"])
+app.include_router(settings_router, prefix="/api/settings", tags=["settings"])
 
 
 if __name__ == "__main__":

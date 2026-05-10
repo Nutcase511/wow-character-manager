@@ -20,6 +20,11 @@ class Settings(BaseSettings):
 
     # CORS
     FRONTEND_URL: str = "http://localhost:5173"
+    
+    # 默认数据源路径
+    DEFAULT_ACCOUNTANT_PATH: str = ""
+    DEFAULT_TDINSPECT_PATH: str = ""
+    DEFAULT_ATLASLOOT_PATH: str = ""
 
     class Config:
         env_file = ".env"
