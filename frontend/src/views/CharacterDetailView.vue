@@ -37,7 +37,7 @@
         <div v-else-if="goldData?.character_gold" class="gold-content">
             <span class="gold-amount">{{ formatGold(goldData.character_gold.current_gold) }}</span>
         </div>
-        <el-empty v-else description="暂无金币数据，请先在金币统计页面刷新同步" :image-size="60" />
+        <el-empty v-else description="暂无金币数据" :image-size="60" />
       </el-card>
 
       <!-- 当前装备 - 魔兽风格布局 -->
@@ -825,10 +825,9 @@ async function loadProgress() {
 async function loadGold() {
   goldLoading.value = true
   try {
-    // 从金币统计列表接口获取，和金币统计页面保持同一数据源
-    const allGold = await goldApi.getAllGold()
-    const found = allGold.data.find((g: any) => g.character_id === character.value?.id)
-    goldData.value = found ? { character_gold: found } : null
+    const characterId = route.params.id as string
+    const summary = await goldApi.getCharacterSummary(characterId, 'Total')
+    goldData.value = summary
   } catch {
     goldData.value = null
   } finally {
