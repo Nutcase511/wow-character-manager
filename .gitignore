@@ -97,3 +97,16 @@ backend/*.py
 !backend/app/
 !backend/main.py
 !backend/requirements.txt
+
+# Debug/test scripts at root
+/check_*.py
+/test_*.py
+/extract_*.py
+/fetch_*.py
+/parse_*.py
+/translate_*.py
+
+# Scraped data files
+*.html
+!frontend/src/**/*.html
+locale_zhcn.js

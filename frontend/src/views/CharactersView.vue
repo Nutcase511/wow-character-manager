@@ -67,10 +67,6 @@
           </div>
 
           <div class="character-actions">
-            <el-button size="small" @click.stop="editCharacter(character)">
-              <el-icon><Edit /></el-icon>
-              编辑
-            </el-button>
             <el-button size="small" type="danger" @click.stop="deleteCharacter(character.id)">
               <el-icon><Delete /></el-icon>
               删除
@@ -80,11 +76,11 @@
       </div>
     </el-card>
 
-    <!-- 创建/编辑角色对话框 -->
+    <!-- 添加角色对话框 -->
     <el-dialog
       v-model="showCreateDialog"
-      :title="isEditing ? '编辑角色' : '添加角色'"
-      width="500px"
+      title="添加角色"
+      width="400px"
       @close="resetForm"
     >
       <el-form :model="form" :rules="rules" ref="formRef" label-width="80px">
@@ -99,37 +95,10 @@
             <el-option label="时光4" value="时光4" />
           </el-select>
         </el-form-item>
-        <el-form-item label="职业" prop="wow_class">
-          <el-select v-model="form.wow_class" placeholder="请选择职业" style="width: 100%">
-            <el-option
-              v-for="(name, key) in classNames"
-              :key="key"
-              :label="name"
-              :value="key"
-            />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="专精" prop="spec">
-          <el-select v-model="form.spec" placeholder="请选择专精" style="width: 100%" :disabled="!form.wow_class">
-            <el-option
-              v-for="spec in availableSpecs"
-              :key="spec"
-              :label="spec"
-              :value="spec"
-            />
-          </el-select>
-          <div v-if="!form.wow_class" class="form-tip">请先选择职业</div>
-        </el-form-item>
-        <el-form-item label="等级" prop="level">
-          <el-input-number v-model="form.level" :min="1" :max="80" />
-          <div class="form-tip">时光服最高等级为80</div>
-        </el-form-item>
-        <el-form-item label="阵营" prop="faction">
-          <el-radio-group v-model="form.faction">
-            <el-radio label="alliance">联盟</el-radio>
-            <el-radio label="horde">部落</el-radio>
-          </el-radio-group>
-        </el-form-item>
+        <div class="form-tip-block">
+          <el-icon><InfoFilled /></el-icon>
+          <span>职业、等级、阵营等信息将在刷新数据时从插件自动同步</span>
+        </div>
       </el-form>
       <template #footer>
         <el-button @click="showCreateDialog = false">取消</el-button>
@@ -142,11 +111,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, reactive, computed, watch } from 'vue'
+import { ref, onMounted, reactive, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useCharacterStore } from '@/stores/character'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { User, Plus, Edit, Delete, Refresh, RefreshRight } from '@element-plus/icons-vue'
+import { User, Plus, Delete, Refresh, RefreshRight, InfoFilled } from '@element-plus/icons-vue'
 import { characterApi, goldApi } from '@/api'
 import { WoWClass, ClassSpecsMap } from '@/types'
 import { getClassIcon, getFactionIcon } from '@/utils/classIcons'
@@ -156,17 +125,15 @@ const characterStore = useCharacterStore()
 
 // 对话框状态
 const showCreateDialog = ref(false)
-const isEditing = ref(false)
-const editingCharacterId = ref<string | null>(null)
 
-// 表单数据
-const form = reactive<CharacterCreate>({
+// 表单数据（仅需名称和服务器，其他从插件同步）
+const form = reactive({
   name: '',
   realm: '',
-  wow_class: '',
+  wow_class: 'warrior',  // 默认值，刷新时会覆盖
   spec: '',
-  level: 80,  // 时光服默认80级
-  faction: 'horde'  // 默认部落
+  level: 80,
+  faction: 'horde'
 })
 
 const formRef = ref()
@@ -174,9 +141,7 @@ const formRef = ref()
 // 表单验证规则
 const rules = {
   name: [{ required: true, message: '请输入角色名称', trigger: 'blur' }],
-  realm: [{ required: true, message: '请输入服务器名称', trigger: 'blur' }],
-  wow_class: [{ required: true, message: '请选择职业', trigger: 'change' }],
-  level: [{ required: true, message: '请输入等级', trigger: 'blur' }]
+  realm: [{ required: true, message: '请选择服务器', trigger: 'blur' }]
 }
 
 // 职业名称映射
@@ -262,25 +227,9 @@ function getClassTagType(classKey: string): string {
   return typeMap[classKey] || ''
 }
 
-// 计算当前职业可用的专精列表
-const availableSpecs = computed(() => {
-  if (!form.wow_class) return []
-  return ClassSpecsMap[form.wow_class] || []
-})
-
 // 按等级排序的角色列表（等级从高到低）
 const sortedCharacters = computed(() => {
   return [...characterStore.characters].sort((a, b) => b.level - a.level)
-})
-
-// 监听职业变化，自动清空不匹配的专精
-watch(() => form.wow_class, (newClass, oldClass) => {
-  if (oldClass && newClass !== oldClass && form.spec) {
-    const specs = ClassSpecsMap[newClass] || []
-    if (!specs.includes(form.spec)) {
-      form.spec = ''
-    }
-  }
 })
 
 // 重置表单
@@ -289,16 +238,14 @@ function resetForm() {
   Object.assign(form, {
     name: '',
     realm: '',
-    wow_class: '',
+    wow_class: 'warrior',
     spec: '',
     level: 80,
-    faction: 'horde'  // 默认部落
+    faction: 'horde'
   })
-  isEditing.value = false
-  editingCharacterId.value = null
 }
 
-// 提交表单
+// 提交表单（仅创建）
 async function submitForm() {
   if (!formRef.value) return
 
@@ -306,34 +253,14 @@ async function submitForm() {
     if (!valid) return
 
     try {
-      if (isEditing.value && editingCharacterId.value) {
-        await characterStore.updateCharacter(editingCharacterId.value, form)
-        ElMessage.success('角色更新成功')
-      } else {
-        await characterStore.createCharacter(form)
-        ElMessage.success('角色创建成功')
-      }
+      await characterStore.createCharacter(form)
+      ElMessage.success('角色创建成功，请刷新数据以同步详细信息')
       showCreateDialog.value = false
       resetForm()
     } catch (error) {
-      ElMessage.error(isEditing.value ? '角色更新失败' : '角色创建失败')
+      ElMessage.error('角色创建失败')
     }
   })
-}
-
-// 编辑角色
-function editCharacter(character: Character) {
-  isEditing.value = true
-  editingCharacterId.value = character.id
-  Object.assign(form, {
-    name: character.name,
-    realm: character.realm,
-    wow_class: character.wow_class,
-    spec: character.spec || '',
-    level: character.level,
-    faction: character.faction
-  })
-  showCreateDialog.value = true
 }
 
 // 删除角色
@@ -555,6 +482,19 @@ onMounted(() => {
   font-size: 12px;
   color: #6b7280;
   margin-top: 4px;
+}
+
+.form-tip-block {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  font-size: 12px;
+  color: #6b7280;
+  padding: 10px;
+  background: #1f2937;
+  border-radius: 6px;
+  border-left: 3px solid #3b82f6;
+  margin-top: 8px;
 }
 
 .faction-icon {

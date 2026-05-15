@@ -10,10 +10,6 @@
           <el-icon><Upload /></el-icon>
           从 AtlasLoot 导入
         </el-button>
-        <el-button type="primary" @click="showCreateDialog = true">
-          <el-icon><Plus /></el-icon>
-          添加副本
-        </el-button>
       </div>
     </div>
 
@@ -158,76 +154,11 @@
       <el-empty v-else description="暂无世界Boss数据" />
     </div>
 
-    <!-- 添加副本对话框 -->
-    <el-dialog
-      v-model="showCreateDialog"
-      title="添加副本"
-      width="600px"
-      @close="resetForm"
-    >
-      <el-form :model="form" :rules="rules" ref="formRef" label-width="100px">
-        <el-form-item label="副本ID" prop="dungeon_id">
-          <el-input-number v-model="form.dungeon_id" :min="1" style="width: 100%" />
-        </el-form-item>
-        <el-form-item label="副本名称" prop="name">
-          <el-input v-model="form.name" placeholder="请输入副本名称" />
-        </el-form-item>
-        <el-form-item label="资料片" prop="expansion">
-          <el-select v-model="form.expansion" placeholder="选择资料片">
-            <el-option label="巫妖王之怒" value="wotlk" />
-            <el-option label="燃烧的远征" value="tbc" />
-            <el-option label="经典旧世" value="classic" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="类型" prop="category">
-          <el-select v-model="form.category" placeholder="选择类型">
-            <el-option label="五人本" value="dungeon" />
-            <el-option label="团本" value="raid" />
-            <el-option label="世界Boss" value="worldboss" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="阶段" prop="phase">
-          <el-select v-model="form.phase" placeholder="选择阶段">
-            <el-option label="P1" value="P1" />
-            <el-option label="P2" value="P2" />
-            <el-option label="P3" value="P3" />
-            <el-option label="P4" value="P4" />
-            <el-option label="P5" value="P5" />
-            <el-option label="P6" value="P6" />
-            <el-option label="P7" value="P7" />
-            <el-option label="P8" value="P8" />
-            <el-option label="P9" value="P9" />
-            <el-option label="P10" value="P10" />
-            <el-option label="P11" value="P11" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="最低等级" prop="minimum_level">
-          <el-input-number v-model="form.minimum_level" :min="1" :max="80" />
-        </el-form-item>
-        <el-form-item label="难度" prop="modes">
-          <el-checkbox-group v-model="form.modes">
-            <el-checkbox label="normal">普通</el-checkbox>
-            <el-checkbox label="heroic">英雄</el-checkbox>
-            <el-checkbox label="10">10人</el-checkbox>
-            <el-checkbox label="25">25人</el-checkbox>
-            <el-checkbox label="10h">10H</el-checkbox>
-            <el-checkbox label="25h">25H</el-checkbox>
-          </el-checkbox-group>
-        </el-form-item>
-        <el-form-item label="描述">
-          <el-input v-model="form.description" type="textarea" :rows="3" placeholder="请输入副本描述" />
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <el-button @click="showCreateDialog = false">取消</el-button>
-        <el-button type="primary" @click="submitForm" :loading="loading">确定</el-button>
-      </template>
-    </el-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { dungeonApi } from '@/api'
 import { ElMessage } from 'element-plus'
@@ -243,29 +174,6 @@ const activePhase = ref('P3')
 const dungeons = ref<Dungeon[]>([])
 const loading = ref(false)
 const importing = ref(false)
-
-// 对话框状态
-const showCreateDialog = ref(false)
-
-// 表单数据
-const form = reactive({
-  dungeon_id: 0,
-  name: '',
-  map_name: '',
-  minimum_level: 70,
-  modes: [] as string[],
-  expansion: 'wotlk',
-  category: 'dungeon',
-  phase: '',
-  description: ''
-})
-
-const formRef = ref()
-
-const rules = {
-  dungeon_id: [{ required: true, message: '请输入副本ID', trigger: 'blur' }],
-  name: [{ required: true, message: '请输入副本名称', trigger: 'blur' }],
-}
 
 // 阶段标题映射
 function getPhaseTitle(phase: string): string {
@@ -372,37 +280,11 @@ function handlePhaseChange() {
   loadDungeons()
 }
 
-function resetForm() {
-  form.dungeon_id = 0
-  form.name = ''
-  form.map_name = ''
-  form.minimum_level = 70
-  form.modes = []
-  form.expansion = 'wotlk'
-  form.category = 'dungeon'
-  form.phase = ''
-  form.description = ''
-}
-
-async function submitForm() {
-  if (!formRef.value) return
-  try {
-    await formRef.value.validate()
-    const data = await dungeonApi.create(form)
-    ElMessage.success('添加成功')
-    showCreateDialog.value = false
-    resetForm()
-    loadDungeons()
-  } catch (error) {
-    ElMessage.error('添加失败')
-  }
-}
-
 async function handleImportAtlasLoot() {
   importing.value = true
   try {
-    const data = await dungeonApi.importFromAtlasLoot()
-    ElMessage.success(`成功导入 ${data.count} 个副本`)
+    const data = await dungeonApi.importAtlasLoot()
+    ElMessage.success(`成功导入 ${data.stats?.instances || 0} 个副本`)
     loadDungeons()
   } catch (error) {
     ElMessage.error('导入失败')

@@ -207,6 +207,65 @@ class Database:
                 FOREIGN KEY (character_id) REFERENCES characters(id),
                 UNIQUE(character_id, set_id)
             );
+
+            CREATE TABLE IF NOT EXISTS talent_trees (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                class_name TEXT NOT NULL,
+                spec_name TEXT NOT NULL,
+                spec_icon TEXT,
+                description TEXT,
+                background_url TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE(class_name, spec_name)
+            );
+
+            CREATE TABLE IF NOT EXISTS talent_nodes (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                tree_id INTEGER NOT NULL,
+                row INTEGER NOT NULL,
+                col INTEGER NOT NULL,
+                name TEXT NOT NULL,
+                icon TEXT,
+                max_points INTEGER NOT NULL DEFAULT 1,
+                description TEXT,
+                requires TEXT,
+                position_x REAL,
+                position_y REAL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (tree_id) REFERENCES talent_trees(id),
+                UNIQUE(tree_id, row, col)
+            );
+
+            CREATE TABLE IF NOT EXISTS talent_builds (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL,
+                class_name TEXT NOT NULL,
+                spec_name TEXT NOT NULL,
+                points TEXT NOT NULL DEFAULT '{}',
+                image_path TEXT,
+                notes TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+
+            CREATE TABLE IF NOT EXISTS bis_lists (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                class_name TEXT NOT NULL,
+                spec_name TEXT NOT NULL,
+                phase TEXT NOT NULL,
+                slot TEXT NOT NULL,
+                rank INTEGER NOT NULL,
+                item_id INTEGER NOT NULL,
+                item_name TEXT,
+                quality TEXT,
+                item_level INTEGER DEFAULT 0,
+                icon_url TEXT,
+                source TEXT,
+                dungeon_name TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE(class_name, spec_name, phase, slot, rank, item_id)
+            );
         """)
         await self._connection.commit()
         print("Database tables initialized")

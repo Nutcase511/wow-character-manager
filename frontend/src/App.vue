@@ -16,6 +16,7 @@
           <el-menu-item index="/characters">角色管理</el-menu-item>
           <el-menu-item index="/dungeons">副本管理</el-menu-item>
           <el-menu-item index="/item-needs">装备需求</el-menu-item>
+          <el-menu-item index="/bis">毕业装备</el-menu-item>
           <el-menu-item index="/gold">金币统计</el-menu-item>
           <el-menu-item index="/talents">天赋模拟器</el-menu-item>
           <el-menu-item index="/settings">系统配置</el-menu-item>

@@ -25,6 +25,7 @@ class Settings(BaseSettings):
     DEFAULT_ACCOUNTANT_PATH: str = ""
     DEFAULT_TDINSPECT_PATH: str = ""
     DEFAULT_ATLASLOOT_PATH: str = ""
+    DEFAULT_TITANBIS_PATH: str = ""
 
     class Config:
         env_file = ".env"

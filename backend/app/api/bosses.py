@@ -1,8 +1,7 @@
 from fastapi import APIRouter, HTTPException
 from typing import List, Optional
-from app.schemas.schemas import BossCreate, BossResponse
+from app.schemas.schemas import BossResponse
 from app.core.database import db
-from datetime import datetime
 
 router = APIRouter()
 
@@ -19,20 +18,6 @@ def _row_to_boss(row) -> dict:
         "icon_url": row["icon_url"],
         "created_at": row["created_at"],
     }
-
-
-@router.post("/", response_model=BossResponse)
-async def create_boss(boss: BossCreate):
-    """创建Boss"""
-    now = datetime.utcnow().isoformat()
-    cursor = await db.execute(
-        """INSERT INTO bosses (boss_id, name, description, dungeon_id, dungeon_name, category, icon_url, created_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
-        (boss.boss_id, boss.name, boss.description, boss.dungeon_id,
-         boss.dungeon_name, boss.category, boss.icon_url, now)
-    )
-    row = await db.fetchone("SELECT * FROM bosses WHERE id = ?", (cursor.lastrowid,))
-    return BossResponse(**_row_to_boss(row))
 
 
 @router.get("/", response_model=List[BossResponse])
@@ -85,7 +70,6 @@ async def get_boss_loot(boss_id: int):
     result = []
     for row in rows:
         row_dict = dict(row)
-        # 解析stats JSON
         if row_dict.get('stats'):
             try:
                 import json
@@ -107,9 +91,8 @@ async def get_item_detail(item_id: int):
     )
     if not row:
         raise HTTPException(status_code=404, detail="Item not found")
-    
+
     result = dict(row)
-    # 解析stats JSON
     if result.get('stats'):
         try:
             import json
@@ -118,23 +101,5 @@ async def get_item_detail(item_id: int):
             result['stats'] = {}
     else:
         result['stats'] = {}
-    
+
     return result
-
-
-@router.post("/sync/{journal_encounter_id}")
-async def sync_boss_from_blizzard(journal_encounter_id: int):
-    """手动同步Boss数据（本地模式）"""
-    row = await db.fetchone("SELECT * FROM bosses WHERE boss_id = ?", (journal_encounter_id,))
-    if row:
-        return BossResponse(**_row_to_boss(row))
-    raise HTTPException(status_code=404, detail="Boss not found. Use POST / to create manually.")
-
-
-@router.delete("/{boss_id}")
-async def delete_boss(boss_id: int):
-    """删除Boss"""
-    cursor = await db.execute("DELETE FROM bosses WHERE id = ?", (boss_id,))
-    if cursor.rowcount == 0:
-        raise HTTPException(status_code=404, detail="Boss not found")
-    return {"message": "Boss deleted successfully"}

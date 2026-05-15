@@ -46,7 +46,9 @@ export const characterApi = {
   update: (id: string, data: CharacterCreate) => api.put<Character>(`/characters/${id}`, data),
   delete: (id: string) => api.delete(`/characters/${id}`),
   refreshLevels: () => api.post<{ success: boolean; message: string; updated: number; skipped: number }>('/characters/refresh-levels'),
-  refreshAllData: () => api.post<{ success: boolean; message: string; total: number; success_count: number; failed_count: number; results: any[] }>('/character-refresh/refresh-all')
+  refreshAllData: () => api.post<{ success: boolean; message: string; total: number; success_count: number; failed_count: number; results: any[] }>('/character-refresh/refresh-all'),
+  refreshSingle: (characterId: string) => api.post(`/character-refresh/${characterId}/refresh`),
+  getTalents: (characterId: string) => api.get(`/characters/${characterId}/talents`)
 }
 
 // 装备需求相关API
@@ -63,10 +65,8 @@ export const itemNeedApi = {
 
 // 副本相关API
 export const dungeonApi = {
-  getAll: (params?: { expansion?: string; category?: string }) => api.get<Dungeon[]>('/dungeons/', { params }),
+  getAll: (params?: { expansion?: string; category?: string; phase?: string }) => api.get<Dungeon[]>('/dungeons/', { params }),
   getById: (id: string) => api.get<Dungeon>(`/dungeons/${id}`),
-  create: (data: Partial<Dungeon>) => api.post<Dungeon>('/dungeons/', data),
-  delete: (id: string) => api.delete(`/dungeons/${id}`),
   importAtlasLoot: () => api.post<{ success: boolean; message: string; stats: { instances: number; bosses: number; items: number; loot: number } }>('/dungeons/import-atlasloot')
 }
 
@@ -74,12 +74,10 @@ export const dungeonApi = {
 export const bossApi = {
   getAll: (params?: { dungeon_id?: number }) => api.get<Boss[]>('/bosses/', { params }),
   getById: (id: string) => api.get<Boss>(`/bosses/${id}`),
-  create: (data: Partial<Boss>) => api.post<Boss>('/bosses/', data),
   getByDungeon: (dungeonId: number) => api.get<Boss[]>(`/bosses/dungeon/${dungeonId}/bosses`),
   lookupByBossId: (bossId: number) => api.get<Boss>(`/bosses/lookup/${bossId}`),
   getBossLoot: (bossId: number) => api.get(`/bosses/${bossId}/loot`),
-  getItemDetail: (itemId: number) => api.get(`/bosses/item/${itemId}`),
-  delete: (id: string) => api.delete(`/bosses/${id}`)
+  getItemDetail: (itemId: number) => api.get(`/bosses/item/${itemId}`)
 }
 
 // 服务器相关API
@@ -103,11 +101,7 @@ export const goldApi = {
     api.get<GoldTransaction[]>(`/gold/character/${characterId}/transactions`, { params: { time_mode: timeMode } }),
   getCharacterSnapshots: (characterId: string, limit?: number) =>
     api.get<GoldSnapshot[]>(`/gold/character/${characterId}/snapshots`, { params: { limit } }),
-  updateCharacterGold: (characterId: string, goldCopper: number) =>
-    api.post(`/gold/character/${characterId}/update`, null, { params: { gold_copper: goldCopper } }),
   refreshGold: () => api.post<{ success: boolean; message: string; characters: number; transactions: number }>('/gold/refresh'),
-  deleteCharacterGold: (characterId: string) =>
-    api.delete(`/gold/character/${characterId}`),
   // 图表数据API
   getMonthlyStats: (period?: string) =>
     api.get(`/gold/stats/monthly`, { params: { period } }),
@@ -127,7 +121,9 @@ export const equipmentApi = {
   syncEquipment: (characterId: string, data: any) => 
     api.post(`/characters/${characterId}/equipment/sync`, data),
   getEquipmentSlots: () => 
-    api.get('/characters/equipment/slots')
+    api.get('/characters/equipment/slots'),
+  getCharacterItemSets: (characterId: string) =>
+    api.get(`/characters/${characterId}/item-sets`)
 }
 
 // 天赋相关API
@@ -158,6 +154,17 @@ export const talentApi = {
 export const itemApi = {
   getById: (itemId: number) => api.get(`/items/${itemId}`),
   getBatch: (itemIds: number[]) => api.post('/items/batch', itemIds)
+}
+
+// BiS 毕业装备相关API
+export const bisApi = {
+  getClasses: () => api.get('/bis/classes'),
+  getBisList: (params: { class_name: string; spec_name: string; phase: string; max_rank?: number }) =>
+    api.get('/bis/', { params }),
+  importToNeeds: (characterId: number, data: { class_name: string; spec_name: string; phase: string; max_rank?: number }) =>
+    api.post(`/bis/import-needs/${characterId}`, data),
+  compareCharacter: (characterId: string) =>
+    api.get(`/bis/compare/${characterId}`)
 }
 
 export default api

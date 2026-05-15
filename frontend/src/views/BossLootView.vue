@@ -204,30 +204,22 @@ function showItemDetail(item: any) {
 async function loadLoot() {
   loading.value = true
   try {
-    const [lootRes, bossRes] = await Promise.all([
+    const [lootData, bossData] = await Promise.all([
       bossApi.getBossLoot(bossId),
       bossApi.lookupByBossId(bossId).catch(() => null)
     ])
-    
-    // 获取装备详情
-    const detailedItems = await Promise.all(
-      lootRes.data.map(async (item: any) => {
-        // 尝试从items表获取详细信息
-        const itemDetail = await bossApi.getItemDetail(item.item_id).catch(() => null)
-        if (itemDetail?.data) {
-          return { ...item, ...itemDetail.data }
-        }
-        return item
-      })
-    )
-    
-    lootItems.value = detailedItems
 
-    if (bossRes?.data) {
-      bossName.value = bossRes.data.name
-      dungeonName.value = bossRes.data.dungeon_name
-      dungeonId.value = bossRes.data.dungeon_id
-      bossIcon.value = bossRes.data.icon_url || ''
+    // axios 拦截器已解包 response.data
+    // lootData 直接是数组（后端已通过 LEFT JOIN items 获取了物品详情）
+    const loot: any[] = Array.isArray(lootData) ? lootData : []
+    lootItems.value = loot
+
+    if (bossData) {
+      const boss: any = bossData
+      bossName.value = boss.name || `Boss #${bossId}`
+      dungeonName.value = boss.dungeon_name || ''
+      dungeonId.value = boss.dungeon_id || 0
+      bossIcon.value = boss.icon_url || ''
     } else {
       bossName.value = `Boss #${bossId}`
     }

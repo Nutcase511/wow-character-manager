@@ -1,0 +1,148 @@
+## Interface: 38001
+## Title: |cFF00ff00[快跑兄弟]|r TitanBistooltip
+## Notes: In game BiS lists and item tooltip enrichment.
+## Author: 快跑兄弟
+## IconTexture: Interface\AddOns\TitanBistooltip\Icons\my_custom_icon.tga
+## Notes-zhCN: 泰坦时光服全职业毕业装数据库。|n左键点击小地图按钮，可以查看所有职业所有阶段的毕业装备列表。|n右键小地图按钮，可以进入设置界面对鼠标提示信息进行设置。|n此版用于泰坦重铸时光服客户端。|n|cFF00BFFF快跑兄弟（时光1部落）|r
+## Version: 2.21
+## SavedVariables: TitanBistooltipDB
+## LoadManagers: AddonLoader
+## X-LoadOn-Always: delayed
+
+# Libs.
+lib\LibStub\LibStub.lua
+lib\LibExtraTip\Load.xml
+lib\CallbackHandler-1.0\CallbackHandler-1.0.lua
+lib\LibDataBroker-1.1\LibDataBroker-1.1.lua
+lib\LibDBIcon-1.0\LibDBIcon-1.0.lua
+lib\Ace3\AceGUI-3.0\AceGUI-3.0.xml
+lib\Ace3\AceDB-3.0\AceDB-3.0.lua
+lib\Ace3\AceConsole-3.0\AceConsole-3.0.xml
+lib\Ace3\AceAddon-3.0\AceAddon-3.0.xml
+lib\Ace3\AceConfig-3.0\AceConfig-3.0.xml
+lib\Ace3\AceLocale-3.0\AceLocale-3.0.xml
+
+# Locale files
+Locales\Locale-enUS.lua
+Locales\Locale-zhCN.lua
+Locales\Locale-zhTW.lua
+
+TitanBistooltip_classes.lua
+
+# Titan BIS数据文件 - Death knight
+data\Death knight\Blood tank.lua
+data\Death knight\Blood dps.lua
+data\Death knight\Frost.lua
+data\Death knight\Unholy.lua
+
+# Titan BIS数据文件 - Druid
+data\Druid\Balance.lua
+data\Druid\Feral tank.lua
+data\Druid\Feral dps.lua
+data\Druid\Restoration.lua
+
+# Titan BIS数据文件 - Hunter
+data\Hunter\Beast mastery.lua
+data\Hunter\Marksmanship.lua
+data\Hunter\Survival.lua
+
+# Titan BIS数据文件 - Mage
+data\Mage\Arcane.lua
+data\Mage\Fire.lua
+data\Mage\Fire FFB.lua
+data\Mage\Frost.lua
+
+# Titan BIS数据文件 - Paladin
+data\Paladin\Holy.lua
+data\Paladin\Protection.lua
+data\Paladin\Retribution.lua
+
+# Titan BIS数据文件 - Priest
+data\Priest\Discipline.lua
+data\Priest\Holy.lua
+data\Priest\Shadow.lua
+
+# Titan BIS数据文件 - Rogue
+data\Rogue\Assassination.lua
+data\Rogue\Combat.lua
+data\Rogue\Subtlety.lua
+
+# Titan BIS数据文件 - Shaman
+data\Shaman\Elemental.lua
+data\Shaman\Enhancement.lua
+data\Shaman\Restoration.lua
+
+# Titan BIS数据文件 - Warlock
+data\Warlock\Affliction.lua
+data\Warlock\Demonology.lua
+data\Warlock\Destruction.lua
+
+# Titan BIS数据文件 - Warrior
+data\Warrior\Arms.lua
+data\Warrior\Fury.lua
+data\Warrior\Protection.lua
+
+TitanBistooltip_Maxed_bislists.lua
+
+# Maxed BIS数据文件 - Death knight
+maxed\Death knight\Blood tank.lua
+maxed\Death knight\Blood dps.lua
+maxed\Death knight\Frost.lua
+maxed\Death knight\Unholy.lua
+
+# Maxed BIS数据文件 - Druid
+maxed\Druid\Balance.lua
+maxed\Druid\Feral tank.lua
+maxed\Druid\Feral dps.lua
+maxed\Druid\Restoration.lua
+
+# Maxed BIS数据文件 - Hunter
+maxed\Hunter\Beast mastery.lua
+maxed\Hunter\Marksmanship.lua
+maxed\Hunter\Survival.lua
+
+# Maxed BIS数据文件 - Mage
+maxed\Mage\Arcane.lua
+maxed\Mage\Fire.lua
+maxed\Mage\Fire FFB.lua
+maxed\Mage\Frost.lua
+
+# Maxed BIS数据文件 - Paladin
+maxed\Paladin\Holy.lua
+maxed\Paladin\Protection.lua
+maxed\Paladin\Retribution.lua
+
+# Maxed BIS数据文件 - Priest
+maxed\Priest\Discipline.lua
+maxed\Priest\Holy.lua
+maxed\Priest\Shadow.lua
+
+# Maxed BIS数据文件 - Rogue
+maxed\Rogue\Assassination.lua
+maxed\Rogue\Combat.lua
+maxed\Rogue\Subtlety.lua
+
+# Maxed BIS数据文件 - Shaman
+maxed\Shaman\Elemental.lua
+maxed\Shaman\Enhancement.lua
+maxed\Shaman\Restoration.lua
+
+# Maxed BIS数据文件 - Warlock
+maxed\Warlock\Affliction.lua
+maxed\Warlock\Demonology.lua
+maxed\Warlock\Destruction.lua
+
+# Maxed BIS数据文件 - Warrior
+maxed\Warrior\Arms.lua
+maxed\Warrior\Fury.lua
+maxed\Warrior\Protection.lua
+
+TitanBistooltip_Titan_items.lua
+TitanBistooltip_horde_to_ali.lua
+Core.lua
+Config.lua
+KP_AttrPct.lua
+KP_Level.lua
+Maxed.lua
+TitanBistooltip.lua
+Bislist.lua

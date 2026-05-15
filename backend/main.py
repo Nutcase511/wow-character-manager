@@ -8,6 +8,7 @@ from app.api.equipment import router as equipment_router
 from app.api.character_refresh import router as refresh_router
 from app.api.items import router as items_router
 from app.api.settings import router as settings_router
+from app.api.bis import router as bis_router
 
 app = FastAPI(
     title=settings.APP_NAME,
@@ -73,6 +74,7 @@ app.include_router(equipment_router, tags=["equipment"])
 app.include_router(refresh_router, prefix="/api/character-refresh", tags=["character-refresh"])
 app.include_router(items_router, prefix="/api/items", tags=["items"])
 app.include_router(settings_router, prefix="/api/settings", tags=["settings"])
+app.include_router(bis_router, tags=["bis"])
 
 
 if __name__ == "__main__":

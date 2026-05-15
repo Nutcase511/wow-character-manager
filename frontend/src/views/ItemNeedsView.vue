@@ -13,19 +13,17 @@
           @change="handleCharacterChange"
           clearable
         >
-          <template #default="{ option }">
-            <div class="character-option">
-              <img :src="getClassIcon(option.data.wow_class)" :alt="option.data.wow_class" class="option-class-icon" />
-              <span>{{ option.label }}</span>
-            </div>
-          </template>
           <el-option
             v-for="char in characters"
             :key="char.id"
             :label="`${char.name} - ${char.realm}`"
             :value="char.id"
-            :data="char"
-          />
+          >
+            <div class="character-option">
+              <img :src="getClassIcon(char.wow_class)" :alt="char.wow_class" class="option-class-icon" />
+              <span>{{ char.name }} - {{ char.realm }}</span>
+            </div>
+          </el-option>
         </el-select>
         <el-button type="primary" @click="showAddDialog = true" :disabled="!selectedCharacterId">
           <el-icon><Plus /></el-icon>

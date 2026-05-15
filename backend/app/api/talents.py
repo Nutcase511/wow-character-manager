@@ -48,12 +48,11 @@ async def get_classes():
 @router.get("/trees/{class_name}")
 async def get_class_talent_trees(class_name: str):
     """获取某职业的所有天赋树"""
-    cursor = await db.execute(
+    rows = await db.fetchall(
         "SELECT * FROM talent_trees WHERE class_name = ? ORDER BY spec_name",
         (class_name,)
     )
-    rows = await cursor.fetchall()
-    
+
     trees = []
     for row in rows:
         trees.append({
@@ -63,7 +62,7 @@ async def get_class_talent_trees(class_name: str):
             "spec_icon": row["spec_icon"],
             "description": row["description"]
         })
-    
+
     return {"class_name": class_name, "trees": trees}
 
 
@@ -71,21 +70,19 @@ async def get_class_talent_trees(class_name: str):
 async def get_talent_tree(tree_id: int):
     """获取完整天赋树（包含所有节点）"""
     # 获取天赋树信息
-    cursor = await db.execute(
+    tree_row = await db.fetchone(
         "SELECT * FROM talent_trees WHERE id = ?",
         (tree_id,)
     )
-    tree_row = await cursor.fetchone()
-    
+
     if not tree_row:
         raise HTTPException(status_code=404, detail="Talent tree not found")
-    
+
     # 获取所有天赋节点
-    cursor = await db.execute(
+    node_rows = await db.fetchall(
         "SELECT * FROM talent_nodes WHERE tree_id = ? ORDER BY row, col",
         (tree_id,)
     )
-    node_rows = await cursor.fetchall()
     
     tree = {
         "id": tree_row["id"],
@@ -115,15 +112,14 @@ async def get_talent_tree(tree_id: int):
 @router.get("/tree/{class_name}/{spec_name}")
 async def get_talent_tree_by_spec(class_name: str, spec_name: str):
     """通过职业和天赋名获取天赋树"""
-    cursor = await db.execute(
+    row = await db.fetchone(
         "SELECT id FROM talent_trees WHERE class_name = ? AND spec_name = ?",
         (class_name, spec_name)
     )
-    row = await cursor.fetchone()
-    
+
     if not row:
         raise HTTPException(status_code=404, detail="Talent tree not found")
-    
+
     return await get_talent_tree(row["id"])
 
 
@@ -137,18 +133,17 @@ async def get_talent_builds(
     """获取天赋配点方案列表"""
     query = "SELECT * FROM talent_builds WHERE 1=1"
     params = []
-    
+
     if class_name:
         query += " AND class_name = ?"
         params.append(class_name)
     if spec_name:
         query += " AND spec_name = ?"
         params.append(spec_name)
-    
+
     query += " ORDER BY created_at DESC"
-    
-    cursor = await db.execute(query, params)
-    rows = await cursor.fetchall()
+
+    rows = await db.fetchall(query, params)
     
     builds = []
     for row in rows:
@@ -169,11 +164,10 @@ async def get_talent_builds(
 @router.get("/builds/{build_id}")
 async def get_talent_build(build_id: int):
     """获取单个天赋配点方案"""
-    cursor = await db.execute(
+    row = await db.fetchone(
         "SELECT * FROM talent_builds WHERE id = ?",
         (build_id,)
     )
-    row = await cursor.fetchone()
     
     if not row:
         raise HTTPException(status_code=404, detail="Talent build not found")
@@ -234,11 +228,10 @@ async def upload_build_image(build_id: int, file: UploadFile = File(...)):
 async def delete_talent_build(build_id: int):
     """删除天赋配点方案"""
     # 获取图片路径
-    cursor = await db.execute(
+    row = await db.fetchone(
         "SELECT image_path FROM talent_builds WHERE id = ?",
         (build_id,)
     )
-    row = await cursor.fetchone()
     
     if row and row["image_path"]:
         # 删除图片文件

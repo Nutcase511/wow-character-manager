@@ -22,6 +22,77 @@ _backend_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, _backend_dir)
 from import_tdinspect import parse_tdinspect_lua, name_to_key, CLASS_ID_MAP_WOTLK, TDINSPECT_FILE
 
+# tdInspect 装备槽位顺序（按 Lua 表索引）
+TDINSPECT_SLOT_ORDER = [
+    "头部", "颈部", "肩部", "衬衣", "胸部", "腰部",
+    "腿部", "脚部", "手腕", "手套",
+    "手指1", "手指2", "饰品1", "饰品2",
+    "背部", "主手", "副手", "远程", "战袍"
+]
+
+# 天赋树索引 → spec_name 映射（按职业）
+CLASS_TALENT_SPECS = {
+    'death_knight': ['Blood', 'Frost', 'Unholy'],
+    'druid': ['Balance', 'Feral', 'Restoration'],
+    'hunter': ['Beast mastery', 'Marksmanship', 'Survival'],
+    'mage': ['Arcane', 'Fire', 'Frost'],
+    'paladin': ['Holy', 'Protection', 'Retribution'],
+    'priest': ['Discipline', 'Holy', 'Shadow'],
+    'rogue': ['Assassination', 'Combat', 'Subtlety'],
+    'shaman': ['Elemental', 'Enhancement', 'Restoration'],
+    'warlock': ['Affliction', 'Demonology', 'Destruction'],
+    'warrior': ['Arms', 'Fury', 'Protection'],
+}
+
+
+def parse_talent_spec(talents_data: list, wow_class: str) -> str:
+    """从 tdInspect 天赋编码解析出专精名称"""
+    if not talents_data or not isinstance(talents_data, list):
+        return None
+    specs = CLASS_TALENT_SPECS.get(wow_class)
+    if not specs:
+        return None
+    # 计算每个天赋树的总点数
+    tree_points = []
+    for tree_str in talents_data:
+        if isinstance(tree_str, str):
+            total = sum(int(ch) for ch in tree_str if ch.isdigit())
+            tree_points.append(total)
+        else:
+            tree_points.append(0)
+    if not tree_points:
+        return None
+    # 点数最多的树为主专精
+    max_idx = tree_points.index(max(tree_points))
+    if max(tree_points) == 0:
+        return None
+    return specs[max_idx]
+
+
+def format_talent_points(talents_data: list, wow_class: str) -> list:
+    """格式化天赋配点信息供前端展示"""
+    if not talents_data or not isinstance(talents_data, list):
+        return []
+    specs = CLASS_TALENT_SPECS.get(wow_class)
+    if not specs:
+        return []
+    result = []
+    for i, tree_str in enumerate(talents_data):
+        if isinstance(tree_str, str):
+            total = sum(int(ch) for ch in tree_str if ch.isdigit())
+            result.append({
+                "spec_name": specs[i] if i < len(specs) else f"Tree{i}",
+                "points": total,
+                "code": tree_str
+            })
+        else:
+            result.append({
+                "spec_name": specs[i] if i < len(specs) else f"Tree{i}",
+                "points": 0,
+                "code": ""
+            })
+    return result
+
 
 class RefreshResult(BaseModel):
     """刷新结果"""
@@ -100,15 +171,87 @@ async def refresh_character_from_tdinspect(character_id: int, character_name: st
                 updates["race"] = race
                 result.updated_fields.append("race")
         
-        # 更新天赋数据
+        # 更新天赋数据和专精
         if matched_char.get("talents"):
             updates["talents_data"] = json.dumps(matched_char["talents"], ensure_ascii=False)
             result.updated_fields.append("talents_data")
+            # 从天赋编码解析专精
+            wow_class = char_class or updates.get("wow_class")
+            if wow_class:
+                spec = parse_talent_spec(matched_char["talents"], wow_class)
+                if spec:
+                    updates["spec"] = spec
+                    result.updated_fields.append("spec")
         
         # 更新装备数据
         if matched_char.get("equips"):
             updates["equips_data"] = json.dumps(matched_char["equips"], ensure_ascii=False)
             result.updated_fields.append("equips_data")
+
+            # 同时持久化到 character_equipment 表
+            try:
+                equips = matched_char["equips"]
+                for idx, equip_str in enumerate(equips):
+                    if not equip_str or not equip_str.startswith("item:"):
+                        continue
+                    # 解析 item:id:enchantId:gems... 格式
+                    parts = equip_str.split(":")
+                    if len(parts) < 2:
+                        continue
+                    try:
+                        item_id = int(parts[1])
+                    except ValueError:
+                        continue
+
+                    # 确定槽位名称
+                    slot_name = ""
+                    if idx < len(TDINSPECT_SLOT_ORDER):
+                        slot_name = TDINSPECT_SLOT_ORDER[idx]
+                    else:
+                        continue
+
+                    # 从 items 表查询物品详情
+                    item_row = await db.fetchone(
+                        "SELECT name, quality, item_level, slot, icon_url FROM items WHERE item_id = ?",
+                        (item_id,)
+                    )
+
+                    if item_row:
+                        await db.execute("""
+                            INSERT INTO character_equipment
+                            (character_id, item_id, name, slot, quality, item_level, icon_url, is_equipped)
+                            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                            ON CONFLICT(character_id, slot) DO UPDATE SET
+                            item_id = excluded.item_id,
+                            name = excluded.name,
+                            quality = excluded.quality,
+                            item_level = excluded.item_level,
+                            icon_url = excluded.icon_url,
+                            is_equipped = excluded.is_equipped,
+                            updated_at = CURRENT_TIMESTAMP
+                        """, (
+                            character_id, item_id, item_row["name"], slot_name,
+                            item_row["quality"], item_row["item_level"], item_row["icon_url"], 1
+                        ))
+                    else:
+                        # 物品不在 items 表中，仅记录 item_id
+                        await db.execute("""
+                            INSERT INTO character_equipment
+                            (character_id, item_id, name, slot, quality, is_equipped)
+                            VALUES (?, ?, ?, ?, ?, ?)
+                            ON CONFLICT(character_id, slot) DO UPDATE SET
+                            item_id = excluded.item_id,
+                            name = excluded.name,
+                            quality = excluded.quality,
+                            is_equipped = excluded.is_equipped,
+                            updated_at = CURRENT_TIMESTAMP
+                        """, (
+                            character_id, item_id, f"物品#{item_id}", slot_name, "", 1
+                        ))
+
+                result.updated_fields.append("character_equipment")
+            except Exception as e:
+                result.errors.append(f"装备持久化失败: {str(e)}")
         
         # 更新活跃天赋组
         if matched_char.get("activeGroup"):

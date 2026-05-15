@@ -1,0 +1,8 @@
+<Bindings>
+    <Binding name="TOGGLE_BISLIST" Category="BINDING_HEADER_TITANBISTOOLTIP">
+        TitanBistooltipToggle()
+    </Binding>
+    <Binding name="TOGGLE_MAXED" Category="BINDING_HEADER_TITANBISTOOLTIP">
+        TitanBistooltipToggleMaxed()
+    </Binding>
+</Bindings>

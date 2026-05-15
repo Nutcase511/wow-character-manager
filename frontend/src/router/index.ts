@@ -68,6 +68,12 @@ const routes: RouteRecordRaw[] = [
     meta: { title: '天赋模拟器' }
   },
   {
+    path: '/bis',
+    name: 'BiS',
+    component: () => import('@/views/BiSView.vue'),
+    meta: { title: '毕业装备' }
+  },
+  {
     path: '/settings',
     name: 'Settings',
     component: () => import('@/views/SettingsView.vue'),

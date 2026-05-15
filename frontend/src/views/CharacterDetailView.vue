@@ -9,6 +9,10 @@
       </div>
       <h2 v-else class="page-title">角色详情</h2>
       <div class="header-actions">
+        <el-button type="success" plain @click="openBisDialog">
+          <el-icon><Download /></el-icon>
+          导入毕业装备
+        </el-button>
         <el-button type="primary" @click="showAddNeedDialog = true">
           <el-icon><Plus /></el-icon>
           添加装备需求
@@ -151,6 +155,21 @@
                 <span class="meta-value" :class="character.faction">
                   {{ character.faction === 'alliance' ? '联盟' : '部落' }}
                 </span>
+              </div>
+              <!-- 天赋树显示 -->
+              <div v-if="talentInfo?.talents" class="meta-row talent-trees-row">
+                <span class="meta-label">天赋</span>
+                <div class="talent-trees">
+                  <div
+                    v-for="tree in talentInfo.talents"
+                    :key="tree.spec_name"
+                    class="talent-tree-item"
+                    :class="{ active: tree.spec_name === talentInfo.spec }"
+                  >
+                    <span class="talent-tree-name">{{ tree.spec_name }}</span>
+                    <span class="talent-tree-points">{{ tree.points }}</span>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -300,6 +319,56 @@
         </el-empty>
       </el-card>
 
+      <!-- 套装收集进度 -->
+      <el-card v-if="itemSets.length > 0" class="item-sets-card">
+        <template #header>
+          <div class="card-header">
+            <span>套装收集</span>
+            <el-tag type="info" size="small">{{ itemSets.length }} 套</el-tag>
+          </div>
+        </template>
+        <div class="item-sets-list">
+          <div v-for="set in itemSets" :key="set.set_id" class="item-set-item">
+            <div class="set-header">
+              <span class="set-name">{{ set.set_name }}</span>
+              <el-progress
+                :percentage="set.total_count > 0 ? Math.round(set.equipped_count / set.total_count * 100) : 0"
+                :stroke-width="14"
+                :color="set.equipped_count >= set.total_count && set.total_count > 0 ? '#1eff00' : '#0070dd'"
+                style="width: 120px"
+              >
+                <span class="set-progress-text">{{ set.equipped_count }}/{{ set.total_count || '?' }}</span>
+              </el-progress>
+            </div>
+            <!-- 套装效果 -->
+            <div v-if="set.effects && set.effects.length > 0" class="set-effects">
+              <div
+                v-for="(effect, idx) in set.effects"
+                :key="idx"
+                class="set-effect"
+                :class="{ 'effect-active': effect.is_active }"
+              >
+                <el-tag :type="effect.is_active ? 'success' : 'info'" size="small" effect="dark">
+                  {{ effect.required_count }}件
+                </el-tag>
+                <span class="effect-text">{{ effect.display_string }}</span>
+              </div>
+            </div>
+            <!-- 套装部件 -->
+            <div v-if="set.items && set.items.length > 0" class="set-items">
+              <span
+                v-for="(sItem, idx) in set.items"
+                :key="idx"
+                class="set-item-tag"
+                :class="{ 'item-equipped': sItem.is_equipped }"
+              >
+                {{ sItem.name }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </el-card>
+
       <!-- 角色基本信息 -->
       <el-card class="character-info-card">
         <template #header>
@@ -350,6 +419,103 @@
           </div>
         </div>
         <el-empty v-else description="暂无装备需求数据" />
+      </el-card>
+
+      <!-- BiS 毕业装对比 -->
+      <el-card class="bis-comparison-card">
+        <template #header>
+          <div class="card-header">
+            <span>毕业装备对比</span>
+            <el-tag v-if="bisComparison" type="warning">
+              共 {{ bisComparison.comparisons?.length || 0 }} 个天赋方案
+            </el-tag>
+          </div>
+        </template>
+        <div v-if="bisComparisonLoading" class="bis-loading">
+          <el-skeleton :rows="3" animated />
+        </div>
+        <div v-else-if="bisComparison && bisComparison.comparisons && bisComparison.comparisons.length > 0">
+          <div class="bis-spec-tabs">
+            <el-radio-group v-model="selectedBisSpec" size="small" @change="onBisCompareSpecChange">
+              <el-radio-button
+                v-for="comp in bisComparison.comparisons"
+                :key="comp.spec_name"
+                :value="comp.spec_name"
+              >
+                {{ comp.spec_name }} ({{ comp.obtained_count }}/{{ comp.total }})
+              </el-radio-button>
+            </el-radio-group>
+          </div>
+          <div v-if="currentBisComparison" class="bis-comparison-content">
+            <div class="bis-summary">
+              <el-statistic title="已获取" :value="currentBisComparison.obtained_count" />
+              <el-statistic title="未获取" :value="currentBisComparison.missing_count" />
+              <el-statistic title="总毕业装" :value="currentBisComparison.total" />
+            </div>
+            <el-divider />
+            <div class="bis-missing-list">
+              <h4>未获取的毕业装备</h4>
+              <div v-if="currentBisComparison.missing.length > 0" class="bis-items-grid">
+                <div
+                  v-for="item in currentBisComparison.missing"
+                  :key="item.item_id"
+                  class="bis-item-card"
+                  :class="`quality-${item.quality || 'common'}`"
+                >
+                  <div class="bis-item-icon">
+                    <img
+                      v-if="item.icon_url"
+                      :src="item.icon_url"
+                      :alt="item.item_name"
+                      @error="(e: any) => e.target.src = ''"
+                    />
+                    <div v-else class="item-icon-placeholder">{{ item.item_name?.[0] || '?' }}</div>
+                  </div>
+                  <div class="bis-item-info">
+                    <div class="bis-item-name">{{ item.item_name || `物品#${item.item_id}` }}</div>
+                    <div class="bis-item-meta">
+                      <span class="bis-item-slot">{{ item.slot }}</span>
+                      <span v-if="item.item_level" class="bis-item-level">装等 {{ item.item_level }}</span>
+                    </div>
+                    <div v-if="item.source" class="bis-item-source">{{ item.source }}</div>
+                  </div>
+                </div>
+              </div>
+              <el-empty v-else description="全部毕业装已获取！" :image-size="60" />
+            </div>
+            <el-divider />
+            <div class="bis-obtained-list">
+              <h4>已获取的毕业装备</h4>
+              <div v-if="currentBisComparison.obtained.length > 0" class="bis-items-grid">
+                <div
+                  v-for="item in currentBisComparison.obtained"
+                  :key="item.item_id"
+                  class="bis-item-card obtained"
+                  :class="`quality-${item.quality || 'common'}`"
+                >
+                  <div class="bis-item-icon">
+                    <img
+                      v-if="item.icon_url"
+                      :src="item.icon_url"
+                      :alt="item.item_name"
+                      @error="(e: any) => e.target.src = ''"
+                    />
+                    <div v-else class="item-icon-placeholder">{{ item.item_name?.[0] || '?' }}</div>
+                  </div>
+                  <div class="bis-item-info">
+                    <div class="bis-item-name">{{ item.item_name || `物品#${item.item_id}` }}</div>
+                    <div class="bis-item-meta">
+                      <span class="bis-item-slot">{{ item.slot }}</span>
+                      <span v-if="item.item_level" class="bis-item-level">装等 {{ item.item_level }}</span>
+                    </div>
+                    <div v-if="item.source" class="bis-item-source">{{ item.source }}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <el-empty v-else description="暂无 BiS 数据" :image-size="60" />
       </el-card>
 
       <!-- 装备需求列表 -->
@@ -428,6 +594,60 @@
       </el-button>
     </div>
 
+    <!-- 导入毕业装备对话框 -->
+    <el-dialog v-model="bisDialogVisible" title="导入毕业装备 (BiS)" width="700px" destroy-on-close>
+      <div class="bis-dialog">
+        <el-form :inline="true" class="bis-filter-form">
+          <el-form-item label="天赋">
+            <el-select v-model="bisSpecName" placeholder="选择天赋" @change="onBisSpecChange">
+              <el-option
+                v-for="spec in bisSpecOptions"
+                :key="spec.value"
+                :label="spec.label"
+                :value="spec.value"
+              />
+            </el-select>
+          </el-form-item>
+          <el-form-item label="阶段">
+            <el-select v-model="bisPhase" placeholder="选择阶段" @change="loadBisPreview">
+              <el-option
+                v-for="p in bisPhaseOptions"
+                :key="p.value"
+                :label="p.label"
+                :value="p.value"
+              />
+            </el-select>
+          </el-form-item>
+        </el-form>
+
+        <div v-loading="bisLoading" class="bis-preview">
+          <div v-if="bisPreviewItems.length > 0" class="bis-items">
+            <div v-for="item in bisPreviewItems" :key="item.item_id" class="bis-item-row">
+              <span class="bis-slot">{{ bisSlotName(item.slot) }}</span>
+              <span class="bis-name" :class="bisQualityClass(item.quality)">
+                {{ item.item_name || `物品#${item.item_id}` }}
+              </span>
+              <span class="bis-ilvl">Lv.{{ item.item_level || '-' }}</span>
+              <span class="bis-source">{{ item.source || item.dungeon_name || '-' }}</span>
+              <el-tag v-if="isItemInNeeds(item.item_id)" type="success" size="small">已添加</el-tag>
+            </div>
+          </div>
+          <el-empty v-else-if="!bisLoading" description="请选择天赋和阶段" :image-size="40" />
+        </div>
+      </div>
+      <template #footer>
+        <el-button @click="bisDialogVisible = false">取消</el-button>
+        <el-button
+          type="primary"
+          @click="importBisToNeeds"
+          :loading="bisImporting"
+          :disabled="bisPreviewItems.length === 0"
+        >
+          导入到装备需求
+        </el-button>
+      </template>
+    </el-dialog>
+
     <!-- 添加/编辑装备需求对话框 -->
     <el-dialog
       v-model="showAddNeedDialog"
@@ -477,8 +697,8 @@ import { useRoute, useRouter } from 'vue-router'
 import { useCharacterStore } from '@/stores/character'
 import { useItemNeedStore } from '@/stores/itemNeed'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { ArrowLeft, Plus, Refresh } from '@element-plus/icons-vue'
-import { goldApi, equipmentApi, itemApi } from '@/api'
+import { ArrowLeft, Plus, Refresh, Download } from '@element-plus/icons-vue'
+import { goldApi, equipmentApi, itemApi, bisApi } from '@/api'
 import type { ItemNeed, ItemNeedCreate, ItemProgress } from '@/types'
 import { WoWClass } from '@/types'
 import { getClassIcon, getFactionIcon } from '@/utils/classIcons'
@@ -500,6 +720,20 @@ const goldLoading = ref(false)
 const equipment = ref<any[]>([])
 const equipmentLoading = ref(false)
 const averageItemLevel = ref(0)
+
+// 套装状态
+const itemSets = ref<any[]>([])
+const itemSetsLoading = ref(false)
+
+// BiS 对比状态
+const bisComparison = ref<any>(null)
+const bisComparisonLoading = ref(false)
+const selectedBisSpec = ref<string>('')
+const selectedBisPhase = ref<string>('')
+
+// 天赋信息状态
+const talentInfo = ref<any>(null)
+const talentInfoLoading = ref(false)
 
 // 装备槽位定义（魔兽风格布局）
 const leftSlots = [
@@ -533,6 +767,22 @@ const weaponSlots = [
 
 // 过滤器
 const filterStatus = ref<'all' | 'pending' | 'obtained'>('all')
+
+// BiS 对比计算属性
+const currentBisComparison = computed(() => {
+  if (!bisComparison.value?.comparisons) return null
+  return bisComparison.value.comparisons.find(
+    (c: any) => c.spec_name === selectedBisSpec.value
+  ) || bisComparison.value.comparisons[0]
+})
+
+function onBisCompareSpecChange(spec: string) {
+  selectedBisSpec.value = spec
+  const comp = bisComparison.value?.comparisons?.find((c: any) => c.spec_name === spec)
+  if (comp) {
+    selectedBisPhase.value = comp.phase
+  }
+}
 
 // 对话框状态
 const showAddNeedDialog = ref(false)
@@ -958,6 +1208,214 @@ async function loadEquipmentFromEquipsData() {
   }
 }
 
+// BiS 毕业装备导入
+const bisDialogVisible = ref(false)
+const bisSpecName = ref('')
+const bisPhase = ref('PR')
+const bisPreviewItems = ref<any[]>([])
+const bisLoading = ref(false)
+const bisImporting = ref(false)
+const bisClassesData = ref<Record<string, any>>({})
+
+// BiS 天赋选项（根据角色职业过滤）
+const bisSpecOptions = computed(() => {
+  if (!character.value) return []
+  const cls = character.value.wow_class
+  const specs = bisClassesData.value[cls] || {}
+  // TitanBistooltip spec_name 到中文显示名的映射
+  const specDisplayNames: Record<string, string> = {
+    // Warrior
+    'Arms': '武器', 'Fury': '狂怒', 'Protection': '防护',
+    // Paladin
+    'Holy': '神圣', 'Retribution': '惩戒',
+    // Hunter
+    'Beast mastery': '兽王', 'Marksmanship': '射击', 'Survival': '生存',
+    // Rogue
+    'Assassination': '刺杀', 'Combat': '战斗', 'Subtlety': '敏锐',
+    // Priest
+    'Discipline': '戒律', 'Shadow': '暗影',
+    // Shaman
+    'Elemental': '元素', 'Enhancement': '增强', 'Restoration': '恢复',
+    // Mage
+    'Arcane': '奥术', 'Fire': '火焰', 'Fire FFB': '冰火法', 'Frost': '冰霜',
+    // Warlock
+    'Affliction': '痛苦', 'Demonology': '恶魔', 'Destruction': '毁灭', 'Destruction fire': '火毁',
+    // Druid
+    'Balance': '平衡', 'Feral dps': '猫德', 'Feral tank': '熊T',
+    // DK
+    'Blood tank': '血坦', 'Blood dps': '鲜血DPS', 'Frost': '冰霜', 'Unholy': '邪恶',
+  }
+  return Object.keys(specs).map(s => ({
+    value: s,
+    label: specDisplayNames[s] || s
+  }))
+})
+
+const bisPhaseOptions = [
+  { value: 'PR', label: '团本前' },
+  { value: 'P1', label: '阶段1' },
+  { value: 'P2', label: '阶段2' },
+  { value: 'P3', label: '阶段3' },
+  { value: 'P4', label: '阶段4' },
+  { value: 'P5', label: '阶段5' },
+  { value: 'P6', label: '阶段6' },
+  { value: 'P7', label: '阶段7' },
+  { value: 'P8', label: '阶段8' },
+  { value: 'P9', label: '阶段9' },
+  { value: 'P10', label: '阶段10' },
+  { value: 'P11', label: '阶段11' },
+]
+
+function bisSlotName(slot: string): string {
+  const names: Record<string, string> = {
+    Head: '头部', Neck: '颈部', Shoulder: '肩部', Back: '背部',
+    Chest: '胸部', Wrist: '手腕', Hands: '手套', Waist: '腰部',
+    Legs: '腿部', Feet: '脚部', Finger: '手指', Trinket: '饰品',
+    Weapon: '主手', 'Off hand': '副手', Ranged: '远程',
+    Helm: '头部', Bracers: '手腕', Pants: '腿部', Boots: '脚部',
+    MainHand: '主手', OffHand: '副手', TwoHand: '双手',
+  }
+  return names[slot] || slot
+}
+
+function bisQualityClass(quality: string | null): string {
+  const map: Record<string, string> = {
+    uncommon: 'q-uncommon', rare: 'q-rare', epic: 'q-epic', legendary: 'q-legendary'
+  }
+  return map[quality || ''] || ''
+}
+
+function isItemInNeeds(itemId: number): boolean {
+  return itemNeeds.value.some(n => Number(n.item_id) === itemId)
+}
+
+async function openBisDialog() {
+  bisDialogVisible.value = true
+  bisSpecName.value = ''
+  bisPreviewItems.value = []
+  // 加载 BiS 职业数据
+  try {
+    const data = await bisApi.getClasses()
+    bisClassesData.value = data as any
+    // 自动选择第一个天赋
+    const cls = character.value?.wow_class
+    if (cls && data[cls]) {
+      const firstSpec = Object.keys(data[cls])[0]
+      if (firstSpec) {
+        bisSpecName.value = firstSpec
+        if (data[cls][firstSpec]?.includes('PR')) {
+          bisPhase.value = 'PR'
+        }
+        await loadBisPreview()
+      }
+    }
+  } catch (error) {
+    console.error('加载BiS数据失败:', error)
+  }
+}
+
+async function onBisSpecChange() {
+  await loadBisPreview()
+}
+
+async function loadBisPreview() {
+  if (!bisSpecName.value || !bisPhase.value) {
+    bisPreviewItems.value = []
+    return
+  }
+  const cls = character.value?.wow_class
+  if (!cls) return
+
+  bisLoading.value = true
+  try {
+    const data = await bisApi.getBisList({
+      class_name: cls,
+      spec_name: bisSpecName.value,
+      phase: bisPhase.value,
+      max_rank: 1
+    })
+    bisPreviewItems.value = Array.isArray(data) ? data : []
+  } catch (error) {
+    bisPreviewItems.value = []
+  } finally {
+    bisLoading.value = false
+  }
+}
+
+async function importBisToNeeds() {
+  const characterId = route.params.id as string
+  const cls = character.value?.wow_class
+  if (!cls || !bisSpecName.value || !bisPhase.value) return
+
+  bisImporting.value = true
+  try {
+    const result = await bisApi.importToNeeds(Number(characterId), {
+      class_name: cls,
+      spec_name: bisSpecName.value,
+      phase: bisPhase.value,
+      max_rank: 1
+    })
+    ElMessage.success(result.message || '导入成功')
+    bisDialogVisible.value = false
+    await loadItemNeeds()
+    await loadProgress()
+  } catch (error) {
+    ElMessage.error('导入失败')
+  } finally {
+    bisImporting.value = false
+  }
+}
+
+// 加载角色套装
+async function loadItemSets() {
+  const characterId = route.params.id as string
+  itemSetsLoading.value = true
+  try {
+    const data = await equipmentApi.getCharacterItemSets(characterId)
+    if (data && data.item_sets) {
+      itemSets.value = data.item_sets
+    }
+  } catch (error) {
+    console.error('加载套装数据失败:', error)
+  } finally {
+    itemSetsLoading.value = false
+  }
+}
+
+// 加载 BiS 对比数据
+async function loadBisComparison() {
+  const characterId = route.params.id as string
+  bisComparisonLoading.value = true
+  try {
+    const data = await bisApi.compareCharacter(characterId)
+    bisComparison.value = data
+    if (data.comparisons && data.comparisons.length > 0) {
+      selectedBisSpec.value = data.comparisons[0].spec_name
+      selectedBisPhase.value = data.comparisons[0].phase
+    }
+  } catch (error) {
+    console.error('加载 BiS 对比数据失败:', error)
+    bisComparison.value = null
+  } finally {
+    bisComparisonLoading.value = false
+  }
+}
+
+// 加载天赋信息
+async function loadTalentInfo() {
+  const characterId = route.params.id as string
+  talentInfoLoading.value = true
+  try {
+    const data = await characterApi.getTalents(characterId)
+    talentInfo.value = data
+  } catch (error) {
+    console.error('加载天赋信息失败:', error)
+    talentInfo.value = null
+  } finally {
+    talentInfoLoading.value = false
+  }
+}
+
 // 获取品质数值
 function getQualityValue(quality: string): number {
   const values: Record<string, number> = {
@@ -971,25 +1429,16 @@ function getQualityValue(quality: string): number {
   return values[quality?.toLowerCase()] || 1
 }
 
-// 加载角色装备（优先从 equips_data，其次从 API）
+// 加载角色装备（优先从 character_equipment 表 API，其次从 equips_data）
 async function loadEquipment() {
   const characterId = route.params.id as string
   equipmentLoading.value = true
-  
+
   try {
-    // 首先尝试从角色的 equips_data 加载（tdInspect 数据）
-    if (character.value?.equips_data) {
-      await loadEquipmentFromEquipsData()
-      if (equipment.value.length > 0) {
-        equipmentLoading.value = false
-        return
-      }
-    }
-    
-    // 如果没有 tdInspect 数据，尝试从 API 加载
+    // 首先尝试从 character_equipment 表加载（持久化数据）
     const data = await equipmentApi.getCharacterEquipment(characterId)
-    
-    if (data && data.equipped_items) {
+
+    if (data && data.equipped_items && data.equipped_items.length > 0) {
       equipment.value = data.equipped_items.map((item: any) => ({
         slot: item.slot,
         slotType: item.slot_type || '',
@@ -1008,17 +1457,28 @@ async function loadEquipment() {
         durabilityMax: item.durability_max,
         itemSetName: item.item_set_name
       }))
-      
+
       // 计算平均装等
       const validItems = equipment.value.filter((i: any) => i.itemLevel > 0)
       if (validItems.length > 0) {
         const total = validItems.reduce((sum: number, i: any) => sum + i.itemLevel, 0)
         averageItemLevel.value = Math.round(total / validItems.length)
       }
-    } else {
-      equipment.value = []
-      averageItemLevel.value = 0
+      equipmentLoading.value = false
+      return
     }
+
+    // 回退：从角色的 equips_data 加载（tdInspect 原始数据）
+    if (character.value?.equips_data) {
+      await loadEquipmentFromEquipsData()
+      if (equipment.value.length > 0) {
+        equipmentLoading.value = false
+        return
+      }
+    }
+
+    equipment.value = []
+    averageItemLevel.value = 0
   } catch (error) {
     console.error('加载装备失败:', error)
     equipment.value = []
@@ -1033,8 +1493,25 @@ onMounted(async () => {
   loading.value = true
   try {
     await loadCharacter()
-    await Promise.all([loadItemNeeds(), loadProgress(), loadEquipment()])
-    await loadGold()
+    // 自动从 tdInspect 刷新角色数据
+    try {
+      await characterApi.refreshSingle(route.params.id as string)
+    } catch {
+      console.warn('tdInspect 刷新失败，使用已有数据')
+    }
+    await Promise.all([
+      loadItemNeeds(),
+      loadProgress(),
+      loadEquipment(),
+      loadItemSets(),
+      loadGold(),
+      loadBisComparison(),
+      loadTalentInfo()
+    ])
+    // 如果金币数据为空，自动触发一次刷新
+    if (!goldData.value?.character_gold) {
+      await loadGold()
+    }
   } finally {
     loading.value = false
   }
@@ -1482,7 +1959,48 @@ onMounted(async () => {
 }
 
 .meta-value.horde {
-  color: #ff2020;
+  color: #ff4444;
+}
+
+/* 天赋树显示 */
+.talent-trees-row {
+  flex-direction: column !important;
+  align-items: flex-start !important;
+  gap: 6px !important;
+}
+
+.talent-trees {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.talent-tree-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  background: #f3f4f6;
+  color: #6b7280;
+  border: 1px solid #e5e7eb;
+}
+
+.talent-tree-item.active {
+  background: #e0f2fe;
+  border-color: #3b82f6;
+  color: #2563eb;
+  font-weight: 600;
+}
+
+.talent-tree-name {
+  white-space: nowrap;
+}
+
+.talent-tree-points {
+  font-weight: 700;
+  font-size: 12px;
 }
 
 .equipment-loading {
@@ -1493,6 +2011,148 @@ onMounted(async () => {
   font-size: 12px;
   color: #6b7280;
   margin-top: 8px;
+}
+
+/* 套装收集 */
+.item-sets-card {
+  background: #1f2937;
+  border: 1px solid #374151;
+}
+
+.item-sets-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.item-set-item {
+  padding: 12px 16px;
+  background: #172033;
+  border-radius: 8px;
+  border-left: 3px solid #0070dd;
+}
+
+.set-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.set-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: #a335ee;
+}
+
+.set-progress-text {
+  font-size: 12px;
+  color: #e5e7eb;
+}
+
+.set-effects {
+  margin-bottom: 8px;
+}
+
+.set-effect {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.set-effect.effect-active .effect-text {
+  color: #1eff00;
+}
+
+.set-items {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.set-item-tag {
+  font-size: 12px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: #1f2937;
+  color: #6b7280;
+  border: 1px solid #374151;
+}
+
+.set-item-tag.item-equipped {
+  color: #0070dd;
+  border-color: #0070dd;
+  background: rgba(0, 112, 221, 0.1);
+}
+
+/* BiS 导入对话框 */
+.bis-dialog {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.bis-filter-form {
+  display: flex;
+  gap: 16px;
+}
+
+.bis-preview {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.bis-items {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.bis-item-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  background: #172033;
+  border-radius: 6px;
+  font-size: 13px;
+}
+
+.bis-slot {
+  width: 50px;
+  color: #9ca3af;
+  flex-shrink: 0;
+}
+
+.bis-name {
+  flex: 1;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bis-name.q-uncommon { color: #1eff00; }
+.bis-name.q-rare { color: #0070dd; }
+.bis-name.q-epic { color: #a335ee; }
+.bis-name.q-legendary { color: #ff8000; }
+
+.bis-ilvl {
+  color: #6b7280;
+  flex-shrink: 0;
+  min-width: 50px;
+}
+
+.bis-source {
+  color: #6b7280;
+  flex-shrink: 0;
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* 响应式适配 */
@@ -1542,6 +2202,139 @@ onMounted(async () => {
   
   .equipment-center {
     flex-direction: column;
+  }
+}
+
+/* BiS 对比样式 */
+.bis-comparison-card {
+  margin-top: 20px;
+}
+
+.bis-loading {
+  padding: 20px;
+}
+
+.bis-spec-tabs {
+  margin-bottom: 16px;
+}
+
+.bis-comparison-content {
+  padding: 0 4px;
+}
+
+.bis-summary {
+  display: flex;
+  gap: 40px;
+  justify-content: center;
+  padding: 12px 0;
+}
+
+.bis-missing-list h4,
+.bis-obtained-list h4 {
+  margin: 0 0 12px 0;
+  font-size: 14px;
+  color: #606266;
+}
+
+.bis-items-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 8px;
+}
+
+.bis-item-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  border: 1px solid #e4e7ed;
+  background: #fafafa;
+  transition: all 0.2s;
+}
+
+.bis-item-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.bis-item-card.obtained {
+  opacity: 0.75;
+}
+
+.bis-item-card.obtained .bis-item-name::after {
+  content: ' ✓';
+  color: #67c23a;
+  font-weight: bold;
+}
+
+.bis-item-card.quality-common { border-left: 3px solid #ffffff; }
+.bis-item-card.quality-uncommon { border-left: 3px solid #1eff00; }
+.bis-item-card.quality-rare { border-left: 3px solid #0070dd; }
+.bis-item-card.quality-epic { border-left: 3px solid #a335ee; }
+.bis-item-card.quality-legendary { border-left: 3px solid #ff8000; }
+
+.bis-item-icon {
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  border-radius: 4px;
+  overflow: hidden;
+  background: #e4e7ed;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bis-item-icon img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.item-icon-placeholder {
+  font-size: 16px;
+  font-weight: bold;
+  color: #909399;
+}
+
+.bis-item-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.bis-item-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: #303133;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.bis-item-meta {
+  display: flex;
+  gap: 8px;
+  font-size: 11px;
+  color: #909399;
+  margin-top: 2px;
+}
+
+.bis-item-source {
+  font-size: 11px;
+  color: #c0c4cc;
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@media (max-width: 768px) {
+  .bis-items-grid {
+    grid-template-columns: 1fr;
+  }
+  .bis-summary {
+    gap: 20px;
   }
 }
 </style>

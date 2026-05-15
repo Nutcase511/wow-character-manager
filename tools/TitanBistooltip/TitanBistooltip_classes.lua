@@ -1,0 +1,74 @@
+
+TitanBistooltip_classes = {}
+
+TitanBistooltip_phases = {}
+
+
+TitanBistooltip_classes_indexes = {
+    ["Death knight"] = 1,
+    ["Druid"] = 2,
+    ["Hunter"] = 3,
+    ["Mage"] = 4,
+    ["Paladin"] = 5,
+    ["Priest"] = 6,
+    ["Rogue"] = 7,
+    ["Shaman"] = 8,
+    ["Warrior"] = 9,
+    ["Warlock"] = 10
+}
+
+TitanBistooltip_spec_icons = {};
+TitanBistooltip_spec_icons["Death knight"] = {};
+TitanBistooltip_spec_icons["Death knight"]["classIcon"] = 135771;
+TitanBistooltip_spec_icons["Death knight"]["Blood tank"] = 135770;
+TitanBistooltip_spec_icons["Death knight"]["Frost"] = 135773;
+TitanBistooltip_spec_icons["Death knight"]["Unholy"] = 135775;
+TitanBistooltip_spec_icons["Death knight"]["Blood dps"] = 135770;
+TitanBistooltip_spec_icons["Druid"] = {};
+TitanBistooltip_spec_icons["Druid"]["classIcon"] = 625999;
+TitanBistooltip_spec_icons["Druid"]["Balance"] = 136096;
+TitanBistooltip_spec_icons["Druid"]["Feral tank"] = 132276;
+TitanBistooltip_spec_icons["Druid"]["Feral dps"] = 132115;
+TitanBistooltip_spec_icons["Druid"]["Restoration"] = 136041;
+TitanBistooltip_spec_icons["Hunter"] = {};
+TitanBistooltip_spec_icons["Hunter"]["classIcon"] = 626000;
+TitanBistooltip_spec_icons["Hunter"]["Beast mastery"] = 132164;
+TitanBistooltip_spec_icons["Hunter"]["Marksmanship"] = 132222;
+TitanBistooltip_spec_icons["Hunter"]["Survival"] = 132215;
+TitanBistooltip_spec_icons["Mage"] = {};
+TitanBistooltip_spec_icons["Mage"]["classIcon"] = 626001;
+TitanBistooltip_spec_icons["Mage"]["Arcane"] = 135932;
+TitanBistooltip_spec_icons["Mage"]["Fire"] = 135810;
+TitanBistooltip_spec_icons["Mage"]["Fire FFB"] = 236217;
+TitanBistooltip_spec_icons["Mage"]["Frost"] = 135846;
+TitanBistooltip_spec_icons["Paladin"] = {};
+TitanBistooltip_spec_icons["Paladin"]["classIcon"] = 626003;
+TitanBistooltip_spec_icons["Paladin"]["Holy"] = 135920;
+TitanBistooltip_spec_icons["Paladin"]["Protection"] = 135893;
+TitanBistooltip_spec_icons["Paladin"]["Retribution"] = 135873;
+TitanBistooltip_spec_icons["Priest"] = {};
+TitanBistooltip_spec_icons["Priest"]["classIcon"] = 626004;
+TitanBistooltip_spec_icons["Priest"]["Discipline"] = 135987;
+TitanBistooltip_spec_icons["Priest"]["Holy"] = 135953;
+TitanBistooltip_spec_icons["Priest"]["Shadow"] = 136207;
+TitanBistooltip_spec_icons["Rogue"] = {};
+TitanBistooltip_spec_icons["Rogue"]["classIcon"] = 626005;
+TitanBistooltip_spec_icons["Rogue"]["Assassination"] = 132292;
+TitanBistooltip_spec_icons["Rogue"]["Combat"] = 132090;
+TitanBistooltip_spec_icons["Rogue"]["Subtlety"] = 132320;
+TitanBistooltip_spec_icons["Shaman"] = {};
+TitanBistooltip_spec_icons["Shaman"]["classIcon"] = 626006;
+TitanBistooltip_spec_icons["Shaman"]["Elemental"] = 136048;
+TitanBistooltip_spec_icons["Shaman"]["Enhancement"] = 136051;
+TitanBistooltip_spec_icons["Shaman"]["Restoration"] = 136052;
+TitanBistooltip_spec_icons["Warlock"] = {};
+TitanBistooltip_spec_icons["Warlock"]["classIcon"] = 626007;
+TitanBistooltip_spec_icons["Warlock"]["Affliction"] = 136145;
+TitanBistooltip_spec_icons["Warlock"]["Demonology"] = 136172;
+TitanBistooltip_spec_icons["Warlock"]["Destruction"] = 136186;
+TitanBistooltip_spec_icons["Warlock"]["Destruction fire"] = 136186;
+TitanBistooltip_spec_icons["Warrior"] = {};
+TitanBistooltip_spec_icons["Warrior"]["classIcon"] = 626008;
+TitanBistooltip_spec_icons["Warrior"]["Arms"] = 132292;
+TitanBistooltip_spec_icons["Warrior"]["Fury"] = 132347;
+TitanBistooltip_spec_icons["Warrior"]["Protection"] = 134952;

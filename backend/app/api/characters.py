@@ -5,6 +5,7 @@ from app.core.database import db
 from app.core.config import settings
 from datetime import datetime
 import asyncio
+import json
 import os
 import sys
 import sqlite3
@@ -137,6 +138,34 @@ async def update_character(character_id: int, character: CharacterCreate):
         raise HTTPException(status_code=404, detail="Character not found")
     row = await db.fetchone("SELECT * FROM characters WHERE id = ?", (character_id,))
     return CharacterResponse(**_row_to_character(row))
+
+
+@router.get("/{character_id}/talents")
+async def get_character_talents(character_id: int):
+    """获取角色的天赋配点信息"""
+    row = await db.fetchone(
+        "SELECT id, name, wow_class, spec, talents_data FROM characters WHERE id = ?",
+        (character_id,)
+    )
+    if not row:
+        raise HTTPException(status_code=404, detail="角色不存在")
+
+    talents_info = None
+    if row["talents_data"]:
+        try:
+            talents_data = json.loads(row["talents_data"])
+            from app.api.character_refresh import format_talent_points
+            talents_info = format_talent_points(talents_data, row["wow_class"])
+        except (json.JSONDecodeError, ImportError):
+            pass
+
+    return {
+        "character_id": character_id,
+        "character_name": row["name"],
+        "wow_class": row["wow_class"],
+        "spec": row["spec"],
+        "talents": talents_info
+    }
 
 
 @router.delete("/{character_id}")

@@ -164,55 +164,6 @@ async def get_character_snapshots(character_id: int, limit: int = 30):
     return [GoldSnapshotResponse(**_row_to_snapshot(row)) for row in rows]
 
 
-@router.post("/character/{character_id}/update")
-async def update_character_gold(character_id: int, gold_copper: int):
-    """更新角色当前金币"""
-    # 获取角色信息
-    char_row = await db.fetchone(
-        "SELECT name, realm FROM characters WHERE id = ?",
-        (character_id,)
-    )
-    
-    if not char_row:
-        raise HTTPException(status_code=404, detail="Character not found")
-    
-    # 检查是否存在记录
-    existing = await db.fetchone(
-        "SELECT id FROM character_gold WHERE character_id = ?",
-        (character_id,)
-    )
-    
-    if existing:
-        await db.execute("""
-            UPDATE character_gold
-            SET current_gold = ?, last_updated = CURRENT_TIMESTAMP
-            WHERE character_id = ?
-        """, (gold_copper, character_id))
-    else:
-        await db.execute("""
-            INSERT INTO character_gold (character_id, character_name, realm, current_gold)
-            VALUES (?, ?, ?, ?)
-        """, (character_id, char_row["name"], char_row["realm"], gold_copper))
-    
-    # 添加快照
-    await db.execute("""
-        INSERT INTO gold_snapshot (character_id, gold_amount)
-        VALUES (?, ?)
-    """, (character_id, gold_copper))
-    
-    return {"success": True, "message": "Gold updated successfully"}
-
-
-@router.delete("/character/{character_id}")
-async def delete_character_gold(character_id: int):
-    """删除角色的金币数据"""
-    await db.execute("DELETE FROM gold_transaction WHERE character_id = ?", (character_id,))
-    await db.execute("DELETE FROM gold_snapshot WHERE character_id = ?", (character_id,))
-    await db.execute("DELETE FROM character_gold WHERE character_id = ?", (character_id,))
-    
-    return {"success": True, "message": "Gold data deleted successfully"}
-
-
 @router.get("/stats/monthly")
 async def get_monthly_gold_stats(period: str = "month"):
     """获取按日/月/年统计的金币数据（用于图表）"""

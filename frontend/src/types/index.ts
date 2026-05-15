@@ -199,3 +199,133 @@ export const TimeModeLabels: Record<string, string> = {
   'Week': '本周',
   'Total': '总计'
 }
+
+// BiS 毕业装备相关类型
+export interface BiSItem {
+  id: number
+  class_name: string
+  spec_name: string
+  phase: string
+  slot: string
+  rank: number
+  item_id: number
+  item_name: string | null
+  quality: string | null
+  item_level: number | null
+  icon_url: string | null
+  source: string | null
+  dungeon_name: string | null
+}
+
+export interface BiSClasses {
+  [className: string]: {
+    [specName: string]: string[]
+  }
+}
+
+// BiS 职业名称映射（bis_lists 缩写 → 显示名）
+export const BisClassNameMap: Record<string, string> = {
+  'dk': '死亡骑士',
+  'druid': '德鲁伊',
+  'hunter': '猎人',
+  'mage': '法师',
+  'paladin': '圣骑士',
+  'priest': '牧师',
+  'rogue': '潜行者',
+  'shaman': '萨满',
+  'warlock': '术士',
+  'warrior': '战士'
+}
+
+// BiS 职业缩写 → characters 表 wow_class 映射
+export const BisClassToCharClass: Record<string, string> = {
+  'dk': 'death_knight',
+  'druid': 'druid',
+  'hunter': 'hunter',
+  'mage': 'mage',
+  'paladin': 'paladin',
+  'priest': 'priest',
+  'rogue': 'rogue',
+  'shaman': 'shaman',
+  'warlock': 'warlock',
+  'warrior': 'warrior'
+}
+
+// BiS 天赋中文名映射
+export const SpecNameMap: Record<string, string> = {
+  // DK
+  'Blood dps': '鲜血DPS',
+  'Blood tank': '鲜血坦克',
+  'Frost': '冰霜',
+  'Unholy': '邪恶',
+  // Druid
+  'Balance': '平衡',
+  'Feral dps': '野性DPS',
+  'Feral tank': '野性坦克',
+  'Restoration': '恢复',
+  // Hunter
+  'Beast mastery': '野兽控制',
+  'Marksmanship': '射击',
+  'Survival': '生存',
+  // Mage
+  'Arcane': '奥术',
+  'Fire': '火焰',
+  'Fire FFB': '霜火',
+  // Paladin
+  'Holy': '神圣',
+  'Protection': '防护',
+  'Retribution': '惩戒',
+  // Priest
+  'Discipline': '戒律',
+  'Shadow': '暗影',
+  // Rogue
+  'Assassination': '刺杀',
+  'Combat': '战斗',
+  'Subtlety': '敏锐',
+  // Shaman
+  'Elemental': '元素',
+  'Enhancement': '增强',
+  // Warlock
+  'Affliction': '痛苦',
+  'Demonology': '恶魔学识',
+  'Destruction': '毁灭',
+  // Warrior
+  'Arms': '武器',
+  'Fury': '狂暴'
+}
+
+// 装备部位中文名
+export const SlotNameMap: Record<string, string> = {
+  'Head': '头部',
+  'Neck': '颈部',
+  'Shoulder': '肩部',
+  'Back': '背部',
+  'Chest': '胸部',
+  'Wrist': '手腕',
+  'Hands': '手套',
+  'Waist': '腰部',
+  'Legs': '腿部',
+  'Feet': '脚部',
+  'Finger': '手指',
+  'Trinket': '饰品',
+  'Weapon': '武器',
+  'Off hand': '副手',
+  'Ranged': '远程',
+  'Relic': '圣物'
+}
+
+// 阶段中文名
+export const PhaseNameMap: Record<string, string> = {
+  'PR': '团本前',
+  'P1': 'P1',
+  'P2': 'P2',
+  'P3': 'P3',
+  'P4': 'P4',
+  'P5': 'P5',
+  'P6': 'P6',
+  'P7': 'P7',
+  'P8': 'P8',
+  'P9': 'P9',
+  'P10': 'P10',
+  'P11': 'P11'
+}
