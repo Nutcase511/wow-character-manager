@@ -1243,7 +1243,7 @@ const bisSpecOptions = computed(() => {
     // Druid
     'Balance': '平衡', 'Feral dps': '猫德', 'Feral tank': '熊T',
     // DK
-    'Blood tank': '血坦', 'Blood dps': '鲜血DPS', 'Frost': '冰霜', 'Unholy': '邪恶',
+    'Blood tank': '血坦', 'Blood dps': '鲜血DPS', 'Unholy': '邪恶',
   }
   return Object.keys(specs).map(s => ({
     value: s,

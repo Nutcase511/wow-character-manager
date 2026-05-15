@@ -144,7 +144,7 @@ async def update_character(character_id: int, character: CharacterCreate):
 async def get_character_talents(character_id: int):
     """获取角色的天赋配点信息"""
     row = await db.fetchone(
-        "SELECT id, name, wow_class, spec, talents_data FROM characters WHERE id = ?",
+        "SELECT id, name, wow_class, spec, talents_data, active_talent_group FROM characters WHERE id = ?",
         (character_id,)
     )
     if not row:
@@ -154,8 +154,9 @@ async def get_character_talents(character_id: int):
     if row["talents_data"]:
         try:
             talents_data = json.loads(row["talents_data"])
+            active_group = row.get("active_talent_group", 1) or 1
             from app.api.character_refresh import format_talent_points
-            talents_info = format_talent_points(talents_data, row["wow_class"])
+            talents_info = format_talent_points(talents_data, row["wow_class"], active_group)
         except (json.JSONDecodeError, ImportError):
             pass
 

@@ -45,16 +45,26 @@ CLASS_TALENT_SPECS = {
 }
 
 
-def parse_talent_spec(talents_data: list, wow_class: str) -> str:
-    """从 tdInspect 天赋编码解析出专精名称"""
+def parse_talent_spec(talents_data: list, wow_class: str, active_group: int = 1) -> str:
+    """从 tdInspect 天赋编码解析出专精名称
+    talents_data 格式: [["tree1_code","tree2_code","tree3_code"], ...]  # 每个元素是一个天赋组
+    active_group: 当前激活的天赋组 (1-indexed)
+    """
     if not talents_data or not isinstance(talents_data, list):
+        return None
+    # 获取激活的天赋组
+    group_idx = max(0, active_group - 1)
+    if group_idx >= len(talents_data):
+        group_idx = 0
+    group = talents_data[group_idx]
+    if not isinstance(group, list):
         return None
     specs = CLASS_TALENT_SPECS.get(wow_class)
     if not specs:
         return None
     # 计算每个天赋树的总点数
     tree_points = []
-    for tree_str in talents_data:
+    for tree_str in group:
         if isinstance(tree_str, str):
             total = sum(int(ch) for ch in tree_str if ch.isdigit())
             tree_points.append(total)
@@ -69,15 +79,25 @@ def parse_talent_spec(talents_data: list, wow_class: str) -> str:
     return specs[max_idx]
 
 
-def format_talent_points(talents_data: list, wow_class: str) -> list:
-    """格式化天赋配点信息供前端展示"""
+def format_talent_points(talents_data: list, wow_class: str, active_group: int = 1) -> list:
+    """格式化天赋配点信息供前端展示
+    talents_data 格式: [["tree1_code","tree2_code","tree3_code"], ...]
+    active_group: 当前激活的天赋组 (1-indexed)
+    """
     if not talents_data or not isinstance(talents_data, list):
+        return []
+    # 获取激活的天赋组
+    group_idx = max(0, active_group - 1)
+    if group_idx >= len(talents_data):
+        group_idx = 0
+    group = talents_data[group_idx]
+    if not isinstance(group, list):
         return []
     specs = CLASS_TALENT_SPECS.get(wow_class)
     if not specs:
         return []
     result = []
-    for i, tree_str in enumerate(talents_data):
+    for i, tree_str in enumerate(group):
         if isinstance(tree_str, str):
             total = sum(int(ch) for ch in tree_str if ch.isdigit())
             result.append({
@@ -177,8 +197,9 @@ async def refresh_character_from_tdinspect(character_id: int, character_name: st
             result.updated_fields.append("talents_data")
             # 从天赋编码解析专精
             wow_class = char_class or updates.get("wow_class")
+            active_group = matched_char.get("activeGroup", 1)
             if wow_class:
-                spec = parse_talent_spec(matched_char["talents"], wow_class)
+                spec = parse_talent_spec(matched_char["talents"], wow_class, active_group)
                 if spec:
                     updates["spec"] = spec
                     result.updated_fields.append("spec")
