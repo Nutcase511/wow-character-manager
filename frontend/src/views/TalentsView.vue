@@ -436,21 +436,23 @@ onMounted(() => {
   flex-direction: column;
   align-items: center;
   padding: 15px;
-  background: #1a1a2e;
+  background: rgba(26, 26, 46, 0.65);
   border-radius: 12px;
   cursor: pointer;
   transition: all 0.2s;
   border: 2px solid transparent;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
 }
 
 .class-card:hover {
-  background: #252542;
+  background: rgba(37, 37, 66, 0.75);
   transform: translateY(-2px);
 }
 
 .class-card.active {
   border-color: #ffd700;
-  background: #2a2a4a;
+  background: rgba(42, 42, 74, 0.8);
 }
 
 .class-icon {
@@ -775,9 +777,11 @@ onMounted(() => {
   justify-content: space-between;
   align-items: center;
   padding: 15px;
-  background: #252542;
+  background: rgba(37, 37, 66, 0.6);
   border-radius: 8px;
   margin-bottom: 10px;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
 }
 
 .build-info h4 {

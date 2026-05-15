@@ -1694,9 +1694,11 @@ onMounted(async () => {
   justify-content: space-around;
   margin-top: 30px;
   padding: 20px;
-  background: #172033;
+  background: rgba(23, 32, 51, 0.65);
   border-radius: 8px;
-  border: 1px solid #374151;
+  border: 1px solid rgba(55, 65, 81, 0.4);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
 }
 
 .empty-container {
@@ -2110,8 +2112,11 @@ onMounted(async () => {
 
 /* 套装收集 */
 .item-sets-card {
-  background: #1f2937;
-  border: 1px solid #374151;
+  background: rgba(31, 41, 55, 0.55);
+  border: 1px solid rgba(55, 65, 81, 0.4);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.04);
 }
 
 .item-sets-list {

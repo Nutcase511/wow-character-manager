@@ -122,7 +122,15 @@ const specs = computed(() => {
 
 const phases = computed(() => {
   if (!selectedClass.value || !selectedSpec.value) return []
-  return bisClasses.value[selectedClass.value]?.[selectedSpec.value] || []
+  const raw = bisClasses.value[selectedClass.value]?.[selectedSpec.value] || []
+  return [...raw].sort((a, b) => {
+    const numA = parseInt(a.replace('P', ''))
+    const numB = parseInt(b.replace('P', ''))
+    if (isNaN(numA) && isNaN(numB)) return 0
+    if (isNaN(numA)) return -1
+    if (isNaN(numB)) return 1
+    return numA - numB
+  })
 })
 
 function getQualityClass(quality: string | null): string {
@@ -244,7 +252,7 @@ onMounted(async () => {
 
 .bis-card {
   min-height: 400px;
-  border: 1px solid #374151;
+  border: 1px solid rgba(55, 65, 81, 0.4);
 }
 
 .card-header {
@@ -271,8 +279,11 @@ onMounted(async () => {
   gap: 12px;
   padding: 12px;
   border-radius: 8px;
-  background: #1f2937;
-  border: 1px solid #374151;
+  background: rgba(31, 41, 55, 0.55);
+  border: 1px solid rgba(55, 65, 81, 0.4);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.04);
   transition: all 0.2s;
 }
 

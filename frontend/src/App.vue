@@ -352,10 +352,22 @@ html.dark {
   color-scheme: dark;
 }
 
-/* 深色卡片 */
+/* ===== 水玻璃卡片 ===== */
 html.dark .el-card {
-  --el-card-bg-color: #1f2937;
-  border-color: #374151;
+  --el-card-bg-color: rgba(31, 41, 55, 0.6);
+  border-color: rgba(55, 65, 81, 0.4);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+/* 水玻璃卡片通用类（用于自定义卡片 div） */
+.glass-card {
+  background: rgba(31, 41, 55, 0.6);
+  border: 1px solid rgba(55, 65, 81, 0.4);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
 }
 
 html.dark .el-table {

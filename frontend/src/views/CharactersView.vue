@@ -384,8 +384,11 @@ onMounted(() => {
   padding: 20px;
   color: #e5e7eb;
   cursor: pointer;
+  background: rgba(31, 41, 55, 0.55);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.04);
   transition: transform 0.2s, box-shadow 0.2s, border-color 0.3s;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
   border: 1px solid rgba(255, 255, 255, 0.15);
 }
 

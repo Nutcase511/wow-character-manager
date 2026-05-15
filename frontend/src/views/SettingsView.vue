@@ -786,13 +786,16 @@ const executeClearAll = async () => {
 }
 
 .settings-card {
-  background: #1f2937;
-  border: 1px solid #374151;
+  background: rgba(31, 41, 55, 0.55);
+  border: 1px solid rgba(55, 65, 81, 0.4);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.04);
 }
 
 .settings-card :deep(.el-card__header) {
-  background: #172033;
-  border-bottom: 1px solid #374151;
+  background: rgba(23, 32, 51, 0.6);
+  border-bottom: 1px solid rgba(55, 65, 81, 0.4);
   padding: 16px 20px;
 }
 
