@@ -1496,6 +1496,8 @@ onMounted(async () => {
     // 自动从 tdInspect 刷新角色数据
     try {
       await characterApi.refreshSingle(route.params.id as string)
+      // 刷新后重新加载角色数据（spec/talents_data 已更新）
+      await loadCharacter()
     } catch {
       console.warn('tdInspect 刷新失败，使用已有数据')
     }
