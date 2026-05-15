@@ -58,7 +58,7 @@
               {{ getClassDisplayName(character.wow_class) }}
             </el-tag>
             <el-tag v-if="character.spec" type="info" size="small">
-              {{ character.spec }}
+              {{ SpecNameMap[character.spec] || character.spec }}
             </el-tag>
             <el-tag :type="character.faction === 'alliance' ? 'primary' : 'danger'" size="small">
               <img :src="getFactionIcon(character.faction)" :alt="character.faction" class="faction-icon" />
@@ -117,7 +117,7 @@ import { useCharacterStore } from '@/stores/character'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { User, Plus, Delete, Refresh, RefreshRight, InfoFilled } from '@element-plus/icons-vue'
 import { characterApi, goldApi } from '@/api'
-import { WoWClass, ClassSpecsMap } from '@/types'
+import { WoWClass, ClassSpecsMap, SpecNameMap } from '@/types'
 import { getClassIcon, getFactionIcon } from '@/utils/classIcons'
 
 const router = useRouter()

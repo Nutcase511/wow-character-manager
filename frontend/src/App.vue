@@ -1,160 +1,292 @@
 <template>
-  <el-container class="app-container">
-    <el-header class="app-header">
-      <div class="header-content">
-        <div class="logo">
-          <img src="/images/wow.png" alt="WoW Logo" class="logo-image">
-          <span class="logo-text">魔兽世界角色管理系统</span>
+  <div class="app-wrapper">
+    <video class="bg-video" autoplay muted loop playsinline poster="/images/wow.png">
+      <source src="/videos/wow-bg.mp4" type="video/mp4">
+    </video>
+    <div class="bg-overlay" />
+
+    <div class="app-layout">
+      <aside class="app-sidebar">
+        <div class="sidebar-header">
+          <div class="sidebar-logo-wrap">
+            <img src="/images/wow.png" alt="WoW Logo" class="sidebar-logo">
+          </div>
+          <div class="sidebar-title">
+            <span class="title-main">魔兽世界</span>
+            <span class="title-sub">角色管理系统</span>
+          </div>
         </div>
-        <el-menu
-          :default-active="activeMenu"
-          mode="horizontal"
-          :ellipsis="false"
-          router
-          class="header-menu"
-        >
-          <el-menu-item index="/characters">角色管理</el-menu-item>
-          <el-menu-item index="/dungeons">副本管理</el-menu-item>
-          <el-menu-item index="/item-needs">装备需求</el-menu-item>
-          <el-menu-item index="/bis">毕业装备</el-menu-item>
-          <el-menu-item index="/gold">金币统计</el-menu-item>
-          <el-menu-item index="/talents">天赋模拟器</el-menu-item>
-          <el-menu-item index="/settings">系统配置</el-menu-item>
-        </el-menu>
-      </div>
-    </el-header>
 
-    <el-main class="app-main">
-      <router-view v-slot="{ Component }">
-        <transition name="fade" mode="out-in">
-          <component :is="Component" />
-        </transition>
-      </router-view>
-    </el-main>
+        <nav class="sidebar-nav">
+          <router-link
+            v-for="item in menuItems"
+            :key="item.path"
+            :to="item.path"
+            class="sidebar-menu-item"
+            :class="{ active: isActive(item.path) }"
+          >
+            <div class="menu-item-glow" />
+            <el-icon class="menu-icon"><component :is="item.icon" /></el-icon>
+            <span class="menu-text">{{ item.label }}</span>
+          </router-link>
+        </nav>
+      </aside>
 
-    <el-footer class="app-footer">
-      <div class="footer-content">
-        <span>© 2024 魔兽世界角色管理系统</span>
-        <span class="version">v1.0.0</span>
-      </div>
-    </el-footer>
-  </el-container>
+      <main class="app-main">
+        <router-view v-slot="{ Component }">
+          <transition name="fade" mode="out-in">
+            <component :is="Component" />
+          </transition>
+        </router-view>
+      </main>
+    </div>
+  </div>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
 import { useRoute } from 'vue-router'
-import { Monitor } from '@element-plus/icons-vue'
+import {
+  User, Grid, Goods, TrophyBase, Money, MagicStick, Setting
+} from '@element-plus/icons-vue'
 
 const route = useRoute()
 
-const activeMenu = computed(() => route.path)
+interface MenuItem {
+  path: string
+  label: string
+  icon: object
+}
+
+const menuItems: MenuItem[] = [
+  { path: '/characters', label: '角色管理', icon: User },
+  { path: '/dungeons', label: '副本管理', icon: Grid },
+  { path: '/item-needs', label: '装备需求', icon: Goods },
+  { path: '/bis', label: '毕业装备', icon: TrophyBase },
+  { path: '/gold', label: '金币统计', icon: Money },
+  { path: '/talents', label: '天赋模拟器', icon: MagicStick },
+  { path: '/settings', label: '系统配置', icon: Setting }
+]
+
+function isActive(path: string): boolean {
+  const currentPath = route.path
+  if (path === '/characters' && (currentPath === '/characters' || currentPath.startsWith('/characters/'))) return true
+  if (path === '/dungeons' && (currentPath === '/dungeons' || currentPath.startsWith('/dungeons/'))) return true
+  if (path === '/gold' && (currentPath === '/gold' || currentPath.startsWith('/gold/'))) return true
+  if (path === '/bis' && (currentPath === '/bis' || currentPath.startsWith('/bis/'))) return true
+  return currentPath === path
+}
 </script>
 
 <style scoped>
-.app-container {
+.app-wrapper {
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+  position: relative;
+}
+
+/* ===== 视频背景 ===== */
+.bg-video {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  min-width: 100vw;
+  min-height: 100vh;
+  width: auto;
+  height: auto;
+  object-fit: cover;
+  z-index: 0;
+}
+
+.bg-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  background:
+    linear-gradient(180deg, rgba(0, 0, 0, 0.55) 0%, rgba(0, 0, 0, 0.75) 100%),
+    linear-gradient(90deg, rgba(0, 0, 0, 0.5) 0%, rgba(0, 0, 0, 0.2) 50%, rgba(0, 0, 0, 0.4) 100%);
+}
+
+/* ===== 主布局 ===== */
+.app-layout {
+  position: relative;
+  z-index: 2;
   height: 100vh;
   display: flex;
+}
+
+/* ===== 左侧玻璃拟态菜单 ===== */
+.app-sidebar {
+  width: 240px;
+  min-width: 240px;
+  height: 100vh;
+  background: rgba(8, 8, 24, 0.72);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border-right: 1px solid rgba(243, 156, 18, 0.15);
+  box-shadow:
+    4px 0 40px rgba(0, 0, 0, 0.5),
+    inset -1px 0 0 rgba(243, 156, 18, 0.08);
+  display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 
-.app-header {
-  background: linear-gradient(135deg, #0d0d1a 0%, #111827 100%);
-  color: #fff;
-  padding: 0;
-  height: 60px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
-  border-bottom: 1px solid #1f2937;
-}
-
-.header-content {
-  max-width: 1400px;
-  margin: 0 auto;
-  height: 100%;
+/* ---- 侧栏头部 ---- */
+.sidebar-header {
+  padding: 28px 20px 24px;
   display: flex;
   align-items: center;
-  padding: 0 20px;
+  gap: 14px;
+  border-bottom: 1px solid rgba(243, 156, 18, 0.1);
 }
 
-.logo {
+.sidebar-logo-wrap {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, rgba(243, 156, 18, 0.15), rgba(231, 76, 60, 0.1));
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin-right: 40px;
-  font-size: 18px;
-  font-weight: 600;
+  justify-content: center;
+  box-shadow: 0 0 16px rgba(243, 156, 18, 0.15);
 }
 
-.logo-image {
+.sidebar-logo {
   width: 32px;
   height: 32px;
   border-radius: 6px;
 }
 
-.logo-text {
-  background: linear-gradient(45deg, #f39c12, #e74c3c);
+.sidebar-title {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.title-main {
+  font-size: 16px;
+  font-weight: 700;
+  background: linear-gradient(90deg, #f39c12, #e74c3c);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+  line-height: 1.2;
 }
 
-.header-menu {
-  background: transparent;
-  border: none;
+.title-sub {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.45);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+/* ---- 导航菜单 ---- */
+.sidebar-nav {
   flex: 1;
-}
-
-.header-menu .el-menu-item {
-  color: rgba(255, 255, 255, 0.7);
-  font-size: 15px;
-  border-bottom: 2px solid transparent;
-}
-
-.header-menu .el-menu-item:hover {
-  background: rgba(255, 255, 255, 0.08);
-  color: #fff;
-}
-
-.header-menu .el-menu-item.is-active {
-  background: rgba(243, 156, 18, 0.15);
-  color: #f39c12;
-  border-bottom: 2px solid #f39c12;
-}
-
-.app-main {
-  flex: 1;
-  background: #111827;
-  padding: 20px;
+  padding: 16px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
   overflow-y: auto;
 }
 
-.app-footer {
-  background: #0d0d1a;
-  color: rgba(255, 255, 255, 0.5);
-  padding: 0;
-  height: 40px;
-  border-top: 1px solid #1f2937;
-}
-
-.footer-content {
-  max-width: 1400px;
-  margin: 0 auto;
-  height: 100%;
+.sidebar-menu-item {
+  position: relative;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 0 20px;
+  gap: 12px;
+  padding: 13px 16px 13px 18px;
+  border-radius: 10px;
+  color: rgba(255, 255, 255, 0.6);
+  text-decoration: none;
   font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  overflow: hidden;
+  border-left: 3px solid transparent;
 }
 
-.version {
-  color: rgba(255, 255, 255, 0.3);
+/* 发光背景元素 */
+.menu-item-glow {
+  position: absolute;
+  inset: 0;
+  border-radius: 10px;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  background: linear-gradient(135deg, rgba(243, 156, 18, 0.08), rgba(231, 76, 60, 0.04));
 }
 
-/* 页面切换动画 */
+.menu-icon {
+  position: relative;
+  z-index: 1;
+  font-size: 18px;
+  color: rgba(255, 255, 255, 0.5);
+  transition: all 0.3s ease;
+}
+
+.menu-text {
+  position: relative;
+  z-index: 1;
+  transition: all 0.3s ease;
+}
+
+/* 悬停效果 */
+.sidebar-menu-item:hover {
+  color: rgba(255, 255, 255, 0.9);
+  border-left-color: rgba(243, 156, 18, 0.4);
+}
+
+.sidebar-menu-item:hover .menu-item-glow {
+  opacity: 1;
+}
+
+.sidebar-menu-item:hover .menu-icon {
+  color: #f39c12;
+  transform: scale(1.1);
+}
+
+/* 激活效果 - WoW 金色发光 */
+.sidebar-menu-item.active {
+  color: #f39c12;
+  background: linear-gradient(135deg, rgba(243, 156, 18, 0.12), rgba(231, 76, 60, 0.06));
+  border-left: 3px solid #f39c12;
+  box-shadow:
+    inset 0 0 20px rgba(243, 156, 18, 0.06),
+    0 0 16px rgba(243, 156, 18, 0.1);
+}
+
+.sidebar-menu-item.active .menu-item-glow {
+  opacity: 1;
+  background: linear-gradient(135deg, rgba(243, 156, 18, 0.15), rgba(231, 76, 60, 0.08));
+}
+
+.sidebar-menu-item.active .menu-icon {
+  color: #f39c12;
+  filter: drop-shadow(0 0 6px rgba(243, 156, 18, 0.5));
+}
+
+.sidebar-menu-item.active .menu-text {
+  text-shadow: 0 0 12px rgba(243, 156, 18, 0.3);
+}
+
+/* ===== 主内容区 ===== */
+.app-main {
+  flex: 1;
+  padding: 24px 28px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  background: rgba(17, 24, 39, 0.55);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+/* ===== 页面切换动画 ===== */
 .fade-enter-active,
 .fade-leave-active {
-  transition: opacity 0.3s ease;
+  transition: opacity 0.25s ease;
 }
 
 .fade-enter-from,
@@ -173,7 +305,26 @@ const activeMenu = computed(() => route.path)
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB',
     'Microsoft YaHei', 'Helvetica Neue', Helvetica, Arial, sans-serif;
-  background: #111827;
+  background: #000;
+  overflow: hidden;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
 }
 
 #app {
@@ -184,18 +335,18 @@ body {
 html.dark {
   --el-bg-color: #1f2937;
   --el-bg-color-overlay: #1f2937;
-  --el-bg-color-page: #111827;
+  --el-bg-color-page: transparent;
   --el-text-color-primary: #e5e7eb;
   --el-text-color-regular: #d1d5db;
   --el-text-color-secondary: #9ca3af;
   --el-text-color-placeholder: #6b7280;
-  --el-border-color: #374151;
-  --el-border-color-light: #2d3748;
-  --el-border-color-lighter: #1f2937;
-  --el-fill-color: #1f2937;
-  --el-fill-color-light: #252f3f;
-  --el-fill-color-lighter: #1f2937;
-  --el-fill-color-blank: #1a2332;
+  --el-border-color: rgba(55, 65, 81, 0.6);
+  --el-border-color-light: rgba(45, 55, 72, 0.5);
+  --el-border-color-lighter: rgba(31, 41, 55, 0.5);
+  --el-fill-color: rgba(31, 41, 55, 0.8);
+  --el-fill-color-light: rgba(37, 47, 63, 0.7);
+  --el-fill-color-lighter: rgba(31, 41, 55, 0.6);
+  --el-fill-color-blank: rgba(26, 35, 50, 0.7);
   --el-mask-color: rgba(0, 0, 0, 0.6);
 
   color-scheme: dark;

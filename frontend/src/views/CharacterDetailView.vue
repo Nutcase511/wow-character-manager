@@ -148,7 +148,7 @@
               </div>
               <div class="meta-row">
                 <span class="meta-label">专精</span>
-                <span class="meta-value">{{ character.spec || '-' }}</span>
+                <span class="meta-value">{{ SpecNameMap[character.spec] || character.spec || '-' }}</span>
               </div>
               <div class="meta-row">
                 <span class="meta-label">阵营</span>
@@ -166,7 +166,7 @@
                     class="talent-tree-item"
                     :class="{ active: tree.spec_name === talentInfo.spec }"
                   >
-                    <span class="talent-tree-name">{{ tree.spec_name }}</span>
+                    <span class="talent-tree-name">{{ SpecNameMap[tree.spec_name] || tree.spec_name }}</span>
                     <span class="talent-tree-points">{{ tree.points }}</span>
                   </div>
                 </div>
@@ -388,7 +388,7 @@
               {{ getClassDisplayName(character.wow_class) }}
             </el-tag>
           </el-descriptions-item>
-          <el-descriptions-item label="专精">{{ character.spec || '-' }}</el-descriptions-item>
+          <el-descriptions-item label="专精">{{ SpecNameMap[character.spec] || character.spec || '-' }}</el-descriptions-item>
           <el-descriptions-item label="创建时间">
             {{ formatDate(character.created_at) }}
           </el-descriptions-item>
@@ -442,73 +442,118 @@
                 :key="comp.spec_name"
                 :value="comp.spec_name"
               >
-                {{ comp.spec_name }} ({{ comp.obtained_count }}/{{ comp.total }})
+                {{ SpecNameMap[comp.spec_name] || comp.spec_name }} ({{ comp.obtained_count }}/{{ comp.total }})
               </el-radio-button>
             </el-radio-group>
           </div>
           <div v-if="currentBisComparison" class="bis-comparison-content">
-            <div class="bis-summary">
-              <el-statistic title="已获取" :value="currentBisComparison.obtained_count" />
-              <el-statistic title="未获取" :value="currentBisComparison.missing_count" />
-              <el-statistic title="总毕业装" :value="currentBisComparison.total" />
+            <!-- 进度条 -->
+            <div class="bis-progress-section">
+              <div class="bis-progress-header">
+                <span class="bis-progress-title">
+                  {{ SpecNameMap[currentBisComparison.spec_name] || currentBisComparison.spec_name }}
+                  - {{ PhaseNameMap[currentBisComparison.phase] || currentBisComparison.phase }}
+                </span>
+                <span class="bis-progress-text">{{ currentBisComparison.obtained_count }}/{{ currentBisComparison.total }} ({{ bisProgressPercent }}%)</span>
+              </div>
+              <el-progress
+                :percentage="bisProgressPercent"
+                :color="bisProgressPercent >= 100 ? '#67c23a' : bisProgressPercent >= 50 ? '#409eff' : '#e6a23c'"
+                :stroke-width="12"
+                :text-inside="false"
+              />
             </div>
             <el-divider />
-            <div class="bis-missing-list">
-              <h4>未获取的毕业装备</h4>
-              <div v-if="currentBisComparison.missing.length > 0" class="bis-items-grid">
+            <!-- 未获取 - 按部位分组 -->
+            <div class="bis-section">
+              <div class="bis-section-header">
+                <h4>未获取的毕业装备</h4>
+                <el-tag v-if="currentBisComparison.missing_count > 0" type="danger" size="small">
+                  {{ currentBisComparison.missing_count }} 件
+                </el-tag>
+              </div>
+              <div v-if="currentBisComparison.missing.length > 0" class="bis-slot-groups">
                 <div
-                  v-for="item in currentBisComparison.missing"
-                  :key="item.item_id"
-                  class="bis-item-card"
-                  :class="`quality-${item.quality || 'common'}`"
+                  v-for="(items, slot) in groupedMissingBySlot"
+                  :key="slot"
+                  class="bis-slot-group"
                 >
-                  <div class="bis-item-icon">
-                    <img
-                      v-if="item.icon_url"
-                      :src="item.icon_url"
-                      :alt="item.item_name"
-                      @error="(e: any) => e.target.src = ''"
-                    />
-                    <div v-else class="item-icon-placeholder">{{ item.item_name?.[0] || '?' }}</div>
+                  <div class="bis-slot-header">
+                    <span class="bis-slot-label">{{ SlotNameMap[slot] || slot }}</span>
+                    <span class="bis-slot-count">{{ items.length }} 件</span>
                   </div>
-                  <div class="bis-item-info">
-                    <div class="bis-item-name">{{ item.item_name || `物品#${item.item_id}` }}</div>
-                    <div class="bis-item-meta">
-                      <span class="bis-item-slot">{{ item.slot }}</span>
-                      <span v-if="item.item_level" class="bis-item-level">装等 {{ item.item_level }}</span>
+                  <div class="bis-items-grid">
+                    <div
+                      v-for="item in items"
+                      :key="item.item_id"
+                      class="bis-item-card"
+                      :class="`quality-${item.quality || 'common'}`"
+                    >
+                      <div class="bis-item-icon">
+                        <img
+                          v-if="item.icon_url"
+                          :src="item.icon_url"
+                          :alt="item.item_name"
+                          @error="(e: any) => e.target.src = ''"
+                        />
+                        <div v-else class="item-icon-placeholder">{{ item.item_name?.[0] || '?' }}</div>
+                      </div>
+                      <div class="bis-item-info">
+                        <div class="bis-item-name">{{ item.item_name || `物品#${item.item_id}` }}</div>
+                        <div class="bis-item-meta">
+                          <span v-if="item.item_level" class="bis-item-level">装等 {{ item.item_level }}</span>
+                        </div>
+                        <div v-if="item.source" class="bis-item-source">{{ item.source }}</div>
+                      </div>
                     </div>
-                    <div v-if="item.source" class="bis-item-source">{{ item.source }}</div>
                   </div>
                 </div>
               </div>
               <el-empty v-else description="全部毕业装已获取！" :image-size="60" />
             </div>
             <el-divider />
-            <div class="bis-obtained-list">
-              <h4>已获取的毕业装备</h4>
-              <div v-if="currentBisComparison.obtained.length > 0" class="bis-items-grid">
+            <!-- 已获取 - 按部位分组 -->
+            <div class="bis-section">
+              <div class="bis-section-header">
+                <h4>已获取的毕业装备</h4>
+                <el-tag v-if="currentBisComparison.obtained_count > 0" type="success" size="small">
+                  {{ currentBisComparison.obtained_count }} 件
+                </el-tag>
+              </div>
+              <div v-if="currentBisComparison.obtained.length > 0" class="bis-slot-groups">
                 <div
-                  v-for="item in currentBisComparison.obtained"
-                  :key="item.item_id"
-                  class="bis-item-card obtained"
-                  :class="`quality-${item.quality || 'common'}`"
+                  v-for="(items, slot) in groupedObtainedBySlot"
+                  :key="slot"
+                  class="bis-slot-group"
                 >
-                  <div class="bis-item-icon">
-                    <img
-                      v-if="item.icon_url"
-                      :src="item.icon_url"
-                      :alt="item.item_name"
-                      @error="(e: any) => e.target.src = ''"
-                    />
-                    <div v-else class="item-icon-placeholder">{{ item.item_name?.[0] || '?' }}</div>
+                  <div class="bis-slot-header">
+                    <span class="bis-slot-label">{{ SlotNameMap[slot] || slot }}</span>
+                    <span class="bis-slot-count">{{ items.length }} 件</span>
                   </div>
-                  <div class="bis-item-info">
-                    <div class="bis-item-name">{{ item.item_name || `物品#${item.item_id}` }}</div>
-                    <div class="bis-item-meta">
-                      <span class="bis-item-slot">{{ item.slot }}</span>
-                      <span v-if="item.item_level" class="bis-item-level">装等 {{ item.item_level }}</span>
+                  <div class="bis-items-grid">
+                    <div
+                      v-for="item in items"
+                      :key="item.item_id"
+                      class="bis-item-card obtained"
+                      :class="`quality-${item.quality || 'common'}`"
+                    >
+                      <div class="bis-item-icon">
+                        <img
+                          v-if="item.icon_url"
+                          :src="item.icon_url"
+                          :alt="item.item_name"
+                          @error="(e: any) => e.target.src = ''"
+                        />
+                        <div v-else class="item-icon-placeholder">{{ item.item_name?.[0] || '?' }}</div>
+                      </div>
+                      <div class="bis-item-info">
+                        <div class="bis-item-name">{{ item.item_name || `物品#${item.item_id}` }}</div>
+                        <div class="bis-item-meta">
+                          <span v-if="item.item_level" class="bis-item-level">装等 {{ item.item_level }}</span>
+                        </div>
+                        <div v-if="item.source" class="bis-item-source">{{ item.source }}</div>
+                      </div>
                     </div>
-                    <div v-if="item.source" class="bis-item-source">{{ item.source }}</div>
                   </div>
                 </div>
               </div>
@@ -700,7 +745,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { ArrowLeft, Plus, Refresh, Download } from '@element-plus/icons-vue'
 import { goldApi, equipmentApi, itemApi, bisApi } from '@/api'
 import type { ItemNeed, ItemNeedCreate, ItemProgress } from '@/types'
-import { WoWClass } from '@/types'
+import { WoWClass, SpecNameMap, SlotNameMap, PhaseNameMap } from '@/types'
 import { getClassIcon, getFactionIcon } from '@/utils/classIcons'
 
 const route = useRoute()
@@ -774,6 +819,54 @@ const currentBisComparison = computed(() => {
   return bisComparison.value.comparisons.find(
     (c: any) => c.spec_name === selectedBisSpec.value
   ) || bisComparison.value.comparisons[0]
+})
+
+// 按部位分组的 BiS 对比
+const groupedMissingBySlot = computed(() => {
+  const comp = currentBisComparison.value
+  if (!comp || !comp.missing?.length) return {}
+  const groups: Record<string, any[]> = {}
+  const slotOrder = ['Head', 'Neck', 'Shoulder', 'Back', 'Chest', 'Wrist', 'Hands', 'Waist', 'Legs', 'Feet', 'Finger', 'Trinket', 'Weapon', 'Off hand', 'Ranged', 'Relic']
+  for (const item of comp.missing) {
+    const slot = item.slot || '其他'
+    if (!groups[slot]) groups[slot] = []
+    groups[slot].push(item)
+  }
+  // 按标准顺序排序
+  const sorted: Record<string, any[]> = {}
+  for (const s of slotOrder) {
+    if (groups[s]) sorted[s] = groups[s]
+  }
+  for (const s of Object.keys(groups)) {
+    if (!sorted[s]) sorted[s] = groups[s]
+  }
+  return sorted
+})
+
+const groupedObtainedBySlot = computed(() => {
+  const comp = currentBisComparison.value
+  if (!comp || !comp.obtained?.length) return {}
+  const groups: Record<string, any[]> = {}
+  const slotOrder = ['Head', 'Neck', 'Shoulder', 'Back', 'Chest', 'Wrist', 'Hands', 'Waist', 'Legs', 'Feet', 'Finger', 'Trinket', 'Weapon', 'Off hand', 'Ranged', 'Relic']
+  for (const item of comp.obtained) {
+    const slot = item.slot || '其他'
+    if (!groups[slot]) groups[slot] = []
+    groups[slot].push(item)
+  }
+  const sorted: Record<string, any[]> = {}
+  for (const s of slotOrder) {
+    if (groups[s]) sorted[s] = groups[s]
+  }
+  for (const s of Object.keys(groups)) {
+    if (!sorted[s]) sorted[s] = groups[s]
+  }
+  return sorted
+})
+
+const bisProgressPercent = computed(() => {
+  const comp = currentBisComparison.value
+  if (!comp || comp.total === 0) return 0
+  return Math.round((comp.obtained_count / comp.total) * 100)
 })
 
 function onBisCompareSpecChange(spec: string) {
@@ -2224,24 +2317,82 @@ onMounted(async () => {
   padding: 0 4px;
 }
 
-.bis-summary {
-  display: flex;
-  gap: 40px;
-  justify-content: center;
-  padding: 12px 0;
+.bis-progress-section {
+  padding: 8px 0;
 }
 
-.bis-missing-list h4,
-.bis-obtained-list h4 {
-  margin: 0 0 12px 0;
+.bis-progress-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.bis-progress-title {
+  font-size: 14px;
+  font-weight: 500;
+  color: #303133;
+}
+
+.bis-progress-text {
+  font-size: 13px;
+  color: #909399;
+}
+
+.bis-section {
+  margin-bottom: 8px;
+}
+
+.bis-section-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.bis-section-header h4 {
+  margin: 0;
   font-size: 14px;
   color: #606266;
+}
+
+.bis-slot-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.bis-slot-group {
+  border: 1px solid #ebeef5;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.bis-slot-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 12px;
+  background: #f5f7fa;
+  border-bottom: 1px solid #ebeef5;
+}
+
+.bis-slot-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: #303133;
+}
+
+.bis-slot-count {
+  font-size: 11px;
+  color: #909399;
 }
 
 .bis-items-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 8px;
+  gap: 6px;
+  padding: 8px;
 }
 
 .bis-item-card {
@@ -2334,9 +2485,6 @@ onMounted(async () => {
 @media (max-width: 768px) {
   .bis-items-grid {
     grid-template-columns: 1fr;
-  }
-  .bis-summary {
-    gap: 20px;
   }
 }
 </style>
