@@ -683,7 +683,7 @@
     "created_at": "2026-05-10 12:32:53",
     "expansion": "classic",
     "category": "raid",
-    "phase": null
+    "phase": "P11"
   },
   {
     "id": 1211,
@@ -697,7 +697,7 @@
     "created_at": "2026-05-10 12:32:53",
     "expansion": "classic",
     "category": "raid",
-    "phase": null
+    "phase": "P11"
   },
   {
     "id": 1212,
@@ -711,12 +711,12 @@
     "created_at": "2026-05-10 12:32:53",
     "expansion": "classic",
     "category": "raid",
-    "phase": null
+    "phase": "P11"
   },
   {
     "id": 1213,
     "dungeon_id": 209,
-    "name": "暗影",
+    "name": "祖尔法拉克",
     "description": null,
     "map_name": null,
     "minimum_level": 60,
@@ -725,7 +725,7 @@
     "created_at": "2026-05-10 12:32:53",
     "expansion": "classic",
     "category": "raid",
-    "phase": null
+    "phase": "P11"
   },
   {
     "id": 1214,
@@ -739,7 +739,7 @@
     "created_at": "2026-05-10 12:32:53",
     "expansion": "classic",
     "category": "raid",
-    "phase": null
+    "phase": "P11"
   },
   {
     "id": 1215,
@@ -753,7 +753,7 @@
     "created_at": "2026-05-10 12:32:53",
     "expansion": "classic",
     "category": "raid",
-    "phase": null
+    "phase": "P11"
   },
   {
     "id": 1216,
@@ -767,7 +767,7 @@
     "created_at": "2026-05-10 12:32:53",
     "expansion": "classic",
     "category": "raid",
-    "phase": null
+    "phase": "P11"
   },
   {
     "id": 1217,
@@ -781,12 +781,12 @@
     "created_at": "2026-05-10 12:32:53",
     "expansion": "classic",
     "category": "raid",
-    "phase": null
+    "phase": "P11"
   },
   {
     "id": 1218,
     "dungeon_id": 796,
-    "name": "墓地",
+    "name": "血色修道院",
     "description": null,
     "map_name": null,
     "minimum_level": 60,
@@ -795,7 +795,7 @@
     "created_at": "2026-05-10 12:32:53",
     "expansion": "classic",
     "category": "raid",
-    "phase": null
+    "phase": "P11"
   },
   {
     "id": 1219,
@@ -809,7 +809,7 @@
     "created_at": "2026-05-10 12:32:53",
     "expansion": "classic",
     "category": "raid",
-    "phase": null
+    "phase": "P11"
   },
   {
     "id": 1220,
@@ -823,7 +823,7 @@
     "created_at": "2026-05-10 12:32:53",
     "expansion": "classic",
     "category": "raid",
-    "phase": null
+    "phase": "P11"
   },
   {
     "id": 1221,
@@ -837,7 +837,7 @@
     "created_at": "2026-05-10 12:32:53",
     "expansion": "classic",
     "category": "raid",
-    "phase": null
+    "phase": "P11"
   },
   {
     "id": 1222,
@@ -851,12 +851,12 @@
     "created_at": "2026-05-10 12:32:53",
     "expansion": "classic",
     "category": "raid",
-    "phase": null
+    "phase": "P11"
   },
   {
     "id": 1223,
     "dungeon_id": 1477,
-    "name": "哈卡",
+    "name": "阿塔哈卡神庙",
     "description": null,
     "map_name": null,
     "minimum_level": 60,
@@ -865,7 +865,7 @@
     "created_at": "2026-05-10 12:32:53",
     "expansion": "classic",
     "category": "raid",
-    "phase": null
+    "phase": "P11"
   },
   {
     "id": 1224,
@@ -879,7 +879,7 @@
     "created_at": "2026-05-10 12:32:53",
     "expansion": "classic",
     "category": "raid",
-    "phase": null
+    "phase": "P11"
   },
   {
     "id": 1225,
@@ -893,7 +893,7 @@
     "created_at": "2026-05-10 12:32:53",
     "expansion": "classic",
     "category": "raid",
-    "phase": null
+    "phase": "P11"
   },
   {
     "id": 1226,
@@ -907,7 +907,7 @@
     "created_at": "2026-05-10 12:32:53",
     "expansion": "classic",
     "category": "raid",
-    "phase": null
+    "phase": "P11"
   },
   {
     "id": 1227,
@@ -921,12 +921,12 @@
     "created_at": "2026-05-10 12:32:53",
     "expansion": "classic",
     "category": "raid",
-    "phase": null
+    "phase": "P11"
   },
   {
     "id": 1228,
     "dungeon_id": 2017,
-    "name": "斯坦索姆信使",
+    "name": "斯坦索姆",
     "description": null,
     "map_name": null,
     "minimum_level": 60,
@@ -935,7 +935,7 @@
     "created_at": "2026-05-10 12:32:53",
     "expansion": "classic",
     "category": "raid",
-    "phase": null
+    "phase": "P11"
   },
   {
     "id": 1229,
@@ -949,7 +949,7 @@
     "created_at": "2026-05-10 12:32:53",
     "expansion": "classic",
     "category": "raid",
-    "phase": null
+    "phase": "P11"
   },
   {
     "id": 1230,
@@ -963,7 +963,7 @@
     "created_at": "2026-05-10 12:32:53",
     "expansion": "classic",
     "category": "raid",
-    "phase": null
+    "phase": "P11"
   },
   {
     "id": 1231,
@@ -977,7 +977,7 @@
     "created_at": "2026-05-10 12:32:53",
     "expansion": "classic",
     "category": "raid",
-    "phase": null
+    "phase": "P11"
   },
   {
     "id": 1232,
@@ -991,7 +991,7 @@
     "created_at": "2026-05-10 12:32:53",
     "expansion": "classic",
     "category": "raid",
-    "phase": null
+    "phase": "P11"
   },
   {
     "id": 1233,
@@ -1005,7 +1005,7 @@
     "created_at": "2026-05-10 12:32:53",
     "expansion": "classic",
     "category": "raid",
-    "phase": null
+    "phase": "P11"
   },
   {
     "id": 1234,
@@ -1019,7 +1019,7 @@
     "created_at": "2026-05-10 12:32:53",
     "expansion": "classic",
     "category": "raid",
-    "phase": null
+    "phase": "P11"
   },
   {
     "id": 1235,
@@ -1033,7 +1033,7 @@
     "created_at": "2026-05-10 12:32:53",
     "expansion": "tbc",
     "category": "raid",
-    "phase": null
+    "phase": "P7"
   },
   {
     "id": 1236,
@@ -1047,7 +1047,7 @@
     "created_at": "2026-05-10 12:32:53",
     "expansion": "tbc",
     "category": "raid",
-    "phase": null
+    "phase": "P7"
   },
   {
     "id": 1237,
@@ -1061,7 +1061,7 @@
     "created_at": "2026-05-10 12:32:53",
     "expansion": "tbc",
     "category": "raid",
-    "phase": null
+    "phase": "P7"
   },
   {
     "id": 1238,
@@ -1075,7 +1075,7 @@
     "created_at": "2026-05-10 12:32:53",
     "expansion": "tbc",
     "category": "raid",
-    "phase": null
+    "phase": "P7"
   },
   {
     "id": 1239,
@@ -1089,7 +1089,7 @@
     "created_at": "2026-05-10 12:32:53",
     "expansion": "tbc",
     "category": "raid",
-    "phase": null
+    "phase": "P7"
   },
   {
     "id": 1240,
@@ -1103,12 +1103,12 @@
     "created_at": "2026-05-10 12:32:53",
     "expansion": "tbc",
     "category": "raid",
-    "phase": null
+    "phase": "P7"
   },
   {
     "id": 1241,
     "dungeon_id": 3789,
-    "name": "暗影",
+    "name": "暗影迷宫",
     "description": null,
     "map_name": null,
     "minimum_level": 60,
@@ -1117,7 +1117,7 @@
     "created_at": "2026-05-10 12:32:53",
     "expansion": "tbc",
     "category": "raid",
-    "phase": null
+    "phase": "P7"
   },
   {
     "id": 1242,
@@ -1131,7 +1131,7 @@
     "created_at": "2026-05-10 12:32:53",
     "expansion": "tbc",
     "category": "raid",
-    "phase": null
+    "phase": "P7"
   },
   {
     "id": 1243,
@@ -1145,7 +1145,7 @@
     "created_at": "2026-05-10 12:32:53",
     "expansion": "tbc",
     "category": "raid",
-    "phase": null
+    "phase": "P7"
   },
   {
     "id": 1244,
@@ -1159,7 +1159,7 @@
     "created_at": "2026-05-10 12:32:53",
     "expansion": "tbc",
     "category": "raid",
-    "phase": null
+    "phase": "P7"
   },
   {
     "id": 1245,
@@ -1173,7 +1173,7 @@
     "created_at": "2026-05-10 12:32:53",
     "expansion": "tbc",
     "category": "raid",
-    "phase": null
+    "phase": "P7"
   },
   {
     "id": 1246,
@@ -1187,7 +1187,7 @@
     "created_at": "2026-05-10 12:32:53",
     "expansion": "tbc",
     "category": "raid",
-    "phase": null
+    "phase": "P7"
   },
   {
     "id": 1247,
@@ -1201,7 +1201,7 @@
     "created_at": "2026-05-10 12:32:53",
     "expansion": "tbc",
     "category": "raid",
-    "phase": null
+    "phase": "P7"
   },
   {
     "id": 1248,
@@ -1215,7 +1215,7 @@
     "created_at": "2026-05-10 12:32:53",
     "expansion": "tbc",
     "category": "raid",
-    "phase": null
+    "phase": "P7"
   },
   {
     "id": 1249,
@@ -1229,7 +1229,7 @@
     "created_at": "2026-05-10 12:32:53",
     "expansion": "tbc",
     "category": "raid",
-    "phase": null
+    "phase": "P7"
   },
   {
     "id": 1250,
@@ -1243,7 +1243,7 @@
     "created_at": "2026-05-10 12:32:53",
     "expansion": "tbc",
     "category": "raid",
-    "phase": null
+    "phase": "P5"
   },
   {
     "id": 1251,
@@ -1271,12 +1271,12 @@
     "created_at": "2026-05-10 12:32:53",
     "expansion": "tbc",
     "category": "raid",
-    "phase": null
+    "phase": "P7"
   },
   {
     "id": 1253,
     "dungeon_id": 3836,
-    "name": "玛瑟里顿",
+    "name": "玛瑟里顿的巢穴",
     "description": null,
     "map_name": null,
     "minimum_level": 60,
@@ -1285,7 +1285,7 @@
     "created_at": "2026-05-10 12:32:53",
     "expansion": "tbc",
     "category": "raid",
-    "phase": null
+    "phase": "P7"
   },
   {
     "id": 1254,
@@ -1299,7 +1299,7 @@
     "created_at": "2026-05-10 12:32:53",
     "expansion": "tbc",
     "category": "raid",
-    "phase": null
+    "phase": "P7"
   },
   {
     "id": 1255,
@@ -1313,7 +1313,7 @@
     "created_at": "2026-05-10 12:32:53",
     "expansion": "tbc",
     "category": "raid",
-    "phase": null
+    "phase": "P7"
   },
   {
     "id": 1256,
@@ -1327,7 +1327,7 @@
     "created_at": "2026-05-10 12:32:53",
     "expansion": "tbc",
     "category": "raid",
-    "phase": null
+    "phase": "P7"
   },
   {
     "id": 1257,
@@ -1341,7 +1341,7 @@
     "created_at": "2026-05-10 12:32:53",
     "expansion": "tbc",
     "category": "raid",
-    "phase": null
+    "phase": "P7"
   },
   {
     "id": 1258,
@@ -1355,7 +1355,7 @@
     "created_at": "2026-05-10 12:32:53",
     "expansion": "tbc",
     "category": "raid",
-    "phase": null
+    "phase": "P7"
   },
   {
     "id": 1259,
@@ -1369,7 +1369,7 @@
     "created_at": "2026-05-10 12:32:53",
     "expansion": "tbc",
     "category": "raid",
-    "phase": null
+    "phase": "P5"
   },
   {
     "id": 1260,
@@ -1383,7 +1383,7 @@
     "created_at": "2026-05-10 12:32:53",
     "expansion": "wrath",
     "category": "raid",
-    "phase": null
+    "phase": "P5"
   },
   {
     "id": 1261,
@@ -1397,7 +1397,7 @@
     "created_at": "2026-05-10 12:32:53",
     "expansion": "wrath",
     "category": "raid",
-    "phase": null
+    "phase": "P5"
   },
   {
     "id": 1262,
@@ -1411,7 +1411,7 @@
     "created_at": "2026-05-10 12:32:53",
     "expansion": "wrath",
     "category": "raid",
-    "phase": null
+    "phase": "P5"
   },
   {
     "id": 1263,
@@ -1425,7 +1425,7 @@
     "created_at": "2026-05-10 12:32:53",
     "expansion": "wrath",
     "category": "raid",
-    "phase": null
+    "phase": "P5"
   },
   {
     "id": 1264,
@@ -1439,7 +1439,7 @@
     "created_at": "2026-05-10 12:32:53",
     "expansion": "wrath",
     "category": "raid",
-    "phase": null
+    "phase": "P5"
   },
   {
     "id": 1265,
@@ -1453,7 +1453,7 @@
     "created_at": "2026-05-10 12:32:53",
     "expansion": "wrath",
     "category": "raid",
-    "phase": null
+    "phase": "P5"
   },
   {
     "id": 1266,
@@ -1467,7 +1467,7 @@
     "created_at": "2026-05-10 12:32:53",
     "expansion": "wrath",
     "category": "raid",
-    "phase": null
+    "phase": "P5"
   },
   {
     "id": 1267,
@@ -1481,7 +1481,7 @@
     "created_at": "2026-05-10 12:32:53",
     "expansion": "wrath",
     "category": "raid",
-    "phase": null
+    "phase": "P5"
   },
   {
     "id": 1268,
@@ -1495,7 +1495,7 @@
     "created_at": "2026-05-10 12:32:53",
     "expansion": "wrath",
     "category": "raid",
-    "phase": null
+    "phase": "P5"
   },
   {
     "id": 1269,
@@ -1509,12 +1509,12 @@
     "created_at": "2026-05-10 12:32:53",
     "expansion": "wrath",
     "category": "raid",
-    "phase": null
+    "phase": "P5"
   },
   {
     "id": 1270,
     "dungeon_id": 206,
-    "name": "乌特加德",
+    "name": "乌特加德城堡",
     "description": null,
     "map_name": null,
     "minimum_level": 60,
@@ -1523,12 +1523,12 @@
     "created_at": "2026-05-10 12:32:53",
     "expansion": "wrath",
     "category": "raid",
-    "phase": null
+    "phase": "P5"
   },
   {
     "id": 1271,
     "dungeon_id": 1196,
-    "name": "乌特加德",
+    "name": "乌特加德城堡",
     "description": null,
     "map_name": null,
     "minimum_level": 60,
@@ -1537,7 +1537,7 @@
     "created_at": "2026-05-10 12:32:53",
     "expansion": "wrath",
     "category": "raid",
-    "phase": null
+    "phase": "P5"
   },
   {
     "id": 1272,
@@ -1551,7 +1551,7 @@
     "created_at": "2026-05-10 12:32:53",
     "expansion": "wrath",
     "category": "raid",
-    "phase": null
+    "phase": "P4"
   },
   {
     "id": 1273,
@@ -1565,7 +1565,7 @@
     "created_at": "2026-05-10 12:32:53",
     "expansion": "wrath",
     "category": "raid",
-    "phase": null
+    "phase": "P5"
   },
   {
     "id": 1274,
@@ -1579,7 +1579,7 @@
     "created_at": "2026-05-10 12:32:53",
     "expansion": "wrath",
     "category": "raid",
-    "phase": null
+    "phase": "P5"
   },
   {
     "id": 1275,
@@ -1593,7 +1593,7 @@
     "created_at": "2026-05-10 12:32:53",
     "expansion": "wrath",
     "category": "raid",
-    "phase": null
+    "phase": "P5"
   },
   {
     "id": 1276,
@@ -1668,7 +1668,7 @@
   {
     "id": 1281,
     "dungeon_id": 189,
-    "name": "墓地",
+    "name": "血色修道院",
     "description": null,
     "map_name": null,
     "minimum_level": 60,
@@ -1682,7 +1682,7 @@
   {
     "id": 1282,
     "dungeon_id": 109,
-    "name": "哈卡",
+    "name": "阿塔哈卡神庙",
     "description": null,
     "map_name": null,
     "minimum_level": 60,
@@ -1710,7 +1710,7 @@
   {
     "id": 1284,
     "dungeon_id": 309,
-    "name": "高阶祭司耶克里克",
+    "name": "祖尔格拉布",
     "description": null,
     "map_name": null,
     "minimum_level": 60,
@@ -1794,7 +1794,7 @@
   {
     "id": 1290,
     "dungeon_id": 568,
-    "name": "埃基尔松",
+    "name": "祖阿曼",
     "description": null,
     "map_name": null,
     "minimum_level": 60,
@@ -1892,7 +1892,7 @@
   {
     "id": 1297,
     "dungeon_id": 574,
-    "name": "乌特加德",
+    "name": "乌特加德城堡",
     "description": null,
     "map_name": null,
     "minimum_level": 60,
@@ -1906,7 +1906,7 @@
   {
     "id": 1298,
     "dungeon_id": 575,
-    "name": "乌特加德",
+    "name": "乌特加德之巅",
     "description": null,
     "map_name": null,
     "minimum_level": 60,
@@ -2074,7 +2074,7 @@
   {
     "id": 1310,
     "dungeon_id": 3456,
-    "name": "Anub'Rekhan",
+    "name": "纳克萨玛斯",
     "description": null,
     "map_name": null,
     "minimum_level": 60,
@@ -2083,6 +2083,6 @@
     "created_at": "2026-05-11 15:35:56",
     "expansion": "classic",
     "category": "raid",
-    "phase": null
+    "phase": "P11"
   }
 ]
