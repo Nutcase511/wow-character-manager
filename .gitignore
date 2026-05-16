@@ -91,12 +91,15 @@ wow_data/
 !package.json
 !tsconfig.json
 !*.config.json
+!backend/seed_data/*.json
 
 # Import scripts (keep source but ignore generated files)
 backend/*.py
 !backend/app/
 !backend/main.py
 !backend/requirements.txt
+!backend/export_seed.py
+!backend/import_seed.py
 
 # Debug/test scripts at root
 /check_*.py

@@ -1,0 +1,13 @@
+[
+  {
+    "id": 1,
+    "name": "戒律天赋参考",
+    "class_name": "priest",
+    "spec_name": "戒律",
+    "points": "{}",
+    "image_path": "C:\\wow后台管理\\wow-character-manager\\backend\\uploads\\talent_images\\talent_priest_discipline_20260509_210246.png",
+    "notes": "牧师戒律天赋配点参考图",
+    "created_at": "2026-05-09 13:02:46.246283",
+    "updated_at": "2026-05-09 13:02:46.246283"
+  }
+]

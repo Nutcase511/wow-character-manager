@@ -1,0 +1,11 @@
+[
+  {
+    "id": 1,
+    "class_name": "priest",
+    "spec_name": "戒律",
+    "spec_icon": "spell_holy_powerwordshield",
+    "description": "使用护盾和防护魔法保护盟友，同时通过伤害输出进行治疗",
+    "created_at": "2026-05-09 13:02:13",
+    "updated_at": "2026-05-09 13:02:13"
+  }
+]
