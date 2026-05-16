@@ -33,6 +33,9 @@
               readonly
             >
               <template #append>
+                <el-button @click="autoDetectSingle('accountant')" :loading="detectingSingle === 'accountant'" title="自动检测">
+                  <el-icon><Search /></el-icon>
+                </el-button>
                 <el-button @click="selectFile('accountant')">
                   <el-icon><FolderOpened /></el-icon>
                 </el-button>
@@ -59,6 +62,9 @@
               readonly
             >
               <template #append>
+                <el-button @click="autoDetectSingle('tdinspect')" :loading="detectingSingle === 'tdinspect'" title="自动检测">
+                  <el-icon><Search /></el-icon>
+                </el-button>
                 <el-button @click="selectFile('tdinspect')">
                   <el-icon><FolderOpened /></el-icon>
                 </el-button>
@@ -85,6 +91,9 @@
               readonly
             >
               <template #append>
+                <el-button @click="autoDetectSingle('atlasloot')" :loading="detectingSingle === 'atlasloot'" title="自动检测">
+                  <el-icon><Search /></el-icon>
+                </el-button>
                 <el-button @click="selectFolder('atlasloot')">
                   <el-icon><FolderOpened /></el-icon>
                 </el-button>
@@ -111,6 +120,9 @@
               readonly
             >
               <template #append>
+                <el-button @click="autoDetectSingle('titanbis')" :loading="detectingSingle === 'titanbis'" title="自动检测">
+                  <el-icon><Search /></el-icon>
+                </el-button>
                 <el-button @click="selectFolder('titanbis')">
                   <el-icon><FolderOpened /></el-icon>
                 </el-button>
@@ -445,6 +457,32 @@ const browseTitle = computed(() => {
 
 // 自动检测
 const autoDetecting = ref(false)
+const detectingSingle = ref<string | null>(null)
+
+const autoDetectSingle = async (type: string) => {
+  detectingSingle.value = type
+  try {
+    const response = await fetch(`/api/settings/auto-detect/${type}`)
+    if (response.ok) {
+      const data = await response.json()
+      if (data.detected && data.path) {
+        if (type === 'accountant') dataSourceForm.accountantPath = data.path
+        else if (type === 'tdinspect') dataSourceForm.tdinspectPath = data.path
+        else if (type === 'atlasloot') dataSourceForm.atlaslootPath = data.path
+        else if (type === 'titanbis') dataSourceForm.titanbisPath = data.path
+        ElMessage.success(`已检测到路径: ${data.path}`)
+      } else {
+        ElMessage.warning(`未检测到 ${type} 路径，请手动选择`)
+      }
+    } else {
+      ElMessage.error('自动检测失败')
+    }
+  } catch (error) {
+    ElMessage.error('自动检测失败')
+  } finally {
+    detectingSingle.value = null
+  }
+}
 
 // 加载配置
 onMounted(async () => {

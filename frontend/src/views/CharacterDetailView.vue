@@ -395,32 +395,6 @@
         </el-descriptions>
       </el-card>
 
-      <!-- 装备进度 -->
-      <el-card class="progress-card">
-        <template #header>
-          <div class="card-header">
-            <span>装备获取进度</span>
-            <el-tag v-if="progress" type="success">
-              {{ progress.progress_percentage }}%
-            </el-tag>
-          </div>
-        </template>
-        <div v-if="progress" class="progress-content">
-          <el-progress
-            :percentage="progress.progress_percentage"
-            :stroke-width="20"
-            :text-inside="true"
-            status="success"
-          />
-          <div class="progress-stats">
-            <el-statistic title="总需求" :value="progress.total_needs" />
-            <el-statistic title="已获取" :value="progress.obtained" />
-            <el-statistic title="剩余" :value="progress.remaining" />
-          </div>
-        </div>
-        <el-empty v-else description="暂无装备需求数据" />
-      </el-card>
-
       <!-- BiS 毕业装对比 -->
       <el-card class="bis-comparison-card">
         <template #header>
@@ -438,11 +412,22 @@
           <div class="bis-spec-tabs">
             <el-radio-group v-model="selectedBisSpec" size="small" @change="onBisCompareSpecChange">
               <el-radio-button
-                v-for="comp in bisComparison.comparisons"
+                v-for="comp in uniqueSpecs"
                 :key="comp.spec_name"
                 :value="comp.spec_name"
               >
                 {{ SpecNameMap[comp.spec_name] || comp.spec_name }} ({{ comp.obtained_count }}/{{ comp.total }})
+              </el-radio-button>
+            </el-radio-group>
+          </div>
+          <div v-if="availablePhases.length > 1" class="bis-phase-tabs">
+            <el-radio-group v-model="selectedBisPhase" size="small" @change="onBisPhaseChange">
+              <el-radio-button
+                v-for="phase in availablePhases"
+                :key="phase"
+                :value="phase"
+              >
+                {{ PhaseNameMap[phase] || phase }}
               </el-radio-button>
             </el-radio-group>
           </div>
@@ -489,14 +474,14 @@
                       class="bis-item-card"
                       :class="`quality-${item.quality || 'common'}`"
                     >
-                      <div class="bis-item-icon">
+                      <div class="bis-item-icon" :class="`quality-${item.quality || 'common'}`">
                         <img
-                          v-if="item.icon_url"
+                          v-if="item.icon_url && !erroredIcons[String(item.item_id)]"
                           :src="item.icon_url"
                           :alt="item.item_name"
-                          @error="(e: any) => e.target.src = ''"
+                          @error="handleIconError(item.item_id)"
                         />
-                        <div v-else class="item-icon-placeholder">{{ item.item_name?.[0] || '?' }}</div>
+                        <div v-if="!item.icon_url || erroredIcons[String(item.item_id)]" class="item-icon-placeholder">{{ item.item_name?.[0] || '?' }}</div>
                       </div>
                       <div class="bis-item-info">
                         <div class="bis-item-name">{{ item.item_name || `物品#${item.item_id}` }}</div>
@@ -537,21 +522,20 @@
                       class="bis-item-card obtained"
                       :class="`quality-${item.quality || 'common'}`"
                     >
-                      <div class="bis-item-icon">
+                      <div class="bis-item-icon" :class="`quality-${item.quality || 'common'}`">
                         <img
-                          v-if="item.icon_url"
+                          v-if="item.icon_url && !erroredIcons[String(item.item_id)]"
                           :src="item.icon_url"
                           :alt="item.item_name"
-                          @error="(e: any) => e.target.src = ''"
+                          @error="handleIconError(item.item_id)"
                         />
-                        <div v-else class="item-icon-placeholder">{{ item.item_name?.[0] || '?' }}</div>
+                        <div v-if="!item.icon_url || erroredIcons[String(item.item_id)]" class="item-icon-placeholder">{{ item.item_name?.[0] || '?' }}</div>
                       </div>
                       <div class="bis-item-info">
                         <div class="bis-item-name">{{ item.item_name || `物品#${item.item_id}` }}</div>
                         <div class="bis-item-meta">
                           <span v-if="item.item_level" class="bis-item-level">装等 {{ item.item_level }}</span>
                         </div>
-                        <div v-if="item.source" class="bis-item-source">{{ item.source }}</div>
                       </div>
                     </div>
                   </div>
@@ -744,7 +728,7 @@ import { useItemNeedStore } from '@/stores/itemNeed'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { ArrowLeft, Plus, Refresh, Download } from '@element-plus/icons-vue'
 import { goldApi, equipmentApi, itemApi, bisApi } from '@/api'
-import type { ItemNeed, ItemNeedCreate, ItemProgress } from '@/types'
+import type { ItemNeed, ItemNeedCreate } from '@/types'
 import { WoWClass, SpecNameMap, SlotNameMap, PhaseNameMap } from '@/types'
 import { getClassIcon, getFactionIcon } from '@/utils/classIcons'
 
@@ -756,7 +740,6 @@ const itemNeedStore = useItemNeedStore()
 // 状态
 const loading = ref(true)
 const character = ref<any>(null)
-const progress = ref<ItemProgress | null>(null)
 const itemNeeds = ref<ItemNeed[]>([])
 const goldData = ref<any>(null)
 const goldLoading = ref(false)
@@ -775,6 +758,11 @@ const bisComparison = ref<any>(null)
 const bisComparisonLoading = ref(false)
 const selectedBisSpec = ref<string>('')
 const selectedBisPhase = ref<string>('')
+const erroredIcons = reactive<Record<string, boolean>>({})
+
+function handleIconError(itemId: number) {
+  erroredIcons[String(itemId)] = true
+}
 
 // 天赋信息状态
 const talentInfo = ref<any>(null)
@@ -817,8 +805,40 @@ const filterStatus = ref<'all' | 'pending' | 'obtained'>('all')
 const currentBisComparison = computed(() => {
   if (!bisComparison.value?.comparisons) return null
   return bisComparison.value.comparisons.find(
-    (c: any) => c.spec_name === selectedBisSpec.value
-  ) || bisComparison.value.comparisons[0]
+    (c: any) => c.spec_name === selectedBisSpec.value && c.phase === selectedBisPhase.value
+  ) || null
+})
+
+// 去重后的专精列表（合并多阶段数据）
+const uniqueSpecs = computed(() => {
+  if (!bisComparison.value?.comparisons) return []
+  const map = new Map<string, { spec_name: string; obtained_count: number; total: number }>()
+  for (const c of bisComparison.value.comparisons) {
+    const existing = map.get(c.spec_name)
+    if (existing) {
+      existing.obtained_count += c.obtained_count
+      existing.total += c.total
+    } else {
+      map.set(c.spec_name, { spec_name: c.spec_name, obtained_count: c.obtained_count, total: c.total })
+    }
+  }
+  return Array.from(map.values())
+})
+
+// 当前选中专精可用的阶段列表
+const availablePhases = computed(() => {
+  if (!bisComparison.value?.comparisons) return []
+  const phases = bisComparison.value.comparisons
+    .filter((c: any) => c.spec_name === selectedBisSpec.value)
+    .map((c: any) => c.phase)
+  return [...new Set(phases)].sort((a, b) => {
+    const numA = parseInt(a.replace('P', ''))
+    const numB = parseInt(b.replace('P', ''))
+    if (isNaN(numA) && isNaN(numB)) return 0
+    if (isNaN(numA)) return -1
+    if (isNaN(numB)) return 1
+    return numA - numB
+  })
 })
 
 // 按部位分组的 BiS 对比
@@ -871,10 +891,14 @@ const bisProgressPercent = computed(() => {
 
 function onBisCompareSpecChange(spec: string) {
   selectedBisSpec.value = spec
-  const comp = bisComparison.value?.comparisons?.find((c: any) => c.spec_name === spec)
-  if (comp) {
-    selectedBisPhase.value = comp.phase
+  const phases = availablePhases.value
+  if (phases.length > 0) {
+    selectedBisPhase.value = phases[phases.length - 1]
   }
+}
+
+function onBisPhaseChange(phase: string) {
+  selectedBisPhase.value = phase
 }
 
 // 对话框状态
@@ -1078,7 +1102,6 @@ async function submitNeedForm() {
       showAddNeedDialog.value = false
       resetNeedForm()
       await loadItemNeeds()
-      await loadProgress()
     } catch (error) {
       ElMessage.error(isEditingNeed.value ? '装备需求更新失败' : '装备需求添加失败')
     }
@@ -1109,7 +1132,6 @@ async function markAsObtained(id: string) {
     await itemNeedStore.markAsObtained(id)
     ElMessage.success('已标记为获取')
     await loadItemNeeds()
-    await loadProgress()
   } catch (error) {
     ElMessage.error('标记失败')
   }
@@ -1127,7 +1149,6 @@ async function deleteNeed(id: string) {
     await itemNeedStore.deleteItemNeed(id)
     ElMessage.success('删除成功')
     await loadItemNeeds()
-    await loadProgress()
   } catch (error) {
     if (error !== 'cancel') {
       ElMessage.error('删除失败')
@@ -1152,16 +1173,6 @@ async function loadItemNeeds() {
   const characterId = route.params.id as string
   await itemNeedStore.fetchItemNeeds({ character_id: characterId })
   itemNeeds.value = itemNeedStore.filterByCharacter(characterId)
-}
-
-// 加载进度
-async function loadProgress() {
-  const characterId = route.params.id as string
-  try {
-    progress.value = await itemNeedStore.fetchProgress(characterId)
-  } catch (error) {
-    console.error('加载进度失败:', error)
-  }
 }
 
 // 加载角色金币
@@ -1451,7 +1462,6 @@ async function importBisToNeeds() {
     ElMessage.success(result.message || '导入成功')
     bisDialogVisible.value = false
     await loadItemNeeds()
-    await loadProgress()
   } catch (error) {
     ElMessage.error('导入失败')
   } finally {
@@ -1483,8 +1493,28 @@ async function loadBisComparison() {
     const data = await bisApi.compareCharacter(characterId)
     bisComparison.value = data
     if (data.comparisons && data.comparisons.length > 0) {
-      selectedBisSpec.value = data.comparisons[0].spec_name
-      selectedBisPhase.value = data.comparisons[0].phase
+      const charSpec = character.value?.spec
+      // 优先匹配角色当前专精
+      const specs = [...new Set(data.comparisons.map((c: any) => c.spec_name))]
+      if (charSpec && specs.includes(charSpec)) {
+        selectedBisSpec.value = charSpec
+      } else {
+        selectedBisSpec.value = specs[0]
+      }
+      // 默认选中最新阶段
+      const phasesForSpec = [...new Set(
+        data.comparisons
+          .filter((c: any) => c.spec_name === selectedBisSpec.value)
+          .map((c: any) => c.phase)
+      )].sort((a: string, b: string) => {
+        const na = parseInt(a.replace('P', ''))
+        const nb = parseInt(b.replace('P', ''))
+        if (isNaN(na) && isNaN(nb)) return 0
+        if (isNaN(na)) return -1
+        if (isNaN(nb)) return 1
+        return na - nb
+      })
+      selectedBisPhase.value = phasesForSpec[phasesForSpec.length - 1]
     }
   } catch (error) {
     console.error('加载 BiS 对比数据失败:', error)
@@ -1596,7 +1626,6 @@ onMounted(async () => {
     }
     await Promise.all([
       loadItemNeeds(),
-      loadProgress(),
       loadEquipment(),
       loadItemSets(),
       loadGold(),
@@ -1685,23 +1714,12 @@ onMounted(async () => {
   align-items: center;
 }
 
-.progress-content {
-  padding: 20px 0;
-}
-
-.progress-stats {
-  display: flex;
-  justify-content: space-around;
-  margin-top: 30px;
-  padding: 20px;
-  background: rgba(23, 32, 51, 0.65);
-  border-radius: 8px;
-  border: 1px solid rgba(55, 65, 81, 0.4);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
-}
-
 .empty-container {
+  padding: 40px 20px;
+  text-align: center;
+}
+
+.bis-comparison-card {
   padding: 40px 20px;
   text-align: center;
 }
@@ -2318,6 +2336,11 @@ onMounted(async () => {
   margin-bottom: 16px;
 }
 
+.bis-phase-tabs {
+  margin-bottom: 16px;
+  margin-top: -8px;
+}
+
 .bis-comparison-content {
   padding: 0 4px;
 }
@@ -2364,12 +2387,12 @@ onMounted(async () => {
 .bis-slot-groups {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 8px;
 }
 
 .bis-slot-group {
-  border: 1px solid #ebeef5;
-  border-radius: 6px;
+  border: 1px solid rgba(55, 65, 81, 0.4);
+  border-radius: 8px;
   overflow: hidden;
 }
 
@@ -2377,25 +2400,25 @@ onMounted(async () => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 6px 12px;
-  background: #f5f7fa;
-  border-bottom: 1px solid #ebeef5;
+  padding: 5px 10px;
+  background: rgba(23, 32, 51, 0.5);
+  border-bottom: 1px solid rgba(55, 65, 81, 0.3);
 }
 
 .bis-slot-label {
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 500;
-  color: #303133;
+  color: rgba(255, 255, 255, 0.8);
 }
 
 .bis-slot-count {
   font-size: 11px;
-  color: #909399;
+  color: rgba(255, 255, 255, 0.4);
 }
 
 .bis-items-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
   gap: 6px;
   padding: 8px;
 }
@@ -2406,18 +2429,18 @@ onMounted(async () => {
   gap: 10px;
   padding: 8px 10px;
   border-radius: 6px;
-  border: 1px solid #e4e7ed;
-  background: #fafafa;
+  border: 1px solid rgba(55, 65, 81, 0.3);
+  background: rgba(31, 41, 55, 0.35);
   transition: all 0.2s;
 }
 
 .bis-item-card:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  background: rgba(31, 41, 55, 0.55);
+  border-color: rgba(55, 65, 81, 0.6);
 }
 
 .bis-item-card.obtained {
-  opacity: 0.75;
+  opacity: 0.65;
 }
 
 .bis-item-card.obtained .bis-item-name::after {
@@ -2426,35 +2449,48 @@ onMounted(async () => {
   font-weight: bold;
 }
 
-.bis-item-card.quality-common { border-left: 3px solid #ffffff; }
+.bis-item-card.quality-common { border-left: 3px solid rgba(255, 255, 255, 0.3); }
 .bis-item-card.quality-uncommon { border-left: 3px solid #1eff00; }
 .bis-item-card.quality-rare { border-left: 3px solid #0070dd; }
 .bis-item-card.quality-epic { border-left: 3px solid #a335ee; }
 .bis-item-card.quality-legendary { border-left: 3px solid #ff8000; }
 
 .bis-item-icon {
-  width: 40px;
-  height: 40px;
+  width: 36px;
+  height: 36px;
   flex-shrink: 0;
   border-radius: 4px;
   overflow: hidden;
-  background: #e4e7ed;
+  background: rgba(0, 0, 0, 0.3);
   display: flex;
   align-items: center;
   justify-content: center;
+  position: relative;
 }
+
+.bis-item-icon.quality-common { background: linear-gradient(135deg, rgba(128,128,128,0.3), rgba(0,0,0,0.3)); }
+.bis-item-icon.quality-uncommon { background: linear-gradient(135deg, rgba(30,255,0,0.2), rgba(0,0,0,0.3)); }
+.bis-item-icon.quality-rare { background: linear-gradient(135deg, rgba(0,112,221,0.2), rgba(0,0,0,0.3)); }
+.bis-item-icon.quality-epic { background: linear-gradient(135deg, rgba(163,53,238,0.25), rgba(0,0,0,0.3)); }
+.bis-item-icon.quality-legendary { background: linear-gradient(135deg, rgba(255,128,0,0.25), rgba(0,0,0,0.3)); }
 
 .bis-item-icon img {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  display: block;
 }
 
 .item-icon-placeholder {
-  font-size: 16px;
+  font-size: 14px;
   font-weight: bold;
-  color: #909399;
+  color: rgba(255, 255, 255, 0.3);
 }
+
+.bis-item-icon.quality-uncommon .item-icon-placeholder { color: #1eff00; }
+.bis-item-icon.quality-rare .item-icon-placeholder { color: #409eff; }
+.bis-item-icon.quality-epic .item-icon-placeholder { color: #a335ee; }
+.bis-item-icon.quality-legendary .item-icon-placeholder { color: #ff8000; }
 
 .bis-item-info {
   flex: 1;
@@ -2464,7 +2500,7 @@ onMounted(async () => {
 .bis-item-name {
   font-size: 13px;
   font-weight: 500;
-  color: #303133;
+  color: rgba(255, 255, 255, 0.85);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -2474,13 +2510,13 @@ onMounted(async () => {
   display: flex;
   gap: 8px;
   font-size: 11px;
-  color: #909399;
+  color: rgba(255, 255, 255, 0.4);
   margin-top: 2px;
 }
 
 .bis-item-source {
   font-size: 11px;
-  color: #c0c4cc;
+  color: rgba(255, 255, 255, 0.35);
   margin-top: 2px;
   white-space: nowrap;
   overflow: hidden;

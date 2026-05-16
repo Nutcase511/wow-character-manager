@@ -5,18 +5,29 @@
         <el-icon><User /></el-icon>
         角色管理
       </h2>
-      <el-button type="primary" @click="showCreateDialog = true">
-        <el-icon><Plus /></el-icon>
-        添加角色
-      </el-button>
-      <el-button @click="handleRefreshLevels" :loading="refreshing">
-        <el-icon><Refresh /></el-icon>
-        刷新等级
-      </el-button>
-      <el-button type="success" @click="handleRefreshAllData" :loading="refreshingAll">
-        <el-icon><RefreshRight /></el-icon>
-        刷新全部数据
-      </el-button>
+      <div class="header-actions">
+        <el-dropdown trigger="click" @command="handleRefreshCommand">
+          <el-button :loading="refreshing || refreshingAll">
+            <el-icon><Refresh /></el-icon>
+            刷新数据
+            <el-icon class="el-icon--right"><ArrowDown /></el-icon>
+          </el-button>
+          <template #dropdown>
+            <el-dropdown-menu>
+              <el-dropdown-item command="refreshLevels" :disabled="refreshing" icon="Refresh">
+                刷新等级/职业
+              </el-dropdown-item>
+              <el-dropdown-item command="refreshAll" :disabled="refreshingAll" icon="RefreshRight">
+                刷新全部数据
+              </el-dropdown-item>
+            </el-dropdown-menu>
+          </template>
+        </el-dropdown>
+        <el-button type="primary" @click="showCreateDialog = true">
+          <el-icon><Plus /></el-icon>
+          添加角色
+        </el-button>
+      </div>
     </div>
 
     <el-card class="characters-card">
@@ -115,7 +126,7 @@ import { ref, onMounted, reactive, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useCharacterStore } from '@/stores/character'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { User, Plus, Delete, Refresh, RefreshRight, InfoFilled } from '@element-plus/icons-vue'
+import { User, Plus, Delete, Refresh, RefreshRight, ArrowDown, InfoFilled } from '@element-plus/icons-vue'
 import { characterApi, goldApi } from '@/api'
 import { WoWClass, ClassSpecsMap, SpecNameMap } from '@/types'
 import { getClassIcon, getFactionIcon } from '@/utils/classIcons'
@@ -284,6 +295,14 @@ async function deleteCharacter(id: string) {
 const refreshing = ref(false)
 const refreshingAll = ref(false)
 
+async function handleRefreshCommand(command: string) {
+  if (command === 'refreshLevels') {
+    await handleRefreshLevels()
+  } else if (command === 'refreshAll') {
+    await handleRefreshAllData()
+  }
+}
+
 async function handleRefreshLevels() {
   refreshing.value = true
   try {
@@ -348,6 +367,12 @@ onMounted(() => {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 20px;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .page-title {

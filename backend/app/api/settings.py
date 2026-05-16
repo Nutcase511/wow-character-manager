@@ -11,7 +11,7 @@ import re
 
 from app.core.config import settings as app_settings
 
-router = APIRouter(prefix="/settings", tags=["settings"])
+router = APIRouter(tags=["settings"])
 
 
 class SettingsRequest(BaseModel):
@@ -290,6 +290,12 @@ async def auto_detect_wow_paths():
     # 也检查已配置路径中的 WoW 目录
     conn = get_db()
     cursor = conn.cursor()
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS settings (
+            key TEXT PRIMARY KEY,
+            value TEXT
+        )
+    """)
     cursor.execute("SELECT key, value FROM settings WHERE key IN (?, ?, ?)",
                    ('accountant_path', 'tdinspect_path', 'atlasloot_path'))
     db_settings = {row['key']: row['value'] for row in cursor.fetchall()}
@@ -300,8 +306,8 @@ async def auto_detect_wow_paths():
             # 从已有路径反推 WoW 根目录
             idx = val.find("World of Warcraft")
             candidate = val[:val.find("\\", idx + len("World of Warcraft"))] if "\\" in val[idx + len("World of Warcraft"):] else val[:idx + len("World of Warcraft")]
-            # 需要找到 _classic_ 的父目录
-            for suffix in ["_classic_", "_classic_titan_", "_classic_era_"]:
+            # 需要找到 _classic_titan_ 的父目录
+            for suffix in ["_classic_titan_"]:
                 if suffix in val:
                     parent_end = val.find(suffix)
                     wow_dirs.append(val[:parent_end].rstrip("\\"))
@@ -311,20 +317,12 @@ async def auto_detect_wow_paths():
 
     for wow_dir in wow_dirs:
         # 查找 WTF/Account 目录
-        wtf_path = os.path.join(wow_dir, "_classic_", "WTF", "Account")
-        if not os.path.exists(wtf_path):
-            wtf_path = os.path.join(wow_dir, "_classic_titan_", "WTF", "Account")
-        if not os.path.exists(wtf_path):
-            wtf_path = os.path.join(wow_dir, "_classic_era_", "WTF", "Account")
+        wtf_path = os.path.join(wow_dir, "_classic_titan_", "WTF", "Account")
         if not os.path.exists(wtf_path):
             continue
 
         # 查找 AddOns 目录
-        addons_path = os.path.join(wow_dir, "_classic_", "Interface", "AddOns")
-        if not os.path.exists(addons_path):
-            addons_path = os.path.join(wow_dir, "_classic_titan_", "Interface", "AddOns")
-        if not os.path.exists(addons_path):
-            addons_path = os.path.join(wow_dir, "_classic_era_", "Interface", "AddOns")
+        addons_path = os.path.join(wow_dir, "_classic_titan_", "Interface", "AddOns")
 
         # 遍历 Account 下的账号目录
         for account_dir in os.listdir(wtf_path):
@@ -368,6 +366,31 @@ async def auto_detect_wow_paths():
             break
 
     return results
+
+
+@router.get("/auto-detect/{detect_type}")
+async def auto_detect_single_path(detect_type: str):
+    """自动检测单个插件路径"""
+    valid_types = {"accountant", "tdinspect", "atlasloot", "titanbis"}
+    if detect_type not in valid_types:
+        raise HTTPException(status_code=400, detail=f"无效的检测类型: {detect_type}")
+
+    all_results = await auto_detect_wow_paths()
+
+    key_map = {
+        "accountant": "accountantPath",
+        "tdinspect": "tdinspectPath",
+        "atlasloot": "atlaslootPath",
+        "titanbis": "titanbisPath"
+    }
+
+    path_key = key_map[detect_type]
+    return {
+        "type": detect_type,
+        "path": all_results.get(path_key, ""),
+        "wow_dir": all_results.get("wow_dir", ""),
+        "detected": bool(all_results.get(path_key))
+    }
 
 
 @router.post("/import-bis")
