@@ -86,16 +86,21 @@
       </div>
 
       <!-- 操作按钮 -->
-      <div class="tree-actions">
-        <button class="btn btn-primary" @click="showSaveDialog = true">
-          💾 保存配点
-        </button>
-        <button class="btn btn-secondary" @click="resetPoints">
-          🔄 重置
-        </button>
-        <button class="btn btn-secondary" @click="showBuilds = true">
-          📋 我的配点
-        </button>
+      <div class="tree-actions-bar">
+        <div class="points-display">
+          已分配: <span class="points-count">{{ totalPoints }}</span> / <span class="points-max">{{ talentTree.tree?.max_points || 71 }}</span> 点
+        </div>
+        <div class="tree-actions">
+          <button class="btn btn-primary" @click="showSaveDialog = true">
+            💾 保存配点
+          </button>
+          <button class="btn btn-secondary" @click="resetPoints">
+            🔄 重置
+          </button>
+          <button class="btn btn-secondary" @click="showBuilds = true">
+            📋 我的配点
+          </button>
+        </div>
       </div>
     </div>
 
@@ -196,6 +201,10 @@ const buildNotes = ref('')
 const classSpecs = computed(() => {
   const cls = classes.value.find(c => c.id === selectedClass.value)
   return cls ? cls.specs : []
+})
+
+const totalPoints = computed(() => {
+  return Object.values(points.value).reduce((sum: number, p: any) => sum + (Number(p) || 0), 0)
 })
 
 // 方法
@@ -708,7 +717,34 @@ onMounted(() => {
   height: 64px;
 }
 
-/* 操作按钮 */
+/* 操作按钮区域 */
+.tree-actions-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 15px;
+}
+
+.points-display {
+  font-size: 16px;
+  color: #ddd;
+  padding: 8px 16px;
+  background: rgba(26, 26, 46, 0.5);
+  border-radius: 8px;
+  border: 1px solid #333;
+}
+
+.points-count {
+  color: #ffd700;
+  font-weight: bold;
+  font-size: 18px;
+}
+
+.points-max {
+  color: #888;
+  font-size: 14px;
+}
+
 .tree-actions {
   display: flex;
   justify-content: center;
