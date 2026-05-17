@@ -3,6 +3,6 @@
 ## Author: WCM Tool
 ## Version: 1.0
 ## SavedVariables: IconCollectorDB
-## Interface: 40400
+## Interface: 30300
 
 IconCollector.lua

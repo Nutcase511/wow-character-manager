@@ -1,4 +1,4 @@
--- IconCollector - 装备图标收集插件
+-- IconCollector - 装备图标收集插件 (Wrath 3.3.5 兼容版)
 -- 遍历指定 item_id 列表，通过 GetItemInfo 获取游戏内的确切图标名
 -- 结果保存在 IconCollectorDB SavedVariables 中
 -- 用法: 登录游戏后输入 /ic scan 开始扫描
@@ -52,12 +52,18 @@ local MISSING_ITEM_IDS = {
 
 -- SavedVariables
 IconCollectorDB = IconCollectorDB or {}
+
 -- 扫描状态
 local scanQueue = {}
 local isScanning = false
 local total = 0
 local found = 0
 local failed = 0
+
+-- 使用 OnUpdate 模拟定时器（Wrath 3.3.5 没有 C_Timer.After）
+local timerFrame = CreateFrame("Frame")
+local lastProcessTime = 0
+local SCAN_INTERVAL = 0.02
 
 -- 从纹理路径中提取图标名
 -- 例如 "Interface\\Icons\\inv_misc_questionmark" -> "inv_misc_questionmark"
@@ -71,6 +77,7 @@ end
 local function ProcessNextItem()
     if #scanQueue == 0 then
         isScanning = false
+        timerFrame:SetScript("OnUpdate", nil)
         print(string.format("|cff00ff00[IconCollector] 扫描完成!|r 成功=%d  失败=%d  总计=%d", found, failed, total))
         return
     end
@@ -96,10 +103,17 @@ local function ProcessNextItem()
     if (found + failed) % 5 == 0 then
         print(string.format("[IconCollector] 进度: %d/%d", found + failed, total))
     end
-
-    -- 延迟20ms处理下一个，避免卡界面
-    C_Timer.After(0.02, ProcessNextItem)
 end
+
+-- OnUpdate 处理函数（轮询间隔执行）
+timerFrame:SetScript("OnUpdate", function(self, elapsed)
+    lastProcessTime = lastProcessTime + elapsed
+    if lastProcessTime >= SCAN_INTERVAL then
+        lastProcessTime = 0
+        ProcessNextItem()
+    end
+end)
+timerFrame:Hide()
 
 -- 开始扫描
 local function StartScan()
@@ -108,7 +122,6 @@ local function StartScan()
         return
     end
 
-    -- 清空队列，填入全部ID
     wipe(scanQueue)
     for _, itemId in ipairs(MISSING_ITEM_IDS) do
         tinsert(scanQueue, itemId)
@@ -118,9 +131,10 @@ local function StartScan()
     found = 0
     failed = 0
     isScanning = true
+    lastProcessTime = 0
 
     print(string.format("|cffffff00[IconCollector] 开始扫描 %d 个物品的图标...|r", total))
-    C_Timer.After(0.5, ProcessNextItem)
+    timerFrame:Show()
 end
 
 -- 输出扫描报告
@@ -163,7 +177,7 @@ local function ExportResults()
     for _, entry in ipairs(sorted) do
         print(string.format("    [%d] = \"%s\",", entry.id, entry.icon))
     end
-    print(" }")
+    print("}")
     print("|cffffff00[IconCollector] === 导出结束 ===|r")
 end
 
@@ -201,10 +215,10 @@ SlashCmdList["ICONCOLLECTOR"] = function(msg)
     end
 end
 
--- 事件框架：ADDON_LOADED 后初始化（此时 SavedVariables 已就绪）
-local frame = CreateFrame("Frame")
-frame:RegisterEvent("ADDON_LOADED")
-frame:SetScript("OnEvent", function(self, event, arg1)
+-- 插件加载完成后的初始化
+local loadFrame = CreateFrame("Frame")
+loadFrame:RegisterEvent("ADDON_LOADED")
+loadFrame:SetScript("OnEvent", function(self, event, arg1)
     if arg1 ~= ADDON_NAME then return end
 
     local count = 0
