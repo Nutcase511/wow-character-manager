@@ -226,9 +226,9 @@ const loadTalentTree = async () => {
 
 const loadReferenceImages = async () => {
   if (!selectedClass.value || !selectedSpec.value) return
-  
+
   const images: any[] = []
-  
+
   // 1. 从后端加载保存的配点图片
   try {
     const data = await talentApi.getBuilds({
@@ -240,8 +240,8 @@ const loadReferenceImages = async () => {
   } catch (error) {
     console.error('Failed to load builds:', error)
   }
-  
-  // 2. 加载本地参考图片
+
+  // 2. 加载本地参考图片，失败时使用 CDN 专精图标
   const classNameMap: Record<string, string> = {
     'priest': '牧师',
     'mage': '法师',
@@ -254,14 +254,45 @@ const loadReferenceImages = async () => {
     'druid': '德鲁伊',
     'deathknight': '死亡骑士'
   }
-  
+
+  const specIconMap: Record<string, string> = {
+    '战士-武器': 'ability_warrior_savageblow',
+    '战士-狂怒': 'ability_warrior_innerrage',
+    '战士-防护': 'ability_warrior_defense',
+    '圣骑士-神圣': 'spell_holy_holybolt',
+    '圣骑士-防护': 'spell_holy_devotionaura',
+    '圣骑士-惩戒': 'spell_holy_auraoflight',
+    '猎人-野兽控制': 'ability_hunter_bestialdiscipline',
+    '猎人-射击': 'ability_hunter_focusedaim',
+    '猎人-生存': 'ability_hunter_camouflage',
+    '盗贼-刺杀': 'ability_rogue_eviscerate',
+    '盗贼-战斗': 'ability_rogue_sabreslash',
+    '盗贼-敏锐': 'ability_rogue_masterofsubtlety',
+    '牧师-戒律': 'spell_holy_powerwordshield',
+    '牧师-神圣': 'spell_holy_guardianspirit',
+    '牧师-暗影': 'spell_shadow_shadowwordpain',
+    '萨满祭司-元素': 'spell_nature_lightningbolt',
+    '萨满祭司-增强': 'spell_nature_lightningshield',
+    '萨满祭司-恢复': 'spell_nature_healingwave',
+    '法师-奥术': 'spell_nature_astralrecal',
+    '法师-火焰': 'spell_fire_fireball',
+    '法师-冰霜': 'spell_frost_frostbolt',
+    '术士-痛苦': 'spell_shadow_curseofagony',
+    '术士-恶魔学识': 'spell_shadow_metamorphosis',
+    '术士-毁灭': 'spell_shadow_rainoffire',
+    '德鲁伊-平衡': 'spell_nature_starfall',
+    '德鲁伊-野性战斗': 'ability_druid_catform',
+    '德鲁伊-恢复': 'spell_nature_healingtouch',
+    '死亡骑士-鲜血': 'spell_deathknight_bloodpresence',
+    '死亡骑士-冰霜': 'spell_deathknight_frostpresence',
+    '死亡骑士-邪恶': 'spell_deathknight_unholypresence'
+  }
+
   const cnClassName = classNameMap[selectedClass.value]
   if (cnClassName) {
     const localImagePath = `/images/天赋/${cnClassName}-${selectedSpec.value}.png`
-    // 检查图片是否存在（通过创建一个 Image 对象）
     const img = new Image()
     img.onload = () => {
-      // 如果本地图片存在且未添加，则添加
       if (!images.some((img: any) => img.image_path === localImagePath)) {
         images.push({
           id: `local-${selectedClass.value}-${selectedSpec.value}`,
@@ -272,22 +303,38 @@ const loadReferenceImages = async () => {
         referenceImages.value = images
       }
     }
+    img.onerror = () => {
+      const iconName = specIconMap[`${cnClassName}-${selectedSpec.value}`]
+      if (iconName) {
+        const cdnUrl = `https://wow.zamimg.com/images/wow/icons/medium/${iconName}.jpg`
+        if (!images.some((img: any) => img.image_path === cdnUrl)) {
+          images.push({
+            id: `cdn-${selectedClass.value}-${selectedSpec.value}`,
+            name: `${cnClassName}${selectedSpec.value}专精图标`,
+            image_path: cdnUrl,
+            notes: 'CDN专精图标'
+          })
+          referenceImages.value = images
+        }
+      }
+    }
     img.src = localImagePath
   }
-  
+
   referenceImages.value = images
 }
 
 const getImageUrl = (path: string) => {
-  // 将本地路径转换为可访问的URL
   if (!path) return ''
-  
-  // 如果是本地 public 目录下的图片路径，直接返回
+
+  if (path.startsWith('http://') || path.startsWith('https://')) {
+    return path
+  }
+
   if (path.startsWith('/images/')) {
     return path
   }
-  
-  // 提取文件名（针对后端上传的图片）
+
   const filename = path.split('\\').pop() || path.split('/').pop()
   return `/uploads/talent_images/${filename}`
 }
