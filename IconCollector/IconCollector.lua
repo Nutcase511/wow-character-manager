@@ -55,10 +55,12 @@ IconCollectorDB = IconCollectorDB or {}
 
 -- 扫描状态
 local scanQueue = {}
+local retryCount = {}  -- 记录每个物品的重试次数
 local isScanning = false
 local total = 0
 local found = 0
 local failed = 0
+local MAX_RETRY = 3  -- 最多重试3次
 
 -- 使用 OnUpdate 模拟定时器（Wrath 3.3.5 没有 C_Timer.After）
 local timerFrame = CreateFrame("Frame")
@@ -78,7 +80,7 @@ local function ProcessNextItem()
     if #scanQueue == 0 then
         isScanning = false
         timerFrame:SetScript("OnUpdate", nil)
-        print(string.format("|cff00ff00[IconCollector] 扫描完成!|r 成功=%d  失败=%d  总计=%d", found, failed, total))
+        print(string.format("|cff00ff00[IconCollector] 扫描完成!|r 成功=%d  无法获取=%d  总计=%d", found, total - found, total))
         return
     end
 
@@ -94,14 +96,19 @@ local function ProcessNextItem()
             failed = failed + 1
         end
     else
-        -- 首次未命中，重新入队等待缓存
-        tinsert(scanQueue, itemId)
+        -- 缓存未命中，重试有限次数
+        retryCount[itemId] = (retryCount[itemId] or 0) + 1
+        if retryCount[itemId] <= MAX_RETRY then
+            tinsert(scanQueue, itemId)
+        end
         failed = failed + 1
     end
 
     -- 每处理5个输出一次进度
     if (found + failed) % 5 == 0 then
-        print(string.format("[IconCollector] 进度: %d/%d", found + failed, total))
+        local processed = found + failed
+        if processed > total then processed = total end
+        print(string.format("[IconCollector] 进度: %d/%d  成功=%d", processed, total, found))
     end
 end
 
@@ -123,6 +130,7 @@ local function StartScan()
     end
 
     wipe(scanQueue)
+    wipe(retryCount)
     for _, itemId in ipairs(MISSING_ITEM_IDS) do
         tinsert(scanQueue, itemId)
     end
