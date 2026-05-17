@@ -5,4 +5,5 @@
 ## SavedVariables: IconCollectorDB
 ## Interface: 38001
 
+_raid_item_ids.lua
 IconCollector.lua

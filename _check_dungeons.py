@@ -1,4 +1,4 @@
-"""检查特定副本(如MC)的Boss和掉落"""
+"""查找无Boss副本是否有对应的Boss（通过名字匹配或相似dungeon_id）"""
 import sqlite3
 
 DB_PATH = r'c:\wow后台管理\wow-character-manager\backend\wow_character_manager.db'
@@ -6,51 +6,65 @@ DB_PATH = r'c:\wow后台管理\wow-character-manager\backend\wow_character_manag
 db = sqlite3.connect(DB_PATH)
 c = db.cursor()
 
-# MC的dungeon_id = 43
-print('=== 熔火之心(dungeon_id=43) ===')
-c.execute('SELECT id, boss_id, name FROM bosses WHERE dungeon_id = 43')
-bosses = c.fetchall()
-print(f'Boss: {len(bosses)} 个')
-ids_in_boss_loot = 0
-for b in bosses:
-    c.execute('SELECT COUNT(*) FROM boss_loot WHERE boss_id = ?', (b[1],))
-    loot_cnt = c.fetchone()[0]
-    if loot_cnt > 0:
-        ids_in_boss_loot += 1
-    print(f'  id={b[0]}, boss_id={b[1]}, {b[2]}: {loot_cnt}件掉落')
-print(f'在boss_loot中有掉落数据的Boss: {ids_in_boss_loot}个')
-
-# 再看看60级经典副本的dungeon_id列表
-print('\n=== classic expansion 副本 ===')
-c.execute('SELECT id, dungeon_id, name, phase FROM dungeons WHERE expansion = "classic" ORDER BY id')
-dungeons = c.fetchall()
-for d in dungeons:
-    c.execute('SELECT COUNT(*) FROM bosses WHERE dungeon_id = ?', (d[1],))
-    boss_cnt = c.fetchone()[0]
-    c.execute('SELECT COUNT(DISTINCT bl.item_id) FROM boss_loot bl JOIN bosses b ON bl.boss_id = b.boss_id WHERE b.dungeon_id = ?', (d[1],))
-    loot_cnt = c.fetchone()[0]
-    print(f'  {d[1]}: {d[2]}(phase={d[3]}): {boss_cnt}个Boss, {loot_cnt}件掉落')
-
-# 再看看哪些dungeon_id的Boss有掉落
-print('\n=== 按dungeon_id统计有掉落的副本 ===')
+# 剩余无Boss副本
 c.execute("""
-    SELECT b.dungeon_id, d.name, COUNT(DISTINCT bl.item_id) as loot_cnt
-    FROM boss_loot bl
-    JOIN bosses b ON bl.boss_id = b.boss_id
-    LEFT JOIN dungeons d ON d.dungeon_id = b.dungeon_id
-    GROUP BY b.dungeon_id
-    HAVING loot_cnt > 0
-    ORDER BY b.dungeon_id
+    SELECT d.id, d.dungeon_id, d.name, d.expansion, d.phase, d.category
+    FROM dungeons d
+    WHERE (SELECT COUNT(*) FROM bosses WHERE dungeon_id = d.dungeon_id) = 0
+    ORDER BY d.id
 """)
-rows = c.fetchall()
-print(f'有掉落数据的副本: {len(rows)} 个')
-for r in rows[:15]:
-    print(f'  dungeon_id={r[0]}, {r[1] or "未匹配"}: {r[2]}件')
+no_boss = c.fetchall()
 
-# 复查boss_loot前10条记录
-print('\n=== boss_loot 前10条记录 ===')
-c.execute('SELECT * FROM boss_loot LIMIT 10')
-for r in c.fetchall():
-    print(f'  id={r[0]}, boss_id={r[1]}, item_id={r[2]}, item_name={r[3]}, difficulty={r[4]}')
+print('=== 无Boss副本分析 ===')
+for d in no_boss:
+    did = d[1]
+    name = d[2]
+    
+    # 1. 查bosses表里有没有名字相似的Boss
+    keywords = name.replace('：', ':').replace('  ', ' ').split()
+    keyword = keywords[0] if keywords else name
+    c.execute('SELECT COUNT(*) FROM bosses WHERE name LIKE ?', (f'%{keyword}%',))
+    similar_named = c.fetchone()[0]
+    
+    # 2. 查bosses表里有没有相近的dungeon_id
+    c.execute('SELECT dungeon_id, COUNT(*) as cnt FROM bosses GROUP BY dungeon_id HAVING dungeon_id BETWEEN ? AND ? ORDER BY dungeon_id', (did-5, did+5))
+    nearby = c.fetchall()
+    
+    details = []
+    if similar_named > 0:
+        c.execute('SELECT dungeon_id, name FROM bosses WHERE name LIKE ? LIMIT 3', (f'%{keyword}%',))
+        samples = c.fetchall()
+        for s in samples:
+            c.execute('SELECT name FROM dungeons WHERE dungeon_id = ?', (s[0],))
+            dn = c.fetchone()
+            dn_name = dn[0] if dn else '无对应副本'
+            print(f'  -> Boss"{s[1]}"在dungeon_id={s[0]}({dn_name})')
+    
+    nearby_info = ', '.join([f'{x[0]}({x[1]}Boss)' for x in nearby]) if nearby else '无'
+    
+    print(f'\n[{name}] dungeon_id={did}, phase={d[4]}')
+    if details:
+        for det in details:
+            print(f'  {det}')
+    if nearby:
+        print(f'  附近dungeon_id: {nearby_info}')
+    
+    # 3. 特殊检查：黑石深渊、通灵学院这些
+    c.execute('SELECT DISTINCT dungeon_id FROM bosses WHERE dungeon_id IN (1584, 2057, 1583, 1337, 722, 721, 718)')
+    existing = c.fetchall()
+    if existing:
+        existing_ids = [x[0] for x in existing]
+        print(f'  存在dungeon_id: {existing_ids} 但在bosses表中没有记录')
+
+# 检查黑石深渊等经典副本的Boss在哪里
+print('\n\n=== 经典副本Boss特殊排查 ===')
+classic_dungeon_ids = [1584, 2057, 1583, 1337, 722, 721, 718, 3714, 3790, 3791, 3789, 3716, 3715, 2367, 3848, 3847, 3849, 3959]
+for did in classic_dungeon_ids:
+    c.execute('SELECT COUNT(*) FROM bosses WHERE dungeon_id = ?', (did,))
+    cnt = c.fetchone()[0]
+    c.execute('SELECT name FROM dungeons WHERE dungeon_id = ?', (did,))
+    dn = c.fetchone()
+    dn_name = dn[0] if dn else '无匹配'
+    print(f'dungeon_id={did}({dn_name}): Boss={cnt}个')
 
 db.close()

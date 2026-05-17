@@ -1,252 +1,130 @@
--- IconCollector - 装备图标收集插件 (Wrath 3.3.5 兼容版)
--- 遍历指定 item_id 列表，通过 GetItemInfo 获取游戏内的确切图标名
--- 结果保存在 IconCollectorDB SavedVariables 中
--- 用法: 登录游戏后输入 /ic scan 开始扫描
---       输入 /ic report 查看结果
---       输入 /ic export 输出Lua格式结果
+-- IconCollector - 装备图标收集插件 (Wrath 3.3.5/泰坦重铸兼容版)
+local addonName, addonNS = ...
 
-local ADDON_NAME = "IconCollector"
-
--- 需要获取图标名的物品ID列表（270个）
-local MISSING_ITEM_IDS = {
-    19, 20, 30, 58, 62, 10813, 14495, 17534, 18433, 18621,
-    20306, 20318, 20738, 21551, 200060, 200068, 200235, 200240,
-    201699, 201993, 202195, 204385, 204982, 206272, 206392,
-    206580, 206684, 206685, 206686, 206687, 206691, 206692,
-    206693, 206694, 206697, 206699, 206700, 206701, 206702,
-    206703, 206704, 206705, 206706, 206717, 206726, 206730,
-    206731, 206732, 206733, 206734, 206735, 206736, 206737,
-    206738, 206739, 206740, 206741, 206742, 206743, 206744,
-    206745, 206746, 206747, 206748, 206750, 206751, 206752,
-    206753, 206754, 206755, 206756, 206757, 206759, 206953,
-    207097, 208157, 209515, 209558, 209585, 209587, 209588,
-    209589,
-    209603, 209627, 209629, 209630, 209631, 209633, 209635,
-    209636, 209639, 209641, 209642, 209644, 209648, 209649,
-    209650, 209652, 209654, 209655, 209660, 209661, 209662,
-    209663, 209665, 209695, 209696, 209697, 209780, 209782,
-    209783, 209784, 209785, 209786, 209787, 209789, 209790,
-    209791, 209792, 209793, 209794, 209796, 209801, 209803,
-    209804, 209807, 209808, 209809, 209810, 209811, 209812,
-    209813, 209814, 209815, 209826, 209827, 209829, 209876,
-    209877, 209945, 210047, 210135, 211082, 211206, 211207,
-    211261, 211262, 211817, 211844, 211847, 211850, 211851,
-    216696, 224002, 224375, 224376, 224377, 224378, 224379,
-    224380, 224381, 224382, 224383, 226805, 226812, 231312,
-    232614, 235464, 235561, 235562, 238339, 238340, 238341,
-    238342, 238343, 242551, 245584, 245612, 245613, 246901,
-    247893, 248263, 248398, 248753, 248754, 248945, 248946,
-    248947, 248948, 248949, 248950, 249819, 249820, 249821,
-    256035, 256052, 256054, 256056, 256068, 256069, 256070,
-    256396, 258417, 258420, 258424, 258883, 260491, 260493,
-    260494, 260495, 260500, 260502, 260503, 260504, 260505,
-    260510, 260511, 260512, 260781, 260831, 263199, 263200,
-    263201, 263204, 263207, 263514, 264161, 264167, 264198,
-    264272, 264358, 264359, 264937, 264986, 265028, 265029, 265036,
-    265069, 265070, 265333, 265335, 265340, 265342, 265343,
-    265344, 265345, 265346, 265347, 265348, 265349, 265350,
-    265351, 265352, 265353, 265354, 265355, 265356, 265492,
-    265523, 265524, 265841, 265933, 265937, 265939, 265940,
-    265942, 265944, 267335, 267340, 272955,
-}
-
--- SavedVariables
-IconCollectorDB = IconCollectorDB or {}
-
--- 扫描状态
-local scanQueue = {}
-local retryCount = {}  -- 记录每个物品的重试次数
-local isScanning = false
-local total = 0
-local found = 0
-local failed = 0
-local MAX_RETRY = 3  -- 最多重试3次
-
--- 使用 OnUpdate 模拟定时器（Wrath 3.3.5 没有 C_Timer.After）
-local timerFrame = CreateFrame("Frame")
-local lastProcessTime = 0
-local SCAN_INTERVAL = 0.02
-
--- 从纹理路径中提取图标名
--- 例如 "Interface\\Icons\\inv_misc_questionmark" -> "inv_misc_questionmark"
-local function ExtractIconName(texturePath)
+local function extractIconName(texturePath)
     if not texturePath then return nil end
-    local name = texturePath:match("([^\\]+)$")
+    local name = string.match(texturePath, "Interface\\Icons\\(.+)")
+    if not name then name = string.match(texturePath, "(.+)") end
     return name
 end
 
--- 处理下一个物品
-local function ProcessNextItem()
-    if #scanQueue == 0 then
-        isScanning = false
-        timerFrame:SetScript("OnUpdate", nil)
-        print(string.format("|cff00ff00[IconCollector] 扫描完成!|r 成功=%d  无法获取=%d  总计=%d", found, total - found, total))
-        return
+local function scanItem(itemId)
+    local _, itemName, _, _, _, _, _, _, _, texture = GetItemInfo(itemId)
+    if itemName then
+        local iconName = extractIconName(texture)
+        return itemName, iconName
     end
-
-    local itemId = tremove(scanQueue, 1)
-    local name, _, _, _, _, _, _, _, _, texture = GetItemInfo(itemId)
-
-    if name and texture then
-        local iconName = ExtractIconName(texture)
-        if iconName then
-            IconCollectorDB[tostring(itemId)] = iconName
-            found = found + 1
-        else
-            failed = failed + 1
-        end
-    else
-        -- 缓存未命中，重试有限次数
-        retryCount[itemId] = (retryCount[itemId] or 0) + 1
-        if retryCount[itemId] <= MAX_RETRY then
-            tinsert(scanQueue, itemId)
-        end
-        failed = failed + 1
-    end
-
-    -- 每处理5个输出一次进度
-    if (found + failed) % 5 == 0 then
-        local processed = found + failed
-        if processed > total then processed = total end
-        print(string.format("[IconCollector] 进度: %d/%d  成功=%d", processed, total, found))
-    end
+    return nil, nil
 end
 
--- OnUpdate 处理函数（轮询间隔执行）
-timerFrame:SetScript("OnUpdate", function(self, elapsed)
-    lastProcessTime = lastProcessTime + elapsed
-    if lastProcessTime >= SCAN_INTERVAL then
-        lastProcessTime = 0
-        ProcessNextItem()
+local frame = CreateFrame("Frame")
+frame:RegisterEvent("ADDON_LOADED")
+frame:SetScript("OnEvent", function(self, event, arg1)
+    if event == "ADDON_LOADED" and arg1 == addonName then
+        if not IconCollectorDB then IconCollectorDB = {} end
+        if not IconCollectorDB.raid then IconCollectorDB.raid = {} end
+        print("|cff00ff00IconCollector 加载成功!|r")
+        print("输入 /ic raid 扫描60/70级团本装备图标(" .. #RAID_ITEM_IDS .. "个)")
+        print("输入 /ic info 查看进度")
+        print("输入 /ic export 导出数据")
     end
 end)
-timerFrame:Hide()
 
--- 开始扫描
-local function StartScan()
-    if isScanning then
-        print("|cffff0000[IconCollector] 扫描进行中，请勿重复启动|r")
-        return
+SLASH_IC1, SLASH_IC2, SLASH_IC3 = "/ic", "/iconcollector", "/ic"
+
+SlashCmdList["IC"] = function(msg)
+    msg = string.lower(msg or "")
+    msg = string.gsub(msg, "^%s+", "")
+    msg = string.gsub(msg, "%s+$", "")
+    local parts = {}
+    for word in string.gmatch(msg, "%S+") do
+        table.insert(parts, word)
     end
 
-    wipe(scanQueue)
-    wipe(retryCount)
-    for _, itemId in ipairs(MISSING_ITEM_IDS) do
-        tinsert(scanQueue, itemId)
-    end
+    if #parts == 0 then
+        print("使用说明:")
+        print("  /ic raid - 扫描60/70级团本装备图标(" .. #RAID_ITEM_IDS .. "个)")
+        print("  /ic info - 查看扫描进度")
+        print("  /ic export - 导出图标映射表")
+        print("  /ic reset - 清空扫描结果重新扫描")
 
-    total = #scanQueue
-    found = 0
-    failed = 0
-    isScanning = true
-    lastProcessTime = 0
-
-    print(string.format("|cffffff00[IconCollector] 开始扫描 %d 个物品的图标...|r", total))
-    timerFrame:Show()
-end
-
--- 输出扫描报告
-local function ShowReport()
-    local count = 0
-    for k, v in pairs(IconCollectorDB) do
-        count = count + 1
-    end
-    print(string.format("|cff00ff00[IconCollector] 已收集 %d 个图标|r", count))
-    if count > 0 then
-        print("输入 /ic details 查看详情")
-        print("输入 /ic export 导出Lua格式")
-    end
-end
-
--- 输出详细结果
-local function ShowDetails()
-    local sorted = {}
-    for k, v in pairs(IconCollectorDB) do
-        tinsert(sorted, {id = tonumber(k), icon = v})
-    end
-    sort(sorted, function(a, b) return a.id < b.id end)
-
-    print("|cffffff00[IconCollector] 图标映射详情:|r")
-    for _, entry in ipairs(sorted) do
-        print(string.format("  [%d] = \"%s\"", entry.id, entry.icon))
-    end
-end
-
--- 导出为可导入的Lua格式
-local function ExportResults()
-    local sorted = {}
-    for k, v in pairs(IconCollectorDB) do
-        if k ~= "_export" then
-            tinsert(sorted, {id = tonumber(k), icon = v})
+    elseif parts[1] == "raid" then
+        local db = IconCollectorDB.raid
+        local queue = {}
+        for _, itemId in ipairs(RAID_ITEM_IDS) do
+            if not db[tostring(itemId)] then
+                table.insert(queue, itemId)
+            end
         end
+
+        if #queue == 0 then
+            print("所有物品已扫描完成! 输入 /ic info 查看结果")
+            return
+        end
+
+        local total = #queue
+
+        print("开始扫描 " .. total .. " 个物品...")
+        print("扫描中，请稍候...")
+
+        local scanFrame = CreateFrame("Frame")
+        local idx = 1
+        local found = 0
+        scanFrame:SetScript("OnUpdate", function(self, elapsed)
+            self.elapsed = (self.elapsed or 0) + elapsed
+            if self.elapsed >= 0.02 then
+                self.elapsed = 0
+                if idx <= total then
+                    local itemId = queue[idx]
+                    local itemName, iconName = scanItem(itemId)
+                    if itemName then
+                        db[tostring(itemId)] = { name = itemName, icon = iconName }
+                        found = found + 1
+                    end
+                    if found > 0 and found % 100 == 0 then
+                        print("已扫描 " .. idx .. "/" .. total .. ", 找到 " .. found .. " 个")
+                    end
+                    idx = idx + 1
+                else
+                    print("扫描完成! 共扫描" .. total .. "个物品, " .. found .. "个找到图标")
+                    self:SetScript("OnUpdate", nil)
+                end
+            end
+        end)
+
+    elseif parts[1] == "info" then
+        local db = IconCollectorDB.raid
+        local count = 0
+        for _ in pairs(db) do
+            count = count + 1
+        end
+        print("已收集 " .. count .. "/" .. #RAID_ITEM_IDS .. " 个图标")
+        if count > 0 then
+            print("输入 /ic export 导出数据")
+        end
+
+    elseif parts[1] == "export" then
+        local db = IconCollectorDB.raid
+        local count = 0
+        for _ in pairs(db) do count = count + 1 end
+        if count == 0 then
+            print("没有扫描数据，请先输入 /ic raid")
+            return
+        end
+        local lines = {}
+        table.insert(lines, "local raid_icons = {")
+        for itemId, info in pairs(db) do
+            table.insert(lines, "    [" .. itemId .. "] = { name = \"" .. info.name .. "\", icon = \"" .. info.icon .. "\" },")
+        end
+        table.insert(lines, "}")
+        print("--- 全选并复制以下内容 ---")
+        for _, line in ipairs(lines) do
+            print(line)
+        end
+        print("--- END ---")
+
+    elseif parts[1] == "reset" then
+        IconCollectorDB.raid = {}
+        print("已清空扫描结果，输入 /ic raid 重新扫描")
     end
-    sort(sorted, function(a, b) return a.id < b.id end)
-
-    -- 构建导出文本
-    local lines = {}
-    tinsert(lines, "local icon_mapping = {")
-    for _, entry in ipairs(sorted) do
-        tinsert(lines, string.format("    [%d] = \"%s\",", entry.id, entry.icon))
-    end
-    tinsert(lines, "}")
-
-    local exportText = table.concat(lines, "\n")
-    IconCollectorDB["_export"] = exportText
-
-    print("|cffffff00[IconCollector] 已保存到 SavedVariables，复制 WTF 文件夹下 IconCollector.lua 中的 _export 内容|r")
-    print(string.format("|cff00ff00[IconCollector] 共导出 %d 个图标映射|r", #sorted))
 end
-
--- 清空已有结果重新扫描
-local function ResetAndRescan()
-    wipe(IconCollectorDB)
-    print("|cffffff00[IconCollector] 已清空历史记录，开始重新扫描...|r")
-    StartScan()
-end
-
--- 注册斜杠命令
-SLASH_ICONCOLLECTOR1 = "/iconcollector"
-SLASH_ICONCOLLECTOR2 = "/ic"
-SlashCmdList["ICONCOLLECTOR"] = function(msg)
-    local cmd = msg:trim():lower()
-    if cmd == "scan" then
-        StartScan()
-    elseif cmd == "report" or cmd == "" then
-        ShowReport()
-    elseif cmd == "details" then
-        ShowDetails()
-    elseif cmd == "export" then
-        ExportResults()
-    elseif cmd == "reset" then
-        ResetAndRescan()
-    elseif cmd == "help" then
-        print("|cffffff00[IconCollector] 命令列表:|r")
-        print("  /ic            - 显示报告")
-        print("  /ic scan       - 开始扫描")
-        print("  /ic details    - 显示详细结果")
-        print("  /ic export     - 导出Lua格式")
-        print("  /ic reset      - 清空并重新扫描")
-    else
-        print("|cffff0000未知命令，输入 /ic help 查看帮助|r")
-    end
-end
-
--- 插件加载完成后的初始化
-local loadFrame = CreateFrame("Frame")
-loadFrame:RegisterEvent("ADDON_LOADED")
-loadFrame:SetScript("OnEvent", function(self, event, arg1)
-    if arg1 ~= ADDON_NAME then return end
-
-    local count = 0
-    for k, v in pairs(IconCollectorDB) do
-        count = count + 1
-    end
-
-    if count > 0 then
-        print(string.format("|cff00ff00[IconCollector] 已加载|r 当前已有 %d 个图标记录，输入 /ic report 查看详情", count))
-    else
-        print("|cff00ff00[IconCollector] 已加载|r 输入 /ic scan 开始扫描图标，输入 /ic help 查看命令")
-    end
-
-    self:UnregisterEvent("ADDON_LOADED")
-end)
