@@ -176,17 +176,25 @@ end
 local function ExportResults()
     local sorted = {}
     for k, v in pairs(IconCollectorDB) do
-        tinsert(sorted, {id = tonumber(k), icon = v})
+        if k ~= "_export" then
+            tinsert(sorted, {id = tonumber(k), icon = v})
+        end
     end
     sort(sorted, function(a, b) return a.id < b.id end)
 
-    print("|cffffff00[IconCollector] === 导出结果 (可复制) ===|r")
-    print("local icon_mapping = {")
+    -- 构建导出文本
+    local lines = {}
+    tinsert(lines, "local icon_mapping = {")
     for _, entry in ipairs(sorted) do
-        print(string.format("    [%d] = \"%s\",", entry.id, entry.icon))
+        tinsert(lines, string.format("    [%d] = \"%s\",", entry.id, entry.icon))
     end
-    print("}")
-    print("|cffffff00[IconCollector] === 导出结束 ===|r")
+    tinsert(lines, "}")
+
+    local exportText = table.concat(lines, "\n")
+    IconCollectorDB["_export"] = exportText
+
+    print("|cffffff00[IconCollector] 已保存到 SavedVariables，复制 WTF 文件夹下 IconCollector.lua 中的 _export 内容|r")
+    print(string.format("|cff00ff00[IconCollector] 共导出 %d 个图标映射|r", #sorted))
 end
 
 -- 清空已有结果重新扫描
