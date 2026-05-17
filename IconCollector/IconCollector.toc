@@ -1,0 +1,8 @@
+## Title: IconCollector
+## Notes: 收集缺失的装备图标 - 用于 Wow Character Manager
+## Author: WCM Tool
+## Version: 1.0
+## SavedVariables: IconCollectorDB
+## Interface: 40400
+
+IconCollector.lua

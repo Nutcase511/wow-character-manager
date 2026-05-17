@@ -76,7 +76,8 @@
               >
                 <template v-if="getItemBySlot(slot.key)">
                   <div class="slot-icon">
-                    <img :src="getItemBySlot(slot.key).icon" :alt="getItemBySlot(slot.key).name" />
+                    <img v-if="getItemBySlot(slot.key).icon && !erroredSlots[slot.key]" :src="getItemBySlot(slot.key).icon" :alt="getItemBySlot(slot.key).name" @error="handleSlotIconError(slot.key)" class="equip-icon" />
+                    <div v-else class="slot-icon-fallback">{{ (getItemBySlot(slot.key).name || '?')[0] }}</div>
                   </div>
                   <div class="slot-info">
                     <div class="item-header">
@@ -185,7 +186,8 @@
             >
               <template v-if="getItemBySlot(slot.key)">
                 <div class="slot-icon">
-                  <img :src="getItemBySlot(slot.key).icon" :alt="getItemBySlot(slot.key).name" />
+                  <img v-if="getItemBySlot(slot.key).icon && !erroredSlots[slot.key]" :src="getItemBySlot(slot.key).icon" :alt="getItemBySlot(slot.key).name" @error="handleSlotIconError(slot.key)" class="equip-icon" />
+                  <div v-else class="slot-icon-fallback">{{ (getItemBySlot(slot.key).name || '?')[0] }}</div>
                 </div>
                 <div class="slot-info">
                   <div class="item-header">
@@ -254,7 +256,8 @@
             >
               <template v-if="getItemBySlot(slot.key)">
                 <div class="slot-icon">
-                  <img :src="getItemBySlot(slot.key).icon" :alt="getItemBySlot(slot.key).name" />
+                  <img v-if="getItemBySlot(slot.key).icon && !erroredSlots[slot.key]" :src="getItemBySlot(slot.key).icon" :alt="getItemBySlot(slot.key).name" @error="handleSlotIconError(slot.key)" class="equip-icon" />
+                  <div v-else class="slot-icon-fallback">{{ (getItemBySlot(slot.key).name || '?')[0] }}</div>
                 </div>
                 <div class="slot-info">
                   <div class="item-header">
@@ -759,9 +762,14 @@ const bisComparisonLoading = ref(false)
 const selectedBisSpec = ref<string>('')
 const selectedBisPhase = ref<string>('')
 const erroredIcons = reactive<Record<string, boolean>>({})
+const erroredSlots = reactive<Record<string, boolean>>({})
 
 function handleIconError(itemId: number) {
   erroredIcons[String(itemId)] = true
+}
+
+function handleSlotIconError(slotKey: string) {
+  erroredSlots[slotKey] = true
 }
 
 // 天赋信息状态
@@ -1845,10 +1853,23 @@ onMounted(async () => {
   flex-shrink: 0;
 }
 
-.slot-icon img {
+.slot-icon img,
+.slot-icon .equip-icon {
   width: 100%;
   height: 100%;
   object-fit: cover;
+}
+
+.slot-icon-fallback {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-weight: 700;
+  color: #6b7280;
+  background: #1e293b;
 }
 
 .slot-info {

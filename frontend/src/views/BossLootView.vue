@@ -10,7 +10,7 @@
     <div class="page-header">
       <div class="boss-header">
         <div class="boss-icon-container">
-          <img v-if="bossIcon" :src="bossIcon" :alt="bossName" class="boss-icon" />
+          <img v-if="bossIcon && !erroredIcons['boss']" :src="bossIcon" :alt="bossName" class="boss-icon" @error="handleIconError('boss')" />
           <span v-else class="boss-icon-placeholder">👹</span>
         </div>
         <h2 class="page-title">{{ bossName }} - 掉落装备</h2>
@@ -30,10 +30,11 @@
         <!-- 装备图标 -->
         <div class="item-icon-wrapper">
           <img 
-            v-if="item.icon_url" 
+            v-if="item.icon_url && !erroredIcons[String(item.item_id)]" 
             :src="item.icon_url" 
             :alt="item.item_name" 
             class="item-icon"
+            @error="handleIconError(String(item.item_id))"
           />
           <span v-else class="item-icon-placeholder">📦</span>
         </div>
@@ -85,10 +86,11 @@
         <div class="detail-header">
           <div class="detail-icon-wrapper" :class="getQualityClass(selectedItem.quality)">
             <img 
-              v-if="selectedItem.icon_url" 
+              v-if="selectedItem.icon_url && !erroredIcons['detail-' + String(selectedItem.item_id)]" 
               :src="selectedItem.icon_url" 
               :alt="selectedItem.item_name" 
               class="detail-icon"
+              @error="handleIconError('detail-' + String(selectedItem.item_id))"
             />
             <span v-else class="detail-icon-placeholder">📦</span>
           </div>
@@ -130,7 +132,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { bossApi } from '@/api'
 import { ElMessage } from 'element-plus'
@@ -146,6 +148,11 @@ const lootItems = ref<any[]>([])
 const loading = ref(false)
 const showDetailDialog = ref(false)
 const selectedItem = ref<any>(null)
+const erroredIcons = reactive<Record<string, boolean>>({})
+
+function handleIconError(key: string) {
+  erroredIcons[key] = true
+}
 
 function getQualityClass(quality: string): string {
   const classes: Record<string, string> = {

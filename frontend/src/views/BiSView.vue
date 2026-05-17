@@ -48,7 +48,7 @@
         <div v-for="item in bisItems" :key="item.id" class="bis-item-card" :class="getQualityClass(item.quality)">
           <div class="item-slot">{{ SlotNameMap[item.slot] || item.slot }}</div>
           <div class="item-icon-wrapper">
-            <img v-if="item.icon_url" :src="item.icon_url" class="item-icon" />
+            <img v-if="item.icon_url && !erroredIcons[String(item.item_id)]" :src="item.icon_url" class="item-icon" @error="handleIconError(item.item_id)" />
             <div v-else class="item-icon-placeholder">
               <el-icon><QuestionFilled /></el-icon>
             </div>
@@ -94,7 +94,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, reactive, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { TrophyBase, Download, QuestionFilled } from '@element-plus/icons-vue'
 import { bisApi, characterApi } from '@/api'
@@ -114,6 +114,11 @@ const selectedPhase = ref('')
 
 const showImportDialog = ref(false)
 const importCharacterId = ref('')
+const erroredIcons = reactive<Record<string, boolean>>({})
+
+function handleIconError(itemId: number) {
+  erroredIcons[String(itemId)] = true
+}
 
 const specs = computed(() => {
   if (!selectedClass.value || !bisClasses.value[selectedClass.value]) return []

@@ -184,15 +184,39 @@ export interface GoldSnapshot {
 }
 
 export interface GoldSummary {
-  character_gold?: CharacterGold
+  character_gold?: CharacterGold | null
   total_in: number
   total_out: number
   net: number
   transactions: GoldTransaction[]
 }
 
-// 时间模式
-export const TimeModes = ['Session', 'Day', 'Week', 'Total']
+export interface TokenPrice {
+  id: number
+  price_gold: number
+  source: string
+  notes?: string
+  recorded_at: string
+}
+
+export interface ExchangeRate {
+  id: number
+  gold_per_cny: number
+  source: string
+  notes?: string
+  recorded_at: string
+}
+
+export interface ExchangeResult {
+  gold: number | null
+  cny: number | null
+  rate: number
+  token_price: number | null
+  token_count: number | null
+  message?: string
+}
+
+export const TimeModes = ['Session', 'Day', 'Week', 'Total'] as const
 export const TimeModeLabels: Record<string, string> = {
   'Session': '本次会话',
   'Day': '今日',

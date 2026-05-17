@@ -542,7 +542,7 @@ async def clear_all_data():
                   'character_items', 'gold_records', 'talents',
                   'character_equipment', 'character_item_sets', 'boss_loot',
                   'gold_transaction', 'gold_snapshot', 'item_needs',
-                  'talent_builds']
+                  'talent_builds', 'token_prices', 'exchange_rates']
 
         for table in tables:
             try:

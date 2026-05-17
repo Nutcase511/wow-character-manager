@@ -167,6 +167,22 @@ class Database:
                 FOREIGN KEY (character_id) REFERENCES characters(id)
             );
 
+            CREATE TABLE IF NOT EXISTS token_prices (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                price_gold INTEGER NOT NULL,
+                source TEXT DEFAULT 'manual',
+                notes TEXT,
+                recorded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+
+            CREATE TABLE IF NOT EXISTS exchange_rates (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                gold_per_cny REAL NOT NULL,
+                source TEXT DEFAULT 'manual',
+                notes TEXT,
+                recorded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+
             CREATE TABLE IF NOT EXISTS character_equipment (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 character_id INTEGER NOT NULL,

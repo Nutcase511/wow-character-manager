@@ -21,7 +21,7 @@
       >
         <div class="card-content">
           <div class="boss-avatar">
-            <img v-if="boss.icon_url" :src="boss.icon_url" :alt="boss.name" class="boss-avatar-img" />
+            <img v-if="boss.icon_url && !erroredIcons['boss-' + String(boss.boss_id)]" :src="boss.icon_url" :alt="boss.name" class="boss-avatar-img" @error="handleIconError('boss-' + String(boss.boss_id))" />
             <span v-else>{{ boss.name.charAt(0) }}</span>
           </div>
           <div class="boss-info">
@@ -38,7 +38,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { bossApi } from '@/api'
 import { ElMessage } from 'element-plus'
@@ -52,6 +52,11 @@ const dungeonId = Number(route.params.dungeonId)
 const dungeonName = ref('')
 const bosses = ref<Boss[]>([])
 const loading = ref(false)
+const erroredIcons = reactive<Record<string, boolean>>({})
+
+function handleIconError(key: string) {
+  erroredIcons[key] = true
+}
 
 function goToLoot(boss: Boss) {
   router.push({ name: 'BossLoot', params: { bossId: boss.boss_id } })

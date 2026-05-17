@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from app.core.config import settings
 from app.core.database import db
-from app.api import characters, item_needs, dungeons, bosses, realms, gold, talents
+from app.api import characters, item_needs, dungeons, bosses, realms, gold, talents, exchange
 from app.api.equipment import router as equipment_router
 from app.api.character_refresh import router as refresh_router
 from app.api.items import router as items_router
@@ -75,6 +75,7 @@ app.include_router(refresh_router, prefix="/api/character-refresh", tags=["chara
 app.include_router(items_router, prefix="/api/items", tags=["items"])
 app.include_router(settings_router, prefix="/api/settings", tags=["settings"])
 app.include_router(bis_router, tags=["bis"])
+app.include_router(exchange.router, prefix="/api/exchange", tags=["exchange"])
 
 
 if __name__ == "__main__":

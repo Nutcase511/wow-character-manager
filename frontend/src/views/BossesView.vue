@@ -12,7 +12,7 @@
         <el-table-column label="图标" width="80">
           <template #default="{ row }">
             <div class="boss-icon">
-              <img v-if="row.icon_url" :src="row.icon_url" :alt="row.name" class="boss-icon-img" />
+              <img v-if="row.icon_url && !erroredIcons['boss-' + String(row.boss_id)]" :src="row.icon_url" :alt="row.name" class="boss-icon-img" @error="handleIconError('boss-' + String(row.boss_id))" />
               <span v-else class="boss-icon-placeholder">👹</span>
             </div>
           </template>
@@ -32,7 +32,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { UserFilled } from '@element-plus/icons-vue'
@@ -45,6 +45,11 @@ const router = useRouter()
 // 状态
 const bosses = ref<Boss[]>([])
 const loading = ref(false)
+const erroredIcons = reactive<Record<string, boolean>>({})
+
+function handleIconError(key: string) {
+  erroredIcons[key] = true
+}
 
 // 查看掉落
 function viewLoot(boss: Boss) {
