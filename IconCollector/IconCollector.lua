@@ -111,17 +111,9 @@ SlashCmdList["IC"] = function(msg)
             print("没有扫描数据，请先输入 /ic raid")
             return
         end
-        local lines = {}
-        table.insert(lines, "local raid_icons = {")
-        for itemId, info in pairs(db) do
-            table.insert(lines, "    [" .. itemId .. "] = { name = \"" .. info.name .. "\", icon = \"" .. info.icon .. "\" },")
-        end
-        table.insert(lines, "}")
-        print("--- 全选并复制以下内容 ---")
-        for _, line in ipairs(lines) do
-            print(line)
-        end
-        print("--- END ---")
+        print("已将 " .. count .. " 个物品写入存档文件")
+        print("请执行 /reloadui 将数据保存到磁盘")
+        print("然后运行: python IconCollector/import_icons.py")
 
     elseif parts[1] == "reset" then
         IconCollectorDB.raid = {}

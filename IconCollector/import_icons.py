@@ -1,83 +1,86 @@
 """
-从 WoW 插件的 SavedVariables 文件导入图标映射到数据库
+从WoW SavedVariables文件导入图标扫描结果到数据库
+用法: python IconCollector/import_icons.py
 """
-import sqlite3
-import os
 import re
+import sys
+import sqlite3
 
-DB_PATH = os.path.join(os.path.dirname(__file__), "..", "backend", "wow_character_manager.db")
-WTF_BASE = r"C:\WOW\World of Warcraft\_classic_titan_\WTF\Account"
+DB_PATH = r'c:\wow后台管理\wow-character-manager\backend\wow_character_manager.db'
 
-def find_icon_collector_file():
-    """在 WTF 目录下查找 IconCollector.lua 文件"""
-    for root, dirs, files in os.walk(WTF_BASE):
-        for f in files:
-            if f == "IconCollector.lua":
-                return os.path.join(root, f)
-    return None
+# 尝试多个可能的SavedVariables路径
+import os
+possible_paths = [
+    os.path.expandvars(r'%USERPROFILE%\Documents\WTF\Account\*\SavedVariables\IconCollector.lua'),
+    r'C:\WOW\World of Warcraft\_classic_titan_\WTF\Account\*\SavedVariables\IconCollector.lua',
+]
 
-def parse_icon_mapping(filepath):
-    """解析 SavedVariables Lua 文件中的 IconCollectorDB 数据"""
-    with open(filepath, "r", encoding="utf-8") as f:
-        content = f.read()
+import glob
+found_file = None
+for pattern in possible_paths:
+    files = glob.glob(pattern)
+    if files:
+        found_file = files[0]
+        break
 
-    mapping = {}
-    # 匹配所有 ["itemId"] = "icon_name" 或 [itemId] = "icon_name"
-    for match in re.finditer(r'\["?(\d+)"?\]\s*=\s*"([^"]+)"', content):
-        item_id = int(match.group(1))
-        icon_name = match.group(2)
-        if item_id <= 0:
-            continue
-        icon_url = f"https://render.worldofwarcraft.com/icons/56/{icon_name}.jpg"
-        mapping[item_id] = icon_url
+if not found_file:
+    print("未找到IconCollector.lua SavedVariables文件!")
+    print("请确认路径: WTF/Account/<你的账号>/SavedVariables/IconCollector.lua")
+    print("或者手动输入文件路径:")
+    manual_path = input("文件路径: ").strip()
+    if manual_path:
+        found_file = manual_path
+    else:
+        sys.exit(1)
 
-    return mapping
+with open(found_file, 'r', encoding='utf-8') as f:
+    content = f.read()
 
-def update_database(mapping):
-    """更新数据库 items 表的 icon_url 字段"""
-    conn = sqlite3.connect(DB_PATH)
-    cursor = conn.cursor()
+# 解析Lua格式: ["itemId"] = { ["name"] = "xxx", ["icon"] = "xxx" }
+items = {}
+pattern = r'\[\s*(\d+)\s*\]\s*=\s*\{\s*\[\s*"name"\s*\]\s*=\s*"([^"]*)"\s*,\s*\[\s*"icon"\s*\]\s*=\s*"([^"]*)"\s*\}'
+for match in re.finditer(pattern, content):
+    item_id = int(match.group(1))
+    name = match.group(2)
+    icon_name = match.group(3)
+    items[item_id] = (name, icon_name)
 
-    updated = 0
-    not_found = 0
+if not items:
+    print("未找到扫描数据！请确认已在游戏中执行 /ic raid 扫描 和 /reloadui")
+    sys.exit(1)
 
-    for item_id, icon_url in sorted(mapping.items()):
-        cursor.execute("UPDATE items SET icon_url = ? WHERE item_id = ?", (icon_url, item_id))
-        if cursor.rowcount > 0:
-            updated += 1
-        else:
-            not_found += 1
+print(f"从 {found_file} 读取到 {len(items)} 个物品")
 
-    conn.commit()
-    conn.close()
+# 更新数据库
+db = sqlite3.connect(DB_PATH)
+c = db.cursor()
 
-    print(f"数据库更新完成:")
-    print(f"  - 总处理 {len(mapping)} 个物品")
-    print(f"  - 成功更新 {updated} 条")
-    print(f"  - 未匹配 {not_found} 条（数据库中不存在该 item_id）")
+updated_items = 0
+for item_id, (name, icon_name) in items.items():
+    icon_url = f"https://render.worldofwarcraft.com/icons/56/{icon_name}.jpg"
+    
+    # 更新items表
+    c.execute("SELECT name, icon_url FROM items WHERE item_id = ?", (item_id,))
+    row = c.fetchone()
+    if row:
+        old_name = row[0] or ''
+        if '未知' in old_name or old_name == '':
+            c.execute("UPDATE items SET name = ?, icon_url = ? WHERE item_id = ?",
+                     (name, icon_url, item_id))
+            updated_items += 1
+        elif row[1] != icon_url:
+            c.execute("UPDATE items SET icon_url = ? WHERE item_id = ?",
+                     (icon_url, item_id))
+            updated_items += 1
+    else:
+        # items表没有记录则插入
+        c.execute("INSERT INTO items (item_id, name, quality, item_level, icon_url, stats, slot) VALUES (?, ?, 'common', 0, ?, '{}', '')",
+                 (item_id, name, icon_url))
+        updated_items += 1
 
-def main():
-    print("正在查找 IconCollector.lua...")
-    filepath = find_icon_collector_file()
+db.commit()
 
-    if not filepath:
-        print(f"未在 {WTF_BASE} 下找到 IconCollector.lua 文件")
-        print("请确认以下路径是否存在:")
-        print(r"  C:\WOW\World of Warcraft\_classic_titan_\Interface\AddOns\IconCollector\")
-        print("以及已在游戏中执行过 /ic scan 和 /ic export")
-        return
-
-    print(f"找到文件: {filepath}")
-    print("正在解析图标映射...")
-
-    mapping = parse_icon_mapping(filepath)
-    print(f"解析到 {len(mapping)} 个物品图标")
-
-    if not mapping:
-        print("未解析到任何图标数据，请确认已在游戏中执行了 /ic scan")
-        return
-
-    update_database(mapping)
-
-if __name__ == "__main__":
-    main()
+print(f"\n更新完成:")
+print(f"  items表更新: {updated_items} 条")
+print(f"  boss_loot影响: {len(items)} 个物品")
+db.close()
