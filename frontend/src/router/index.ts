@@ -44,12 +44,6 @@ const routes: RouteRecordRaw[] = [
     meta: { title: 'Boss管理' }
   },
   {
-    path: '/item-needs',
-    name: 'ItemNeeds',
-    component: () => import('@/views/ItemNeedsView.vue'),
-    meta: { title: '装备需求' }
-  },
-  {
     path: '/gold',
     name: 'GoldOverview',
     component: () => import('@/views/GoldOverview.vue'),

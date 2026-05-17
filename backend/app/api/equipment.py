@@ -60,26 +60,59 @@ async def get_character_equipment(character_id: int):
     if not row:
         raise HTTPException(status_code=404, detail="角色不存在")
     
-    # 从数据库获取装备
-    equipment_rows = await db.fetchall(
-        "SELECT * FROM character_equipment WHERE character_id = ? ORDER BY slot",
-        (character_id,)
-    )
+    # 从数据库获取装备，LEFT JOIN items 表以获取最新的 icon_url 和 stats
+    equipment_rows = await db.fetchall("""
+        SELECT ce.*,
+               i.icon_url AS items_icon_url,
+               i.stats AS items_stats,
+               i.quality AS items_quality,
+               i.item_level AS items_item_level
+        FROM character_equipment ce
+        LEFT JOIN items i ON ce.item_id = i.item_id
+        WHERE ce.character_id = ?
+        ORDER BY ce.slot
+    """, (character_id,))
     
     equipped_items = []
     for item in equipment_rows:
+        # 优先使用 items 表的 icon_url（副本管理数据），fallback 到 character_equipment
+        icon_url = item["items_icon_url"] or item["icon_url"]
+        # 优先使用 items 表的 quality/item_level
+        quality = item["items_quality"] or item["quality"]
+        item_level = item["items_item_level"] or item["item_level"]
+        # stats 优先使用 character_equipment 的详细格式，若没有则从 items 表转换
+        stats = item["stats"]
+        if (not stats or stats == "[]") and item["items_stats"]:
+            try:
+                raw = json.loads(item["items_stats"]) if isinstance(item["items_stats"], str) else item["items_stats"]
+                if isinstance(raw, dict):
+                    converted = []
+                    for k, v in raw.items():
+                        converted.append({
+                            "type": {"type": k, "name": k},
+                            "name": k,
+                            "value": v,
+                            "display": {"display_string": f"+{v} {k}"},
+                            "is_equip_bonus": False
+                        })
+                    stats = json.dumps(converted, ensure_ascii=False)
+                elif isinstance(raw, list):
+                    stats = json.dumps(raw, ensure_ascii=False)
+            except (json.JSONDecodeError, TypeError):
+                stats = None
+        
         equipped_items.append({
             "id": item["id"],
             "item_id": item["item_id"],
             "name": item["name"],
             "slot": item["slot"],
             "slot_type": item["slot"],
-            "quality": item["quality"],
-            "quality_value": item["quality"],
-            "item_level": item["item_level"],
-            "icon_url": item["icon_url"],
+            "quality": quality,
+            "quality_value": quality,
+            "item_level": item_level,
+            "icon_url": icon_url,
             "armor": item["armor"],
-            "stats": item["stats"],
+            "stats": stats,
             "enchantments": item["enchantments"],
             "sockets": item["sockets"],
             "spells": item["spells"],

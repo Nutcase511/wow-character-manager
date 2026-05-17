@@ -46,7 +46,7 @@
 <script setup lang="ts">
 import { useRoute } from 'vue-router'
 import {
-  User, Grid, Goods, TrophyBase, Money, MagicStick, Setting
+  User, Grid, TrophyBase, Money, MagicStick, Setting
 } from '@element-plus/icons-vue'
 
 const route = useRoute()
@@ -60,7 +60,6 @@ interface MenuItem {
 const menuItems: MenuItem[] = [
   { path: '/characters', label: '角色管理', icon: User },
   { path: '/dungeons', label: '副本管理', icon: Grid },
-  { path: '/item-needs', label: '装备需求', icon: Goods },
   { path: '/bis', label: '毕业装备', icon: TrophyBase },
   { path: '/gold', label: '金币统计', icon: Money },
   { path: '/talents', label: '天赋模拟器', icon: MagicStick },

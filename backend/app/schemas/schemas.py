@@ -149,6 +149,10 @@ class ItemNeedResponse(BaseModel):
     notes: Optional[str]
     created_at: Optional[str] = None
     updated_at: Optional[str] = None
+    icon_url: Optional[str] = None
+    stats: Optional[dict] = None
+    quality: Optional[str] = None
+    item_level: Optional[int] = None
 
 
 class ProgressCreate(BaseModel):

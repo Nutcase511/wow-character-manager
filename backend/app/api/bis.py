@@ -72,9 +72,14 @@ async def get_bis_list(
     """查询指定职业/天赋/阶段的 BiS 列表"""
     rows = await db.fetchall("""
         SELECT b.*,
-               bl.boss_id
+               bl.boss_id,
+               i.icon_url AS items_icon_url,
+               i.quality AS items_quality,
+               i.item_level AS items_item_level,
+               i.stats AS items_stats
         FROM bis_lists b
         LEFT JOIN boss_loot bl ON b.item_id = bl.item_id
+        LEFT JOIN items i ON b.item_id = i.item_id
         WHERE b.class_name = ? AND b.spec_name = ? AND b.phase = ? AND b.rank <= ?
         ORDER BY b.slot, b.rank
     """, (class_name, spec_name, phase, max_rank))
@@ -98,9 +103,10 @@ async def get_bis_list(
                 "rank": r["rank"],
                 "item_id": r["item_id"],
                 "item_name": r["item_name"],
-                "quality": r["quality"],
-                "item_level": r["item_level"],
-                "icon_url": r["icon_url"],
+                "quality": r["items_quality"] or r["quality"],
+                "item_level": r["items_item_level"] or r["item_level"],
+                "icon_url": r["items_icon_url"] or r["icon_url"],
+                "stats": r["items_stats"],
                 "source": r["source"],
                 "dungeon_name": r["dungeon_name"],
             })
@@ -204,7 +210,13 @@ async def compare_character_bis(character_id: int):
 
     # 获取该职业的所有 BiS 数据（所有天赋、所有阶段）
     bis_rows = await db.fetchall("""
-        SELECT b.* FROM bis_lists b
+        SELECT b.*,
+               i.icon_url AS items_icon_url,
+               i.quality AS items_quality,
+               i.item_level AS items_item_level,
+               i.stats AS items_stats
+        FROM bis_lists b
+        LEFT JOIN items i ON b.item_id = i.item_id
         WHERE b.class_name = ? AND b.rank = 1
         ORDER BY b.slot, b.phase
     """, (char["wow_class"],))
@@ -228,11 +240,12 @@ async def compare_character_bis(character_id: int):
                 "item_id": r["item_id"],
                 "item_name": r["item_name"],
                 "slot": r["slot"],
-                "quality": r["quality"],
-                "item_level": r["item_level"],
+                "quality": r["items_quality"] or r["quality"],
+                "item_level": r["items_item_level"] or r["item_level"],
                 "source": r["source"],
                 "dungeon_name": r["dungeon_name"],
-                "icon_url": r["icon_url"],
+                "icon_url": r["items_icon_url"] or r["icon_url"],
+                "stats": r["items_stats"],
             }
             # 检查角色是否已装备该物品
             if r["item_id"] in equipped_items:
