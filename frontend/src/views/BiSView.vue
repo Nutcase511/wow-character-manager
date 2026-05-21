@@ -201,14 +201,17 @@ const phases = computed(() => {
 })
 
 function getQualityClass(quality: string | null): string {
+  if (!quality || quality === 'None') return ''
+  const q = quality.toLowerCase()
   const map: Record<string, string> = {
     'legendary': 'quality-legendary',
     'epic': 'quality-epic',
     'rare': 'quality-rare',
     'uncommon': 'quality-uncommon',
-    'common': 'quality-common'
+    'common': 'quality-common',
+    'poor': 'quality-poor',
   }
-  return map[quality || ''] || ''
+  return map[q] || ''
 }
 
 function onClassChange() {
@@ -368,6 +371,7 @@ onMounted(async () => {
 .bis-item-card.quality-rare { border-color: #0070dd; }
 .bis-item-card.quality-uncommon { border-color: #1eff00; }
 .bis-item-card.quality-common { border-color: #9d9d9d; }
+.bis-item-card.quality-poor { border-color: #6b7280; }
 
 .item-slot {
   writing-mode: vertical-lr;
