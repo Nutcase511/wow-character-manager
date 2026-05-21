@@ -73,12 +73,14 @@ async def get_bis_list(
     rows = await db.fetchall("""
         SELECT b.*,
                bl.boss_id,
+               bo.name AS boss_name,
                i.icon_url AS items_icon_url,
                i.quality AS items_quality,
                i.item_level AS items_item_level,
                i.stats AS items_stats
         FROM bis_lists b
         LEFT JOIN boss_loot bl ON b.item_id = bl.item_id
+        LEFT JOIN bosses bo ON bl.boss_id = bo.id
         LEFT JOIN items i ON b.item_id = i.item_id
         WHERE b.class_name = ? AND b.spec_name = ? AND b.phase = ? AND b.rank <= ?
         ORDER BY b.slot, b.rank
@@ -108,6 +110,7 @@ async def get_bis_list(
                 "icon_url": r["items_icon_url"] or r["icon_url"],
                 "stats": r["items_stats"],
                 "source": r["source"],
+                "boss_name": r["boss_name"],
                 "dungeon_name": r["dungeon_name"],
             })
 

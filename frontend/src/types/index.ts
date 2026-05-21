@@ -237,7 +237,9 @@ export interface BiSItem {
   quality: string | null
   item_level: number | null
   icon_url: string | null
+  stats: string | null
   source: string | null
+  boss_name: string | null
   dungeon_name: string | null
 }
 

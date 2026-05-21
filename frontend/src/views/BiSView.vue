@@ -53,11 +53,19 @@
               <el-icon><QuestionFilled /></el-icon>
             </div>
           </div>
-          <div class="item-info">
+          <div class="item-details">
             <div class="item-name" :class="getQualityClass(item.quality)">{{ item.item_name || `物品 #${item.item_id}` }}</div>
             <div class="item-meta">
               <span v-if="item.item_level" class="item-level">装等 {{ item.item_level }}</span>
-              <span v-if="item.source" class="item-source">{{ item.source }}</span>
+            </div>
+            <div v-if="item.stats" class="item-stats">
+              <span v-for="(val, key) in parseStats(item.stats)" :key="key" class="stat-tag">
+                {{ StatNameMap[key] || key }} +{{ val }}
+              </span>
+            </div>
+            <div v-if="item.boss_name || item.dungeon_name" class="item-source-row">
+              <span v-if="item.dungeon_name" class="source-dungeon">{{ item.dungeon_name }}</span>
+              <span v-if="item.boss_name" class="source-boss">{{ item.boss_name }}</span>
             </div>
           </div>
         </div>
@@ -108,13 +116,46 @@ const bisClasses = ref<BiSClasses>({})
 const bisItems = ref<BiSItem[]>([])
 const characters = ref<Character[]>([])
 
-const selectedClass = ref('')
-const selectedSpec = ref('')
+const selectedClass = ref('priest')
+const selectedSpec = ref('Discipline')
 const selectedPhase = ref('')
 
 const showImportDialog = ref(false)
 const importCharacterId = ref('')
 const erroredIcons = reactive<Record<string, boolean>>({})
+
+const StatNameMap: Record<string, string> = {
+  stamina: '耐力',
+  intellect: '智力',
+  spirit: '精神',
+  strength: '力量',
+  agility: '敏捷',
+  armor: '护甲',
+  crit: '暴击等级',
+  haste: '急速等级',
+  hit: '命中等级',
+  expertise: '精准等级',
+  spell_power: '法术强度',
+  attack_power: '攻击强度',
+  dodge: '躲闪等级',
+  parry: '招架等级',
+  defense: '防御等级',
+  block: '格挡等级',
+  mana: '法力值',
+  health: '生命值',
+  resilience: '韧性等级',
+  mp5: '五秒回蓝',
+  penetration: '法术穿透',
+}
+
+function parseStats(stats: string | null): Record<string, number> {
+  if (!stats) return {}
+  try {
+    return JSON.parse(stats)
+  } catch {
+    return {}
+  }
+}
 
 function handleIconError(itemId: number) {
   erroredIcons[String(itemId)] = true
@@ -218,6 +259,10 @@ onMounted(async () => {
     ])
     bisClasses.value = classesData
     characters.value = charsData
+    if (classesData.priest?.Discipline?.length) {
+      selectedPhase.value = classesData.priest.Discipline[0]
+      loadBisList()
+    }
   } catch {
     ElMessage.error('加载数据失败')
   }
@@ -337,7 +382,7 @@ onMounted(async () => {
   color: #4b5563;
 }
 
-.item-info {
+.item-details {
   flex: 1;
   min-width: 0;
 }
@@ -361,13 +406,39 @@ onMounted(async () => {
   gap: 8px;
   font-size: 12px;
   color: #6b7280;
+  margin-top: 2px;
+}
+
+.item-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
   margin-top: 4px;
 }
 
-.item-source {
+.stat-tag {
+  font-size: 11px;
+  color: #4d9dff;
+  background: rgba(77, 157, 255, 0.1);
+  padding: 1px 5px;
+  border-radius: 3px;
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+}
+
+.item-source-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 4px;
+  font-size: 11px;
+}
+
+.source-dungeon {
+  color: #9ca3af;
+}
+
+.source-boss {
+  color: #f59e0b;
 }
 
 .option-with-icon {
