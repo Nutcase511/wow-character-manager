@@ -338,7 +338,7 @@ function updateChart() {
       const d = new Date(r.recorded_at)
       return `${d.getMonth() + 1}/${d.getDate()} ${d.getHours()}:${String(d.getMinutes()).padStart(2, '0')}`
     })
-    const prices = sorted.map((r: any) => Math.floor(r.price_gold / 10000))
+    const prices = sorted.map((r: any) => r.price_gold)
 
     tokenChart.setOption({
       tooltip: {
