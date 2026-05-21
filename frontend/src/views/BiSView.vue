@@ -151,7 +151,19 @@ const StatNameMap: Record<string, string> = {
 function parseStats(stats: string | null): Record<string, number> {
   if (!stats) return {}
   try {
-    return JSON.parse(stats)
+    const parsed = JSON.parse(stats)
+    if (Array.isArray(parsed)) {
+      const result: Record<string, number> = {}
+      for (const item of parsed) {
+        const rawName = item.type?.name || ''
+        const cleanName = rawName.replace(/提高%s点。$/, '')
+        if (cleanName) {
+          result[cleanName] = item.value
+        }
+      }
+      return result
+    }
+    return parsed
   } catch {
     return {}
   }
