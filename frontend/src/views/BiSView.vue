@@ -161,10 +161,11 @@ function parseStatsArray(stats: string | null): Array<{ key: string; displayStri
         isEquipBonus: item.is_equip_bonus === true,
       }))
     }
+    const baseStats = new Set(['stamina', 'intellect', 'spirit', 'strength', 'agility', 'armor'])
     return Object.entries(parsed).map(([key, val]) => ({
       key,
       displayString: `+${val} ${StatNameMap[key] || key}`,
-      isEquipBonus: false,
+      isEquipBonus: !baseStats.has(key),
     }))
   } catch {
     return []
