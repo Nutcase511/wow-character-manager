@@ -51,7 +51,7 @@ def import_table(conn, table_name):
 
     conn.commit()
 
-    print(f"  ✅ {table_name}.json  ({len(data)} 条)")
+    print(f"  OK {table_name}.json  ({len(data)} 条)")
     return len(data)
 
 

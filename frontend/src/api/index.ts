@@ -167,4 +167,18 @@ export const bisApi = {
     api.get(`/bis/compare/${characterId}`)
 }
 
+// 时光徽章 & 兑换相关API
+export const exchangeApi = {
+  getCurrentToken: () => api.get('/exchange/token/current'),
+  getTokenHistory: (limit?: number) => api.get('/exchange/token/history', { params: { limit } }),
+  recordToken: (price_gold: number, notes?: string) =>
+    api.post('/exchange/token/record', null, { params: { price_gold, notes } }),
+  getCurrentRate: () => api.get('/exchange/rate/current'),
+  getRateHistory: (limit?: number) => api.get('/exchange/rate/history', { params: { limit } }),
+  recordRate: (gold_per_cny: number, notes?: string) =>
+    api.post('/exchange/rate/record', null, { params: { gold_per_cny, notes } }),
+  calculate: (params: { gold?: number; cny?: number }) =>
+    api.get('/exchange/calculate', { params })
+}
+
 export default api

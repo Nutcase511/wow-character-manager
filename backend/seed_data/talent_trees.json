@@ -1,11 +1,272 @@
 [
   {
     "id": 1,
+    "class_name": "warrior",
+    "spec_name": "武器",
+    "spec_icon": "ability_warrior_savageblow",
+    "description": "专注于双手武器和压制性攻击的战斗大师。",
+    "created_at": "2026-05-21 23:06:10",
+    "updated_at": "2026-05-21 23:06:10"
+  },
+  {
+    "id": 2,
+    "class_name": "warrior",
+    "spec_name": "狂怒",
+    "spec_icon": "ability_warrior_innerrage",
+    "description": "沉浸在战斗的狂怒中，以双持武器造成毁灭性伤害。",
+    "created_at": "2026-05-21 23:06:10",
+    "updated_at": "2026-05-21 23:06:10"
+  },
+  {
+    "id": 3,
+    "class_name": "warrior",
+    "spec_name": "防护",
+    "spec_icon": "ability_warrior_defensivestance",
+    "description": "坚不可摧的盾墙，保护队友免受伤害。",
+    "created_at": "2026-05-21 23:06:10",
+    "updated_at": "2026-05-21 23:06:10"
+  },
+  {
+    "id": 4,
+    "class_name": "paladin",
+    "spec_name": "神圣",
+    "spec_icon": "spell_holy_holybolt",
+    "description": "借助圣光之力治疗盟友，是团队中的坚强后盾。",
+    "created_at": "2026-05-21 23:06:10",
+    "updated_at": "2026-05-21 23:06:10"
+  },
+  {
+    "id": 5,
+    "class_name": "paladin",
+    "spec_name": "防护",
+    "spec_icon": "ability_paladin_shieldofthetemplar",
+    "description": "圣光的守护者，以盾牌和信仰抵御一切攻击。",
+    "created_at": "2026-05-21 23:06:10",
+    "updated_at": "2026-05-21 23:06:10"
+  },
+  {
+    "id": 6,
+    "class_name": "paladin",
+    "spec_name": "惩戒",
+    "spec_icon": "spell_holy_retributionaura",
+    "description": "圣光的审判者，用正义之力制裁邪恶。",
+    "created_at": "2026-05-21 23:06:10",
+    "updated_at": "2026-05-21 23:06:10"
+  },
+  {
+    "id": 7,
+    "class_name": "hunter",
+    "spec_name": "野兽控制",
+    "spec_icon": "ability_hunter_beasttaming",
+    "description": "与野兽伙伴心意相通，指挥它们摧毁敌人。",
+    "created_at": "2026-05-21 23:06:10",
+    "updated_at": "2026-05-21 23:06:10"
+  },
+  {
+    "id": 8,
+    "class_name": "hunter",
+    "spec_name": "射击",
+    "spec_icon": "ability_hunter_markedshot",
+    "description": "百步穿杨的神射手，在远处精准打击目标。",
+    "created_at": "2026-05-21 23:06:10",
+    "updated_at": "2026-05-21 23:06:10"
+  },
+  {
+    "id": 9,
+    "class_name": "hunter",
+    "spec_name": "生存",
+    "spec_icon": "ability_hunter_camouflage",
+    "description": "野外生存专家，使用陷阱和战术削弱敌人。",
+    "created_at": "2026-05-21 23:06:10",
+    "updated_at": "2026-05-21 23:06:10"
+  },
+  {
+    "id": 10,
+    "class_name": "rogue",
+    "spec_name": "刺杀",
+    "spec_icon": "ability_rogue_deadlybrew",
+    "description": "精通毒药和致命一击的暗杀专家。",
+    "created_at": "2026-05-21 23:06:10",
+    "updated_at": "2026-05-21 23:06:10"
+  },
+  {
+    "id": 11,
+    "class_name": "rogue",
+    "spec_name": "战斗",
+    "spec_icon": "ability_backstab",
+    "description": "正面作战的格斗大师，剑刃风暴的中心。",
+    "created_at": "2026-05-21 23:06:10",
+    "updated_at": "2026-05-21 23:06:10"
+  },
+  {
+    "id": 12,
+    "class_name": "rogue",
+    "spec_name": "敏锐",
+    "spec_icon": "ability_stealth",
+    "description": "潜伏在阴影中的刺客，伺机给予致命一击。",
+    "created_at": "2026-05-21 23:06:10",
+    "updated_at": "2026-05-21 23:06:10"
+  },
+  {
+    "id": 13,
     "class_name": "priest",
     "spec_name": "戒律",
     "spec_icon": "spell_holy_powerwordshield",
-    "description": "使用护盾和防护魔法保护盟友，同时通过伤害输出进行治疗",
-    "created_at": "2026-05-09 13:02:13",
-    "updated_at": "2026-05-09 13:02:13"
+    "description": "使用护盾和防护魔法保护盟友，同时通过伤害输出进行治疗。",
+    "created_at": "2026-05-21 23:06:10",
+    "updated_at": "2026-05-21 23:06:10"
+  },
+  {
+    "id": 14,
+    "class_name": "priest",
+    "spec_name": "神圣",
+    "spec_icon": "spell_holy_guardianspirit",
+    "description": "强大的治疗者，借助圣光之力治愈最严重的创伤。",
+    "created_at": "2026-05-21 23:06:10",
+    "updated_at": "2026-05-21 23:06:10"
+  },
+  {
+    "id": 15,
+    "class_name": "priest",
+    "spec_name": "暗影",
+    "spec_icon": "spell_shadow_shadowwordpain",
+    "description": "操纵暗影之力折磨敌人，将痛苦转化为力量。",
+    "created_at": "2026-05-21 23:06:10",
+    "updated_at": "2026-05-21 23:06:10"
+  },
+  {
+    "id": 16,
+    "class_name": "deathknight",
+    "spec_name": "鲜血",
+    "spec_icon": "spell_deathknight_bloodpresence",
+    "description": "掌控鲜血之力，通过牺牲自己来强化攻击。",
+    "created_at": "2026-05-21 23:06:10",
+    "updated_at": "2026-05-21 23:06:10"
+  },
+  {
+    "id": 17,
+    "class_name": "deathknight",
+    "spec_name": "冰霜",
+    "spec_icon": "spell_deathknight_frostpresence",
+    "description": " harnessing 凛冽的极寒之力，冻结并粉碎敌人。",
+    "created_at": "2026-05-21 23:06:10",
+    "updated_at": "2026-05-21 23:06:10"
+  },
+  {
+    "id": 18,
+    "class_name": "deathknight",
+    "spec_name": "邪恶",
+    "spec_icon": "spell_deathknight_unholypresence",
+    "description": "统御亡灵军团，用瘟疫和疾病吞噬一切。",
+    "created_at": "2026-05-21 23:06:10",
+    "updated_at": "2026-05-21 23:06:10"
+  },
+  {
+    "id": 19,
+    "class_name": "shaman",
+    "spec_name": "元素",
+    "spec_icon": "spell_nature_lightningbolt",
+    "description": "召唤火焰、冰霜和闪电的元素之力轰击敌人。",
+    "created_at": "2026-05-21 23:06:10",
+    "updated_at": "2026-05-21 23:06:10"
+  },
+  {
+    "id": 20,
+    "class_name": "shaman",
+    "spec_name": "增强",
+    "spec_icon": "spell_nature_lightningshield",
+    "description": "将元素之力灌注到武器上，在近战中释放毁灭性打击。",
+    "created_at": "2026-05-21 23:06:10",
+    "updated_at": "2026-05-21 23:06:10"
+  },
+  {
+    "id": 21,
+    "class_name": "shaman",
+    "spec_name": "恢复",
+    "spec_icon": "spell_nature_healingwavegreater",
+    "description": "借助自然之力治疗伤口，维持团队的生命线。",
+    "created_at": "2026-05-21 23:06:10",
+    "updated_at": "2026-05-21 23:06:10"
+  },
+  {
+    "id": 22,
+    "class_name": "mage",
+    "spec_name": "奥术",
+    "spec_icon": "spell_holy_magicalsentry",
+    "description": "钻研奥术魔法的奥秘，以纯粹的魔法能量摧毁敌人。",
+    "created_at": "2026-05-21 23:06:10",
+    "updated_at": "2026-05-21 23:06:10"
+  },
+  {
+    "id": 23,
+    "class_name": "mage",
+    "spec_name": "火焰",
+    "spec_icon": "spell_fire_fireball",
+    "description": "掌控烈焰之力，用灼热的火焰将敌人化为灰烬。",
+    "created_at": "2026-05-21 23:06:10",
+    "updated_at": "2026-05-21 23:06:10"
+  },
+  {
+    "id": 24,
+    "class_name": "mage",
+    "spec_name": "冰霜",
+    "spec_icon": "spell_frost_frostbolt",
+    "description": "驾驭极寒之力，冻结敌人并掌控战场节奏。",
+    "created_at": "2026-05-21 23:06:10",
+    "updated_at": "2026-05-21 23:06:10"
+  },
+  {
+    "id": 25,
+    "class_name": "warlock",
+    "spec_name": "痛苦",
+    "spec_icon": "spell_shadow_deathcoil",
+    "description": "以痛苦和诅咒折磨目标，缓慢而残忍地将其摧毁。",
+    "created_at": "2026-05-21 23:06:10",
+    "updated_at": "2026-05-21 23:06:10"
+  },
+  {
+    "id": 26,
+    "class_name": "warlock",
+    "spec_name": "恶魔学识",
+    "spec_icon": "spell_shadow_metamorphosis",
+    "description": "召唤恶魔军团为自己而战，以数量压倒敌人。",
+    "created_at": "2026-05-21 23:06:10",
+    "updated_at": "2026-05-21 23:06:10"
+  },
+  {
+    "id": 27,
+    "class_name": "warlock",
+    "spec_name": "毁灭",
+    "spec_icon": "spell_shadow_rainoffire",
+    "description": "引导混乱的暗影烈焰，以毁灭性的爆发力瞬间消灭敌人。",
+    "created_at": "2026-05-21 23:06:10",
+    "updated_at": "2026-05-21 23:06:10"
+  },
+  {
+    "id": 28,
+    "class_name": "druid",
+    "spec_name": "平衡",
+    "spec_icon": "spell_nature_starfall",
+    "description": "借助月神和自然之力，从远处降下星辰和愤怒。",
+    "created_at": "2026-05-21 23:06:10",
+    "updated_at": "2026-05-21 23:06:10"
+  },
+  {
+    "id": 29,
+    "class_name": "druid",
+    "spec_name": "野性战斗",
+    "spec_icon": "ability_racial_bearform",
+    "description": "化身猛兽，用利爪和尖牙在近战中撕碎敌人。",
+    "created_at": "2026-05-21 23:06:10",
+    "updated_at": "2026-05-21 23:06:10"
+  },
+  {
+    "id": 30,
+    "class_name": "druid",
+    "spec_name": "恢复",
+    "spec_icon": "spell_nature_healingtouch",
+    "description": "利用自然界的再生力量，持续治疗和守护盟友。",
+    "created_at": "2026-05-21 23:06:10",
+    "updated_at": "2026-05-21 23:06:10"
   }
 ]

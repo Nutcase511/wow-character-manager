@@ -46,7 +46,7 @@
 <script setup lang="ts">
 import { useRoute } from 'vue-router'
 import {
-  User, Grid, TrophyBase, Money, MagicStick, Setting
+  User, Grid, TrophyBase, Money, MagicStick, Coin, Setting
 } from '@element-plus/icons-vue'
 
 const route = useRoute()
@@ -63,6 +63,7 @@ const menuItems: MenuItem[] = [
   { path: '/bis', label: '毕业装备', icon: TrophyBase },
   { path: '/gold', label: '金币统计', icon: Money },
   { path: '/talents', label: '天赋模拟器', icon: MagicStick },
+  { path: '/token', label: '时光徽章', icon: Coin },
   { path: '/settings', label: '系统配置', icon: Setting }
 ]
 
@@ -72,6 +73,7 @@ function isActive(path: string): boolean {
   if (path === '/dungeons' && (currentPath === '/dungeons' || currentPath.startsWith('/dungeons/'))) return true
   if (path === '/gold' && (currentPath === '/gold' || currentPath.startsWith('/gold/'))) return true
   if (path === '/bis' && (currentPath === '/bis' || currentPath.startsWith('/bis/'))) return true
+  if (path === '/token' && currentPath === '/token') return true
   return currentPath === path
 }
 </script>

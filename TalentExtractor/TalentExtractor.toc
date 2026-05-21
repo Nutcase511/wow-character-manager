@@ -1,0 +1,8 @@
+## Title: TalentExtractor
+## Notes: 提取所有职业天赋树数据 - 用于 Wow Character Manager
+## Author: WCM Tool
+## Version: 1.0
+## SavedVariables: TalentExtractor_Export
+## Interface: 30300
+
+TalentExtractor.lua

@@ -68,6 +68,12 @@ const routes: RouteRecordRaw[] = [
     meta: { title: '毕业装备' }
   },
   {
+    path: '/token',
+    name: 'Token',
+    component: () => import('@/views/TokenView.vue'),
+    meta: { title: '时光徽章' }
+  },
+  {
     path: '/settings',
     name: 'Settings',
     component: () => import('@/views/SettingsView.vue'),

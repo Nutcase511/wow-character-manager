@@ -3,7 +3,7 @@ from typing import Optional
 from datetime import datetime
 from app.core.database import db
 
-router = APIRouter(prefix="/api/exchange", tags=["exchange"])
+router = APIRouter(tags=["exchange"])
 
 
 @router.get("/token/current")
