@@ -59,9 +59,11 @@
               <span v-if="item.item_level" class="item-level">装等 {{ item.item_level }}</span>
             </div>
             <div v-if="item.stats" class="item-stats">
-              <span v-for="(val, key) in parseStats(item.stats)" :key="key" class="stat-tag">
-                {{ StatNameMap[key] || key }} +{{ val }}
-              </span>
+              <div v-for="stat in parseStatsArray(item.stats)" :key="stat.key" class="stat-line">
+                <span class="stat-text" :class="{ 'bonus': stat.isEquipBonus }">
+                  {{ stat.displayString }}
+                </span>
+              </div>
             </div>
             <div v-if="item.boss_name || item.dungeon_name" class="item-source-row">
               <span v-if="item.dungeon_name" class="source-dungeon">{{ item.dungeon_name }}</span>
@@ -148,25 +150,32 @@ const StatNameMap: Record<string, string> = {
   penetration: '法术穿透',
 }
 
-function parseStats(stats: string | null): Record<string, number> {
-  if (!stats) return {}
+function parseStatsArray(stats: string | null): Array<{ key: string; displayString: string; isEquipBonus: boolean }> {
+  if (!stats) return []
   try {
     const parsed = JSON.parse(stats)
     if (Array.isArray(parsed)) {
-      const result: Record<string, number> = {}
-      for (const item of parsed) {
-        const rawName = item.type?.name || ''
-        const cleanName = rawName.replace(/提高%s点。$/, '')
-        if (cleanName) {
-          result[cleanName] = item.value
-        }
-      }
-      return result
+      return parsed.map((item, idx) => ({
+        key: `stat-${idx}`,
+        displayString: formatStatDisplay(item),
+        isEquipBonus: item.is_equip_bonus === true,
+      }))
     }
-    return parsed
+    return Object.entries(parsed).map(([key, val]) => ({
+      key,
+      displayString: `+${val} ${StatNameMap[key] || key}`,
+      isEquipBonus: false,
+    }))
   } catch {
-    return {}
+    return []
   }
+}
+
+function formatStatDisplay(stat: any): string {
+  const displayStr = stat.display?.display_string
+  if (displayStr) return displayStr
+  const name = (stat.type?.name || '').replace(/提高%s点。$/, '')
+  return name ? `+${stat.value} ${name}` : `+${stat.value}`
 }
 
 function handleIconError(itemId: number) {
@@ -422,19 +431,20 @@ onMounted(async () => {
 }
 
 .item-stats {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 3px;
   margin-top: 4px;
 }
 
-.stat-tag {
+.stat-line {
   font-size: 11px;
-  color: #4d9dff;
-  background: rgba(77, 157, 255, 0.1);
-  padding: 1px 5px;
-  border-radius: 3px;
-  white-space: nowrap;
+  line-height: 1.6;
+}
+
+.stat-text {
+  color: #e2e8f0;
+}
+
+.stat-text.bonus {
+  color: #1eff00;
 }
 
 .item-source-row {
